@@ -1,0 +1,204 @@
+'use client';
+
+import React, { useState, useEffect, ChangeEvent } from 'react';
+import toast from 'react-hot-toast';
+
+import EyeSlashIcon from '../../assets/eye_slash.svg';
+import EyeVisibleIcon from '../../assets/eye_visible.svg';
+
+import { Admin } from "../../app/admins/page"; 
+
+interface FormInputProps {
+    label: string;
+    placeholder?: string;
+    value: string;
+    onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+    type?: string;
+    passwordToggle?: boolean;
+}
+
+interface FormSelectOption {
+    value: string;
+    label: string;
+}
+
+interface FormSelectProps {
+    label: string;
+    value: string;
+    onChange: (e: ChangeEvent<HTMLSelectElement>) => void;
+    options: FormSelectOption[];
+}
+
+export interface UpdatedAdminData {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    password?: string; 
+}
+
+interface EditAdminProps {
+    onClose: () => void;
+    onUpdate: (data: UpdatedAdminData) => void;
+    initialData: Admin;
+}
+
+const FormInput = ({ label, placeholder, value, onChange, type = "text", passwordToggle = false }: FormInputProps) => {
+    const [showPassword, setShowPassword] = useState<boolean>(false);
+    const inputType = passwordToggle ? (showPassword ? "text" : "password") : type;
+
+    return (
+        <div className="w-full">
+            <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+            <div className="relative">
+                <input
+                    type={inputType}
+                    placeholder={placeholder}
+                    value={value}
+                    onChange={onChange}
+                    className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#179678]/50 placeholder-gray-400 ${passwordToggle ? 'pr-10' : ''}`}
+                />
+                {passwordToggle && (
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                        {showPassword ? (
+                            <img src={EyeSlashIcon.src || EyeSlashIcon} alt="Hide password" className="w-5 h-5" />
+                        ) : (
+                            <img src={EyeVisibleIcon.src || EyeVisibleIcon} alt="Show password" className="w-5 h-5" />
+                        )}
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const FormSelect = ({ label, value, onChange, options }: FormSelectProps) => (
+     <div className="w-full">
+        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <div className="relative">
+            <select value={value} onChange={onChange}
+                className={`w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#179678]/50 bg-white pr-8 ${value === "" ? 'text-gray-400' : 'text-gray-900' }`}
+            >
+                <option value="" disabled>เลือกสิทธิ์</option>
+                {options.map(option => ( <option key={option.value} value={option.value}>{option.label}</option> ))}
+            </select>
+             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+        </div>
+    </div>
+);
+
+
+const EditAdmin = ({ onClose, onUpdate, initialData }: EditAdminProps) => {
+    const [firstName, setFirstName] = useState<string>(initialData?.firstName || '');
+    const [lastName, setLastName] = useState<string>(initialData?.lastName || '');
+    const [email, setEmail] = useState<string>(initialData?.email || '');
+    const [role, setRole] = useState<string>(initialData?.role || '');
+
+    const [password, setPassword] = useState<string>('');
+    const [confirmPassword, setConfirmPassword] = useState<string>('');
+
+    useEffect(() => {
+        if (!initialData) return;
+        if ((!initialData.firstName || !initialData.lastName) && initialData.name) {
+            const nameParts = initialData.name.split(' ');
+            setFirstName(nameParts[0] || '');
+            setLastName(nameParts.slice(1).join(' ') || '');
+        }
+    }, [initialData]);
+
+
+    const roleOptions: FormSelectOption[] = [
+        { value: 'Admin', label: 'Admin' },
+        { value: 'Super Admin', label: 'Super Admin' },
+    ];
+
+    const handleUpdate = () => {
+        if (password && password !== confirmPassword) {
+            toast.error(
+                "รหัสผ่านใหม่ไม่ตรงกัน",
+                { duration: 2000, position: "top-right" }
+            );
+            return;
+        }
+
+        const formData: UpdatedAdminData = {
+            id: initialData.id,
+            firstName,
+            lastName,
+            email,
+            role,
+        };
+        
+        if (password) {
+            formData.password = password;
+        }
+
+        console.log("Updating Admin:", formData);
+
+        onUpdate(formData);
+
+    };
+
+
+    return (
+        <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-6 sm:p-8 pointer-events-auto overflow-y-auto max-h-[90vh]">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">แก้ไขผู้ดูแลระบบ</h2>
+
+            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <FormInput
+                        label="ชื่อ" placeholder="ชื่อ" value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                    />
+                    <FormInput
+                        label="นามสกุล" placeholder="นามสกุล" value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                    />
+                </div>
+                <FormInput
+                    label="Email" placeholder="Email" type="email" value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                />
+                <FormSelect
+                    label="สิทธิ์การเข้าถึง" value={role}
+                    onChange={(e) => setRole(e.target.value)} options={roleOptions}
+                />
+
+                <FormInput
+                    label="Password ใหม่ (ทิ้งว่างไว้ถ้าไม่ต้องการเปลี่ยน)"
+                    placeholder="Password ใหม่"
+                    passwordToggle={true}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                />
+
+                <FormInput
+                    label="ยืนยัน Password ใหม่"
+                    placeholder="ยืนยัน Password ใหม่"
+                    passwordToggle={true}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+
+                <div className="flex flex-col sm:flex-row gap-4 mt-8 w-full pt-4">
+                    <button type="button" onClick={onClose}
+                        className="flex-1 px-4 py-3 bg-white border border-[#179678] rounded-lg text-base font-semibold text-[#179678] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#179678]/50">
+                        ยกเลิก
+                    </button>
+                    <button type="button" onClick={handleUpdate}
+                        className="flex-1 px-4 py-3 bg-[#179678] border border-transparent rounded-lg text-base font-semibold text-white hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-[#179678]/50">
+                        บันทึก
+                    </button>
+                </div>
+            </form>
+        </div>
+    );
+};
+
+export default EditAdmin;
