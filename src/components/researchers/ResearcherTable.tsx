@@ -27,7 +27,7 @@ interface TableHeaderProps {
 const TableHeader = ({ title }: TableHeaderProps) => (
     <div className="flex items-center justify-center gap-2 cursor-pointer hover:opacity-80">
         <span>{title}</span>
-        <img src={SortIcon.src || SortIcon} alt="sort" className="w-3 h-3 opacity-60" />
+        <img src={SortIcon.src || SortIcon} alt="sort" className="w-4 h-4 opacity-60" />
     </div>
 );
 
@@ -51,7 +51,7 @@ const ResearcherTable = ({ data, onDeleteClick, startIndex = 0 }: ResearcherTabl
                         <th className="p-4 text-left">
                             <div className="flex items-center gap-2">
                                 <span>ชื่อ-นามสกุล</span>
-                                <img src={SortIcon.src || SortIcon} className="w-3 h-3 opacity-60"/>
+                                <img src={SortIcon.src || SortIcon} className="w-4 h-4 opacity-60"/>
                             </div>
                         </th>
                         <th className="p-4 text-center"><TableHeader title="เบอร์โทร" /></th>

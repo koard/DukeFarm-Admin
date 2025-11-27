@@ -1,6 +1,8 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import SortIcon from '../../assets/fm-arrow.svg';
 import ViewIcon from '../../assets/fm-search-table.svg';
@@ -22,12 +24,14 @@ interface ResearcherHistoryTableProps {
 const TableHeader = ({ title }: { title: string }) => (
     <div className="flex items-center justify-center gap-2 cursor-pointer hover:opacity-80">
         <span>{title}</span>
-        <Image src={SortIcon} alt="sort" width={12} height={12} className="w-3 h-3 opacity-60" />
+        <Image src={SortIcon} alt="sort" width={12} height={12} className="w-4 h-4 opacity-60" />
     </div>
 );
 
 const ResearcherHistoryTable = ({ data, startIndex = 0, onDeleteClick }: ResearcherHistoryTableProps) => {
     
+    const pathname = usePathname();
+
     if (data.length === 0) {
         return (
             <div className="text-center py-10 text-gray-500 bg-white rounded-xl border border-gray-100 shadow-sm">
@@ -46,7 +50,7 @@ const ResearcherHistoryTable = ({ data, startIndex = 0, onDeleteClick }: Researc
                         <th className="p-4 text-left w-[30%] pl-8">
                             <div className="flex items-center gap-2 cursor-pointer hover:opacity-80">
                                 <span>ข้อมูลเกษตรกร</span>
-                                <Image src={SortIcon} alt="sort" width={12} height={12} className="w-3 h-3 opacity-60" />
+                                <Image src={SortIcon} alt="sort" width={12} height={12} className="w-4 h-4 opacity-60" />
                             </div>
                         </th>
                         <th className="p-4 text-center w-[25%]"><TableHeader title="ประเภทกลุ่มการเลี้ยง" /></th>
@@ -62,9 +66,12 @@ const ResearcherHistoryTable = ({ data, startIndex = 0, onDeleteClick }: Researc
                             <td className="p-4 text-center">{item.groupType || "กลุ่มอนุบาลขนาดเล็ก"}</td>
                             <td className="p-4">
                                 <div className="flex justify-center items-center gap-3">
-                                    <button className="hover:scale-110 transition-transform">
+                                    <Link 
+                                        href={`${pathname}/${item.id}`}
+                                        className="hover:scale-110 transition-transform"
+                                    >
                                         <Image src={ViewIcon} alt="view" width={20} height={20} className="w-5 h-5" />
-                                    </button>
+                                    </Link>
                                     
                                     <button 
                                         onClick={() => onDeleteClick && onDeleteClick(item)} 

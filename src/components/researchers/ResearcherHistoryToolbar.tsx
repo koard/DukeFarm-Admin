@@ -68,7 +68,6 @@ const ResearcherHistoryToolbar = ({
                         onChange={handleGroupChange}
                     >
                         <option value="">ประเภทกลุ่ม ทั้งหมด</option>
-                        <option value="กลุ่มอนุบาลขนาดเล็ก">กลุ่มอนุบาลขนาดเล็ก</option>
                         <option value="กลุ่มอนุบาลขนาดใหญ่">กลุ่มอนุบาลขนาดใหญ่</option>
                         <option value="กลุ่มผู้เลี้ยงขนาดตลาด">กลุ่มผู้เลี้ยงขนาดตลาด</option>
                     </select>

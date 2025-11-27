@@ -11,12 +11,12 @@ import Pagination from "../../../components/common/Pagination";
 import DeleteConfirm from "../../../components/common/DeleteConfirm";
 
 const MOCK_HISTORY_DATA_ALL: HistoryData[] = [
-    { id: 1, date: "20/12/2025 - 06:00", farm: "ปทุม มาดี", groupType: "กลุ่มอนุบาลขนาดเล็ก" },
-    { id: 2, date: "10/12/2025 - 06:00", farm: "ฟาร์มป้าแมว", groupType: "กลุ่มอนุบาลขนาดเล็ก" },
-    { id: 3, date: "30/11/2025 - 06:00", farm: "ฟาร์มคุณจิน", groupType: "กลุ่มอนุบาลขนาดเล็ก" },
+    { id: 1, date: "20/12/2025 - 06:00", farm: "ปทุม มาดี", groupType: "กลุ่มอนุบาลขนาดใหญ่" },
+    { id: 2, date: "10/12/2025 - 06:00", farm: "ฟาร์มป้าแมว", groupType: "กลุ่มอนุบาลขนาดใหญ่" },
+    { id: 3, date: "30/11/2025 - 06:00", farm: "ฟาร์มคุณจิน", groupType: "กลุ่มอนุบาลขนาดใหญ่" },
     { id: 4, date: "20/11/2025 - 06:00", farm: "ฟาร์มป้าแมว", groupType: "กลุ่มอนุบาลขนาดใหญ่" },
-    { id: 5, date: "10/11/2025 - 06:00", farm: "ฟาร์มลุงพล", groupType: "กลุ่มอนุบาลขนาดใหญ่" },
-    { id: 6, date: "01/11/2025 - 06:00", farm: "ฟาร์มลุงพล", groupType: "กลุ่มอนุบาลขนาดใหญ่" },
+    { id: 5, date: "10/11/2025 - 06:00", farm: "ฟาร์มลุงพล", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด" },
+    { id: 6, date: "01/11/2025 - 06:00", farm: "ฟาร์มลุงพล", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด" },
     { id: 7, date: "30/10/2025 - 06:00", farm: "ฟาร์มคุณจิน", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด" },
     { id: 8, date: "20/10/2025 - 06:00", farm: "ฟาร์มคุณจิน", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด" },
     { id: 9, date: "10/10/2025 - 06:00", farm: "ฟาร์มลุงพล", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด" },
@@ -125,7 +125,7 @@ export default function ResearcherDetailPage() {
             <header className="h-16 flex items-center px-5 text-white mb-2 bg-[#034A30] sticky top-0 z-20 shadow-md pl-35 lg:pl-5">
                 
                 <button 
-                    onClick={() => router.back()} 
+                    onClick={() => router.push(`/researchers`)} 
                     className="flex items-center gap-2 hover:bg-white/10 px-3 py-1.5 rounded-lg transition-colors -ml-23 lg:ml-0"
                 >
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
