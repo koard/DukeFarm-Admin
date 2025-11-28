@@ -180,6 +180,27 @@ function RecipesPage() {
     };
 
     const handleCreateRecipe = async (formData: NewRecipeFormData) => { 
+        // Validation: Check if all required fields are filled
+        const isCommonDataValid = 
+            formData.recipeName?.trim() && 
+            formData.details?.trim() && 
+            formData.recommendations?.trim();
+
+        let isAgeDataValid = false;
+        if (formData.ageType === 'range') {
+            isAgeDataValid = !!(formData.ageStart && formData.ageEnd);
+        } else if (formData.ageType === 'specific') {
+            isAgeDataValid = !!formData.ageSpecific;
+        }
+
+        if (!isCommonDataValid || !isAgeDataValid) {
+            toast.error("กรุณากรอกข้อมูลให้ครบถ้วน", { 
+                duration: 2000, 
+                position: "top-right" 
+            });
+            return;
+        }
+
         let targetStage = '';
         if (formData.ageType === 'range') {
             const start = formData.ageStart || '...'; 
@@ -222,6 +243,27 @@ function RecipesPage() {
     };
 
     const handleUpdateRecipe = async (updatedData: any) => { 
+        // Validation: Check if data has actually changed
+        const originalItem = data.find(item => item.id === updatedData.id);
+
+        if (!originalItem) return;
+
+        const isUnchanged = 
+            originalItem.name === updatedData.recipeName &&
+            originalItem.description === updatedData.details &&
+            originalItem.recommendations === updatedData.recommendations &&
+            originalItem.targetStage === (updatedData.ageType === 'range' 
+                ? `อายุ ${updatedData.ageStart}-${updatedData.ageEnd} วัน`
+                : `อายุ ${updatedData.ageSpecific} วันขึ้นไป`);
+
+        if (isUnchanged) {
+            toast.error("ยังไม่ได้มีการแก้ไขข้อมูล", {
+                duration: 2000,
+                position: "top-right",
+            });
+            return; 
+        }
+
         console.log("Updated recipe data:", updatedData);
         
         let targetStage = '';
