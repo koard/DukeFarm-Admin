@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { farmersAPI, Farmer as APIFarmer } from "@/services/api/farmers";
 
 import FarmerToolbar from "../../components/farmers/FarmerToolbar";
 import FarmerTable from "../../components/farmers/FarmerTable"; 
@@ -10,14 +9,6 @@ import FarmerTable from "../../components/farmers/FarmerTable";
 import Pagination from "../../components/common/Pagination";
 import DeleteConfirm from "../../components/common/DeleteConfirm"; 
 
-// Map API FarmType to Thai display text
-const FARM_TYPE_MAP: Record<string, string> = {
-    'NURSERY_SMALL': 'กลุ่มอนุบาลขนาดเล็ก',
-    'NURSERY_LARGE': 'กลุ่มอนุบาลขนาดใหญ่',
-    'GROWOUT': 'กลุ่มผู้เลี้ยงขนาดตลาด',
-};
-
-// Local Farmer type for UI (compatible with existing components)
 export interface Farmer {
     id: number;
     name: string;
@@ -29,25 +20,19 @@ export interface Farmer {
     registeredDate: string;
 }
 
-// Convert API farmer to local farmer format
-const convertAPIFarmer = (apiFarmer: APIFarmer): Farmer => ({
-    id: apiFarmer.no,
-    name: apiFarmer.fullName,
-    phone: apiFarmer.phone,
-    groupType: FARM_TYPE_MAP[apiFarmer.farmType] || apiFarmer.farmType,
-    pondType: 'บ่อดิน', // Default since API doesn't provide pond type
-    pondCount: apiFarmer.pondCount,
-    location: `${apiFarmer.latitude},${apiFarmer.longitude}`,
-    registeredDate: new Date(apiFarmer.registeredAt).toLocaleString('th-TH', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-    }).replace(/\//g, '/').replace(',', ' -'),
-});
+export const MOCK_FARMERS: Farmer[] = [
+    { id: 1, name: "อรพินธ์ นาดี", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อดิน", pondCount: 6, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 2, name: "สมปอง มองการไกล", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อดิน", pondCount: 7, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 3, name: "สมหมาย มีดี", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดใหญ่", pondType: "บ่อดิน", pondCount: 4, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 4, name: "มานี มีสุข", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดใหญ่", pondType: "บ่อปูน", pondCount: 12, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 5, name: "แก้วตา นาวา", phone: "0812232343", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อดิน", pondCount: 10, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 6, name: "นภัทร ชื่นชม", phone: "0812232343", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อปูน", pondCount: 8, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 7, name: "วิทยา สุดสวย", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อปูน", pondCount: 9, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 8, name: "ปานเทพ รัศมี", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดใหญ่", pondType: "บ่อดิน", pondCount: 8, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 9, name: "ธนัช จิตใคร่", phone: "0812232343", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อปูน", pondCount: 9, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 10, name: "ธีรศ ยาหมาย", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อปูน", pondCount: 11, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 11, name: "เกษตรกร 11", phone: "0811111111", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อดิน", pondCount: 5, location: "145690.903764", registeredDate: "13/12/2025 - 10:00:00" },
+];
 
 const parseDateString = (dateStr: string) => {
     if (!dateStr || !dateStr.includes('/')) return null;
@@ -62,8 +47,6 @@ const Farmers = () => {
     const [farmers, setFarmers] = useState<Farmer[]>([]); 
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalItems, setTotalItems] = useState(0);
     
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedPondType, setSelectedPondType] = useState('');
@@ -73,33 +56,14 @@ const Farmers = () => {
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [farmerToDelete, setFarmerToDelete] = useState<Farmer | null>(null);
-
-    // Fetch farmers from API
-    const fetchFarmers = async () => {
-        setIsLoading(true);
-        try {
-            const response = await farmersAPI.list({
-                page: currentPage,
-                limit: itemsPerPage,
-            });
-
-            const convertedFarmers = response.data.map(convertAPIFarmer);
-            setFarmers(convertedFarmers);
-            setTotalPages(response.pagination.totalPages);
-            setTotalItems(response.pagination.totalItems);
-        } catch (error: any) {
-            console.error('Failed to fetch farmers:', error);
-            toast.error(error?.message || 'ไม่สามารถโหลดข้อมูลเกษตรกรได้', { duration: 3000 });
-            setFarmers([]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const [farmerToDelete, setFarmerToDelete] = useState<Farmer | null>(null); 
 
     useEffect(() => {
-        fetchFarmers();
-    }, [currentPage, itemsPerPage]);
+        setTimeout(() => {
+            setFarmers(MOCK_FARMERS); 
+            setIsLoading(false);
+        }, 500);
+    }, []);
 
     useEffect(() => {
         if (isDeleteModalOpen) {
@@ -110,9 +74,8 @@ const Farmers = () => {
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [isDeleteModalOpen]);
+    }, [isDeleteModalOpen]); 
 
-    // Client-side filtering (API does server-side pagination)
     const filteredFarmers = farmers.filter(farmer => { 
         const nameMatch = farmer.name && farmer.name.toLowerCase().includes(searchTerm.toLowerCase());
         const phoneMatch = farmer.phone && farmer.phone.includes(searchTerm);
@@ -124,14 +87,30 @@ const Farmers = () => {
         return (nameMatch || phoneMatch) && typeMatch && dateMatch && groupMatch; 
     });
 
-    const displayedFarmers = filteredFarmers;
+    const totalItems = filteredFarmers.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    const paginatedFarmers = filteredFarmers.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
 
     const handleConfirmDelete = () => {
         if (!farmerToDelete) return;
 
-        // TODO: Implement API delete endpoint
-        toast.error('ฟังก์ชันลบยังไม่พร้อมใช้งาน', { duration: 2000 });
-        
+        setFarmers((prevFarmers) =>
+            prevFarmers.filter((f) => f.id !== farmerToDelete.id)
+        );
+
+        toast.success(
+            (t_success) => ( 
+                <div className="flex items-center justify-center gap-2 w-full"> 
+                    <span>{`ลบข้อมูล "${farmerToDelete.name}" สำเร็จ!`}</span>
+                </div>
+            ),
+            { duration: 2000, position: "top-right" }
+        );
+
         setIsDeleteModalOpen(false);
         setFarmerToDelete(null);
     };
@@ -141,12 +120,11 @@ const Farmers = () => {
         setIsDeleteModalOpen(true);
     };
 
-    const handleSearchChange = (term: string) => { setSearchTerm(term); };
-    const handleDateChange = (date: string) => { setSelectedDate(date); };
-    const handleTypeChange = (type: string) => { setSelectedPondType(type); };
-    const handleGroupTypeChange = (group: string) => { setSelectedGroupType(group); };
+    const handleSearchChange = (term: string) => { setSearchTerm(term); setCurrentPage(1); };
+    const handleDateChange = (date: string) => { setSelectedDate(date); setCurrentPage(1); };
+    const handleTypeChange = (type: string) => { setSelectedPondType(type); setCurrentPage(1); };
+    const handleGroupTypeChange = (group: string) => { setSelectedGroupType(group); setCurrentPage(1); };
     const handleItemsPerPageChange = (newSize: number) => { setItemsPerPage(newSize); setCurrentPage(1); };
-    const handlePageChange = (page: number) => { setCurrentPage(page); };
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -159,7 +137,7 @@ const Farmers = () => {
             
             <div className="p-6">
                 <FarmerToolbar 
-                    count={filteredFarmers.length} 
+                    count={totalItems} 
                     onSearchChange={handleSearchChange} 
                     onDateChange={handleDateChange} 
                     onTypeChange={handleTypeChange}
@@ -168,22 +146,10 @@ const Farmers = () => {
                 
                 <div className="mt-6 bg-white rounded-lg shadow-md">
                     {isLoading ? (
-                        <div className="p-6 text-center">
-                            <div className="flex items-center justify-center gap-2">
-                                <svg className="animate-spin h-5 w-5 text-[#034A30]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span className="text-gray-600">กำลังโหลดข้อมูลเกษตรกร...</span>
-                            </div>
-                        </div>
-                    ) : displayedFarmers.length === 0 ? (
-                        <div className="p-6 text-center text-gray-500">
-                            ไม่พบข้อมูลเกษตรกร
-                        </div>
+                        <div className="p-6 text-center">Loading...</div>
                     ) : (
                         <FarmerTable
-                            farmersData={displayedFarmers} 
+                            farmersData={paginatedFarmers} 
                             onDeleteClick={handleDeleteClick}
                             startIndex={(currentPage - 1) * itemsPerPage}
                         />
@@ -197,7 +163,7 @@ const Farmers = () => {
                         totalItems={totalItems} 
                         itemsPerPage={itemsPerPage}
                         onItemsPerPageChange={handleItemsPerPageChange}
-                        onPageChange={handlePageChange} 
+                        onPageChange={(page) => setCurrentPage(page)} 
                     />
                 </div>
             </div>
