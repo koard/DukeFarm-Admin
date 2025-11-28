@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 
 import FarmerToolbar from "../../components/farmers/FarmerToolbar";
-import FarmerTable from "../../components/farmers/FarmerTable";
+import FarmerTable from "../../components/farmers/FarmerTable"; 
 
 import Pagination from "../../components/common/Pagination";
 import DeleteConfirm from "../../components/common/DeleteConfirm"; 
@@ -18,22 +18,20 @@ export interface Farmer {
     pondCount: number;
     location: string;
     registeredDate: string;
-    survivalRate: number;
-    change: string;
 }
 
-const MOCK_FARMERS: Farmer[] = [
-    { id: 1, name: "อรพินธ์ นาดี", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อดิน", pondCount: 6, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00", survivalRate: 4.8, change: "+0.10%", },
-    { id: 2, name: "สมปอง มองการไกล", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อดิน", pondCount: 7, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00", survivalRate: 2.3, change: "-0.10%", },
-    { id: 3, name: "สมหมาย มีดี", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดใหญ่", pondType: "บ่อดิน", pondCount: 4, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00", survivalRate: 4.8, change: "+0.10%", },
-    { id: 4, name: "มานี มีสุข", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดใหญ่", pondType: "บ่อปูน", pondCount: 12, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00", survivalRate: 4.8, change: "+0.10%", },
-    { id: 5, name: "แก้วตา นาวา", phone: "0812232343", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อดิน", pondCount: 10, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00", survivalRate: 2.8, change: "-0.10%", },
-    { id: 6, name: "นภัทร ชื่นชม", phone: "0812232343", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อปูน", pondCount: 8, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00", survivalRate: 4.8, change: "+0.10%", },
-    { id: 7, name: "วิทยา สุดสวย", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อปูน", pondCount: 9, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00", survivalRate: 4.8, change: "+0.10%", },
-    { id: 8, name: "ปานเทพ รัศมี", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดใหญ่", pondType: "บ่อดิน", pondCount: 8, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00", survivalRate: 2.5, change: "-0.10%", },
-    { id: 9, name: "ธนัช จิตใคร่", phone: "0812232343", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อปูน", pondCount: 9, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00", survivalRate: 4.8, change: "+0.10%", },
-    { id: 10, name: "ธีรศ ยาหมาย", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อปูน", pondCount: 11, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00", survivalRate: 3.8, change: "-0.10%", },
-    { id: 11, name: "เกษตรกร 11", phone: "0811111111", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อดิน", pondCount: 5, location: "145690.903764", registeredDate: "13/12/2025 - 10:00:00", survivalRate: 4.0, change: "+0.00%", },
+export const MOCK_FARMERS: Farmer[] = [
+    { id: 1, name: "อรพินธ์ นาดี", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อดิน", pondCount: 6, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 2, name: "สมปอง มองการไกล", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อดิน", pondCount: 7, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 3, name: "สมหมาย มีดี", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดใหญ่", pondType: "บ่อดิน", pondCount: 4, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 4, name: "มานี มีสุข", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดใหญ่", pondType: "บ่อปูน", pondCount: 12, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 5, name: "แก้วตา นาวา", phone: "0812232343", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อดิน", pondCount: 10, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 6, name: "นภัทร ชื่นชม", phone: "0812232343", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อปูน", pondCount: 8, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 7, name: "วิทยา สุดสวย", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อปูน", pondCount: 9, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 8, name: "ปานเทพ รัศมี", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดใหญ่", pondType: "บ่อดิน", pondCount: 8, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 9, name: "ธนัช จิตใคร่", phone: "0812232343", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อปูน", pondCount: 9, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 10, name: "ธีรศ ยาหมาย", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อปูน", pondCount: 11, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
+    { id: 11, name: "เกษตรกร 11", phone: "0811111111", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อดิน", pondCount: 5, location: "145690.903764", registeredDate: "13/12/2025 - 10:00:00" },
 ];
 
 const parseDateString = (dateStr: string) => {

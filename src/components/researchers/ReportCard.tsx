@@ -16,12 +16,18 @@ interface ReportCardProps {
     pondType?: string; 
 }
 
-const InfoRow = ({ label, value }: { label: string, value: string | number }) => (
-    <div className="flex items-start mb-3">
-        <span className="text-base text-gray-800 w-32 flex-shrink-0">{label}</span>
-        <span className="text-base text-gray-900 font-medium break-all">{value || '-'}</span>
-    </div>
-);
+const InfoRow = ({ label, value }: { label: string, value: string | number }) => {
+    const isLocation = label === "พิกัดพื้นที่";
+
+    return (
+        <div className="flex items-start mb-3">
+            <span className="text-base text-gray-800 w-32 flex-shrink-0">{label}</span>
+            <span className={`text-base text-gray-900 font-medium break-all ${isLocation ? 'underline' : ''}`}>
+                {value || '-'}
+            </span>
+        </div>
+    );
+};
 
 const ReportCard = ({ 
     researcherId,
@@ -75,7 +81,7 @@ const ReportCard = ({
             <div className="space-y-4">
                 <div className="flex items-center">
                     <span className="text-base text-gray-800 w-24">ประเภท</span>
-                    <span className="px-6 py-1.5 rounded-lg text-sm font-bold text-black"
+                    <span className="px-6 py-1.5 rounded-lg text-base font-bold text-black"
                           style={{ backgroundColor: '#C5E6C6' }}>
                         {pondType}
                     </span>
@@ -83,7 +89,7 @@ const ReportCard = ({
 
                 <div className="flex items-center">
                     <span className="text-base text-gray-800 w-24">จำนวนบ่อ</span>
-                    <span className="px-8 py-1.5 rounded-lg text-sm font-bold text-black"
+                    <span className="px-8 py-1.5 rounded-lg text-base font-bold text-black"
                           style={{ backgroundColor: '#C5E6C6' }}>
                         {pondCount}
                     </span>

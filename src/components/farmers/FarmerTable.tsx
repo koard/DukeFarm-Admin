@@ -1,10 +1,9 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 
 import SortIcon from '../../assets/fm-arrow.svg';
-import UpArrowIcon from '../../assets/fm-arrow-top.svg';
-import DownArrowIcon from '../../assets/fm-arrow-down.svg';
 import ViewIcon from '../../assets/fm-search-table.svg';
 import DeleteIcon from '../../assets/fm-delete.svg';
 
@@ -17,8 +16,6 @@ export interface Farmer {
   pondCount: number;
   location: string;
   registeredDate: string;
-  survivalRate: number;
-  change: string;
 }
 
 interface FarmerTableProps {
@@ -26,19 +23,6 @@ interface FarmerTableProps {
   onDeleteClick: (farmer: Farmer) => void;
   startIndex?: number;
 }
-
-const ChangeIndicator = ({ change }: { change: string }) => {
-    const isPositive = !change.includes('-');
-    const colorClass = isPositive ? 'text-green-500' : 'text-red-500';
-    const Icon = isPositive ? UpArrowIcon : DownArrowIcon;
-
-    return (
-        <span className={`flex items-center justify-center gap-1 text-xs`}>
-            <Image src={Icon} alt="change" width={12} height={12} className="w-3 h-3" /> 
-            <span className={colorClass}>({change})</span>
-        </span>
-    );
-};
 
 const TableHeader = ({ title }: { title: string }) => (
     <div className="flex items-center justify-center gap-2">
@@ -75,7 +59,6 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
                         <th className="p-4 text-center"><TableHeader title="จำนวนบ่อ" /></th>
                         <th className="p-4 text-center"><TableHeader title="ตำแหน่งฟาร์ม" /></th>
                         <th className="p-4 text-center"><TableHeader title="วันที่ลงทะเบียน" /></th>
-                        <th className="p-4 text-center"><TableHeader title="อัตราการรอดชีวิต" /></th>
                         <th className="p-4 text-center">Action</th>
                     </tr>
                 </thead>
@@ -93,16 +76,15 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
                             </td>
                             <td className="p-4 text-center">{farmer.registeredDate}</td>
                             <td className="p-4">
-                                <div className="flex items-center justify-center gap-1">
-                                    <span>{farmer.survivalRate}</span>
-                                    <ChangeIndicator change={farmer.change} />
-                                </div>
-                            </td>
-                            <td className="p-4">
                                 <div className="flex justify-center items-center gap-3">
-                                    <button className="hover:opacity-75">
+                                    
+                                    <Link 
+                                        href={`/farmers/${farmer.id}?name=${encodeURIComponent(farmer.name)}`} 
+                                        className="hover:opacity-75"
+                                    >
                                         <Image src={ViewIcon} alt="view" width={20} height={20} className="w-5 h-5" />
-                                    </button>
+                                    </Link>
+                                    
                                     <button onClick={() => onDeleteClick(farmer)} className="hover:opacity-75">
                                         <Image src={DeleteIcon} alt="delete" width={20} height={20} className="w-5 h-5" />
                                     </button>
