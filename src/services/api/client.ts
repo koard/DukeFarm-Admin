@@ -34,10 +34,10 @@ class HTTPClient {
       ...headers,
     };
 
-    // Authentication disabled temporarily
-    // if (requireAuth) {
-    //   Object.assign(requestHeaders, getAuthHeader());
-    // }
+    // Add authentication header if required
+    if (requireAuth) {
+      Object.assign(requestHeaders, getAuthHeader());
+    }
 
     // Create abort controller for timeout
     const controller = new AbortController();
