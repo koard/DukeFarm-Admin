@@ -21,8 +21,8 @@ const HIGHLIGHT_COLOR = "#72B544";
 interface FeedingData {
     name: string;
     food: number;
+    temp?: number; 
 }
-
 
 interface RoundedBarProps {
     x?: number;
@@ -48,6 +48,28 @@ const RoundedBar = (props: RoundedBarProps) => {
             fill={fill}
         />
     );
+};
+
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        const data = payload[0].payload; 
+        
+        return (
+            <div className="bg-white p-3 border border-gray-200 shadow-lg rounded-lg">
+                <p className="text-[#093832] font-bold mb-1">{label}</p>
+                <p className="text-sm text-gray-700">
+                    ปริมาณอาหาร : {data.food} kg.
+                </p>
+                {data.temp !== undefined && (
+                    <p className="text-sm text-gray-700">
+                        อุณหภูมิ : {data.temp} °C
+                    </p>
+                )}
+            </div>
+        );
+    }
+    return null;
 };
 
 interface FeedingChartProps {
@@ -86,7 +108,7 @@ function FeedingChart({ data }: FeedingChartProps) {
                     height={24}
                     className="w-6 h-6 mr-2"
                 />
-                <h2 className="text-lg font-semibold text-[#093832]">
+                <h2 className="text-base font-semibold text-[#093832]">
                     ปริมาณอาหารที่สัมพันธ์อุณหภูมิ
                 </h2>
             </div>
@@ -137,16 +159,7 @@ function FeedingChart({ data }: FeedingChartProps) {
                                     tick={{ fill: "#000", fontSize: 10, fontWeight: 500 }}
                                 />
 
-                                <Tooltip
-                                    cursor={{ fill: "rgba(230, 230, 230, 0.5)" }}
-                                    contentStyle={{
-                                        backgroundColor: "white",
-                                        border: "1px solid #E5E7EB",
-                                        borderRadius: "0.5rem",
-                                    }}
-                                    labelStyle={{ color: "#4B5563", fontWeight: "bold" }}
-                                    formatter={(value: number) => [`${value} kg.`, "ปริมาณอาหาร"]}
-                                />
+                                <Tooltip content={<CustomTooltip />} cursor={{ fill: "transparent" }} />
 
                                 <Bar dataKey="food" shape={<RoundedBar />} barSize={23}>
                                     {data.map((entry, index) => (

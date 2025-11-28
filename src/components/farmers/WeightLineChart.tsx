@@ -51,7 +51,7 @@ function GrowthChart({ data }: GrowthChartProps) {
                     height={24}
                     className="w-6 h-6 mr-2"
                 />
-                <h2 className="text-lg font-semibold text-[#093832]">
+                <h2 className="text-base font-semibold text-[#093832]">
                     น้ำหนักเฉลี่ยของปลา                </h2>
             </div>
 
