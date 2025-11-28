@@ -140,6 +140,26 @@ function RecipesPage() {
     };
 
     const handleCreateRecipe = (formData: NewRecipeFormData) => { 
+        const isCommonDataValid = 
+            formData.recipeName?.trim() && 
+            formData.details?.trim() && 
+            formData.recommendations?.trim();
+
+        let isAgeDataValid = false;
+        if (formData.ageType === 'range') {
+            isAgeDataValid = !!(formData.ageStart && formData.ageEnd);
+        } else if (formData.ageType === 'specific') {
+            isAgeDataValid = !!formData.ageSpecific;
+        }
+
+        if (!isCommonDataValid || !isAgeDataValid) {
+            toast.error("กรุณากรอกข้อมูลให้ครบถ้วน", { 
+                duration: 2000, 
+                position: "top-right" 
+            });
+            return;
+        }
+
         let displayAgeRange = '';
         if (formData.ageType === 'range') {
             const start = formData.ageStart || '...'; 
@@ -150,6 +170,7 @@ function RecipesPage() {
         }
         const now = new Date();
         const createdAtTimestamp = `${now.toLocaleDateString('en-GB')} - ${now.toLocaleTimeString('th-TH', { hour12: false })}`;
+        
         setData((prevData) => {
             const maxId = prevData.length > 0 
                 ? Math.max(...prevData.map(item => item.id))
@@ -180,6 +201,27 @@ function RecipesPage() {
     };
 
     const handleUpdateRecipe = (updatedData: any) => { 
+        const originalItem = data.find(item => item.id === updatedData.id);
+
+        if (!originalItem) return;
+
+        const isUnchanged = 
+            originalItem.name === updatedData.name &&
+            originalItem.details === updatedData.details &&
+            originalItem.recommendations === updatedData.recommendations &&
+            originalItem.ageType === updatedData.ageType &&
+            (originalItem.ageStart || null) === (updatedData.ageStart || null) &&
+            (originalItem.ageEnd || null) === (updatedData.ageEnd || null) &&
+            (originalItem.ageSpecific || null) === (updatedData.ageSpecific || null);
+
+        if (isUnchanged) {
+            toast.error("ยังไม่ได้มีการแก้ไขข้อมูล", {
+                duration: 2000,
+                position: "top-right",
+            });
+            return; 
+        }
+
         console.log("Updated recipe data:", updatedData);
         
         let displayAgeRange = '';
@@ -322,8 +364,8 @@ function RecipesPage() {
                         <RecipesTable
                             data={paginatedData} 
                             onView={handleViewClick} 
-                            onEdit={handleEditClick}    
-                            onDelete={handleDeleteClick}  
+                            onEdit={handleEditClick}    
+                            onDelete={handleDeleteClick}  
                             startIndex={(currentPage - 1) * itemsPerPage}
                         />
                     )}

@@ -11,8 +11,6 @@ import EditAdmin, { UpdatedAdminData } from "../../components/admins/EditAdmin";
 import Pagination from "../../components/common/Pagination";
 import DeleteConfirm from "../../components/common/DeleteConfirm"; 
 
-
-
 export interface Admin {
     id: number;
     name: string;
@@ -134,10 +132,25 @@ function Admins() {
     };
 
     const handleCreateAdmin = (formData: any) => { 
+        const isValid = 
+            formData.firstName?.trim() &&
+            formData.lastName?.trim() &&
+            formData.email?.trim() &&
+            formData.role?.trim() &&
+            formData.password?.trim();
+
+        if (!isValid) {
+            toast.error("กรุณากรอกข้อมูลให้ครบถ้วน", { 
+                duration: 2000, 
+                position: "top-right" 
+            });
+            return;
+        }
+
         setAdmins((prevAdmins) => {
             const maxId = prevAdmins.length > 0 
                 ? Math.max(...prevAdmins.map(item => item.id)) 
-                : 0;
+                : 0; 
             
             const now = new Date();
             const createDateTimestamp = `${now.toLocaleDateString('en-GB')} - ${now.toLocaleTimeString('th-TH', { hour12: false })}`;
@@ -164,7 +177,26 @@ function Admins() {
         setModalState({ type: 'create', data: null });
     };
 
-    const handleUpdateAdmin = (updatedData: UpdatedAdminData) => { 
+    const handleUpdateAdmin = (updatedData: any) => { 
+        const originalItem = admins.find(a => a.id === updatedData.id);
+        if (!originalItem) return;
+
+        const isInfoSame =
+            originalItem.firstName === updatedData.firstName &&
+            originalItem.lastName === updatedData.lastName &&
+            originalItem.email === updatedData.email &&
+            originalItem.role === updatedData.role;
+
+        const isPasswordEmpty = !updatedData.password || updatedData.password.trim() === '';
+
+        if (isInfoSame && isPasswordEmpty) {
+            toast.error("ยังไม่ได้มีการแก้ไขข้อมูล", {
+                duration: 2000,
+                position: "top-right",
+            });
+            return; 
+        }
+
         setAdmins((prevAdmins) => 
             prevAdmins.map((admin) => {
                 if (admin.id !== updatedData.id) {

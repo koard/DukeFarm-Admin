@@ -171,6 +171,14 @@ function Access() {
     interface RoleForm { name: string; id?: number; }
 
     const handleCreateRole = (newRoleData: RoleForm) => {
+        if (!newRoleData.name || newRoleData.name.trim() === '') {
+            toast.error("กรุณากรอกชื่อสิทธิ์การเข้าถึง", { 
+                duration: 2000, 
+                position: "top-right" 
+            });
+            return;
+        }
+
         console.log("New Role Data:", newRoleData);
         let newRoleId: number;
         setRoles(prevRoles => {
@@ -224,6 +232,20 @@ function Access() {
     };
 
     const handleUpdateRole = (updatedRole: RoleForm) => { 
+        const originalRole = roles.find(r => r.id === updatedRole.id);
+        
+        if (!originalRole) return;
+
+        const isUnchanged = originalRole.name === updatedRole.name;
+
+        if (isUnchanged) {
+            toast.error("ยังไม่ได้มีการแก้ไขข้อมูล", {
+                duration: 2000,
+                position: "top-right",
+            });
+            return;
+        }
+
         console.log("Updated Role Data:", updatedRole);
         setRoles(prevRoles => prevRoles.map(r =>
             r.id === updatedRole.id ? { ...r, name: updatedRole.name } : r
@@ -238,8 +260,8 @@ function Access() {
     };
 
     const currentPermissions: Permission[] = (selectedRoleId !== null && permissionsByRole[selectedRoleId])
-                                    ? permissionsByRole[selectedRoleId]
-                                    : [];
+                                            ? permissionsByRole[selectedRoleId]
+                                            : [];
 
     const renderModal = () => {
         const roleData = modalState.data as Role; 
