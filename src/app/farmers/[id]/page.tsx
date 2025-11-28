@@ -7,10 +7,10 @@ import { useRouter } from "next/navigation";
 
 // 1. Import Component
 import FarmerInfoCard from "../../../components/farmers/FarmerInfoCard";
-import FarmerDashboard from "../../../components/farmers/FarmerDashboard"; // <-- เพิ่มตรงนี้
+import FarmerDashboard from "../../../components/farmers/FarmerDashboard";
 
-// 2. Import ข้อมูล MOCK_FARMERS และ Type จากไฟล์หลัก (ถอยกลับไป 1 ชั้น ..)
-import { MOCK_FARMERS, Farmer } from "../page"; 
+// 2. Import Type จากไฟล์หลัก
+import { Farmer } from "../page"; 
 
 interface PageProps {
   params: Promise<{
@@ -21,17 +21,25 @@ interface PageProps {
 export default function FarmerDetailPage({ params }: PageProps) {
     const router = useRouter();
     const [farmerData, setFarmerData] = useState<Farmer | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         params.then((resolvedParams) => {
             const id = Number(resolvedParams.id);
             
-            // 3. ค้นหาข้อมูลจาก MOCK_FARMERS ที่ Import มา
-            const foundFarmer = MOCK_FARMERS.find(f => f.id === id);
-            
-            if (foundFarmer) {
-                setFarmerData(foundFarmer);
-            }
+            // TODO: Fetch farmer data from API
+            // For now, create a placeholder
+            setFarmerData({
+                id,
+                name: "กำลังโหลดข้อมูล...",
+                phone: "-",
+                groupType: "-",
+                pondType: "-",
+                pondCount: 0,
+                location: "-",
+                registeredDate: "-",
+            });
+            setIsLoading(false);
         });
     }, [params]);
 
