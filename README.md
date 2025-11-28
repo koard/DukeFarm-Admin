@@ -1,36 +1,182 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DukeFarm Admin Dashboard
 
-## Getting Started
+> Next.js admin dashboard for DukeFarm catfish production management platform
 
-First, run the development server:
+## 🚀 Quick Start
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🏗️ Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI**: React Hot Toast
+- **API**: RESTful (Backend integration)
 
-## Learn More
+## 🔌 API Integration
 
-To learn more about Next.js, take a look at the following resources:
+### Configuration
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+API URL is hardcoded in `src/services/api/config.ts`:
+```typescript
+baseURL: 'https://dukefarm-backend.onrender.com/api'
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Services Structure
 
-## Deploy on Vercel
+```
+services/api/
+├── config.ts         # API base URL & utilities
+├── types.ts          # TypeScript interfaces
+├── client.ts         # HTTP client (GET/POST/PUT/DELETE)
+├── feedFormulas.ts   # Feed formulas CRUD
+└── index.ts          # Public exports
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Usage Example
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```typescript
+import { feedFormulasAPI } from '@/services/api';
+
+// List with pagination
+const response = await feedFormulasAPI.list({ page: 1, limit: 10 });
+
+// Create new formula
+await feedFormulasAPI.create({
+  name: "สูตรลูกปลา",
+  targetStage: "อายุ 15-40 วัน",
+  description: "...",
+  recommendations: "..."
+});
+
+// Update & Delete
+await feedFormulasAPI.update(id, data);
+await feedFormulasAPI.delete(id);
+```
+
+### Error Handling
+
+```typescript
+try {
+  await feedFormulasAPI.create(data);
+} catch (error) {
+  if (error instanceof APIError) {
+    // Handle: 400, 404, 500, etc.
+    toast.error(error.message);
+  }
+}
+```
+
+## 🎯 Features
+
+### Feed Formulas Management (สูตรอาหาร)
+- ✅ List with pagination & search
+- ✅ Create new formula
+- ✅ View formula details
+- ✅ Edit existing formula
+- ✅ Delete formula
+- ✅ Auto-refresh after mutations
+
+### Admin Features
+- Admin user management
+- Role-based access control
+- Permission management
+
+### Farmer Management
+- Farmer profiles
+- Farm information
+- Dashboard analytics
+
+### Researcher Tools
+- Survey management
+- Data collection
+- Research analytics
+
+## 🔐 Authentication
+
+**Note**: Authentication is currently disabled for development.
+
+To re-enable:
+1. Uncomment auth injection in `src/services/api/client.ts`
+2. Add token checks in components
+3. Implement login flow
+
+## 📦 Dependencies
+
+```json
+{
+  "next": "^14.x",
+  "react": "^18.x",
+  "typescript": "^5.x",
+  "tailwindcss": "^3.x",
+  "react-hot-toast": "^2.x"
+}
+```
+
+## 🛠️ Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run dev server
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+# Lint code
+npm run lint
+```
+
+## 🌐 Environment
+
+No environment variables required. API URL is hardcoded.
+
+For production, consider using:
+```env
+NEXT_PUBLIC_API_BASE_URL=https://api.dukefarm.com
+```
+
+## 📝 API Data Mapping
+
+| API Field | Frontend Field | Type |
+|-----------|---------------|------|
+| `id` | `id` | UUID |
+| `name` | `name` | string |
+| `targetStage` | `ageRange` | string |
+| `description` | `description` | string |
+| `recommendations` | `recommendations` | string |
+
+## 🐛 Troubleshooting
+
+**Build Error**: Clear `.next` folder and rebuild
+```bash
+rm -rf .next
+npm run build
+```
+
+**Type Errors**: Restart TypeScript server in VS Code
+```
+Ctrl+Shift+P → "TypeScript: Restart TS Server"
+```
+
+**API Connection**: Check backend status at `/api/v1/health`
+
+## 📚 Related Projects
+
+- [DukeFarm Backend](../DukeFarm-Backend) - Node.js API server
+- [DukeFarm Farmer App](../Dukefram) - Farmer mobile interface
+
+## 📄 License
+
+Proprietary - © 2025 DukeFarm

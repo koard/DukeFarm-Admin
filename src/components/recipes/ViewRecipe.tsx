@@ -23,19 +23,10 @@ interface ViewRecipeProps {
 
 const ViewRecipe = ({ onClose, initialData }: ViewRecipeProps) => { 
 
-    let ageDisplay = '-';
-    if (initialData?.ageType === 'range') {
-        const start = initialData?.ageStart || '...';
-        const end = initialData?.ageEnd || '...';
-        ageDisplay = `อายุ ${start}-${end} วัน`;
-    } else if (initialData?.ageType === 'specific') {
-        ageDisplay = `อายุ ${initialData?.ageSpecific || '-'} วันขึ้นไป`;
-    }
-
     const displayData = {
         name: initialData?.name || '-',
-        ageDisplay: ageDisplay,
-        details: initialData?.details || '-',
+        ageDisplay: initialData?.ageRange || initialData?.targetStage || '-',
+        description: initialData?.description || '-',
         recommendations: initialData?.recommendations || '-',
     };
 
@@ -57,7 +48,7 @@ const ViewRecipe = ({ onClose, initialData }: ViewRecipeProps) => {
 
                 <InfoDisplay 
                     label="รายละเอียด" 
-                    value={displayData.details}
+                    value={displayData.description}
                 />
                 
                 <InfoDisplay 

@@ -10,20 +10,19 @@ import EditRecipe from '../../components/recipes/EditRecipe';
 import ViewRecipe from '../../components/recipes/ViewRecipe';
 
 import Pagination from "../../components/common/Pagination";
-import DeleteConfirm from "../../components/common/DeleteConfirm"; 
+import DeleteConfirm from "../../components/common/DeleteConfirm";
 
+import { feedFormulasAPI, APIError, type FeedFormula } from '../../services/api'; 
 
+// Recipe interface mapped from FeedFormula API
 export interface Recipe {
-    id: number;
+    id: string;  // Changed from number to string (UUID from API)
     name: string;
-    ageRange: string;
-    ageType: 'range' | 'specific';
-    ageStart: string | null;
-    ageEnd: string | null;
-    ageSpecific: string | null;
-    details: string;
+    ageRange: string;  // Derived from targetStage
+    targetStage: string;  // API field
+    description: string;  // API field (was details)
     recommendations: string;
-    author: string;
+    author: string;  // Derived from createdBy or hardcoded
     createdAt: string;
     updatedAt: string;
 }
@@ -33,19 +32,22 @@ interface ModalState {
     data: Recipe | null;
 }
 
-const MOCK_RECIPES_DATA: Recipe[] = [
-    { id: 1, name: 'สูตรลูกปลา อายุ 15-40 วัน', ageRange: 'อายุ 15-40 วัน', ageType: 'range', ageStart: '15', ageEnd: '40', ageSpecific: null, details: 'รายละเอียดสูตร 1...', recommendations: 'คำแนะนำ 1...', author: 'Admin 1', createdAt: '12/12/2025 - 15:23:00', updatedAt: '20/12/2025 - 16:23:00' },
-    { id: 2, name: 'สูตรปลา อายุ 40-60 วัน', ageRange: 'อายุ 40-60 วัน', ageType: 'range', ageStart: '40', ageEnd: '60', ageSpecific: null, details: 'รายละเอียดสูตร 2...', recommendations: 'คำแนะนำ 2...', author: 'Admin 1', createdAt: '12/12/2025 - 15:23:00', updatedAt: '20/12/2025 - 09:23:00' },
-    { id: 3, name: 'สูตรปลา อายุ 60 วันขึ้นไป', ageRange: 'อายุ 60 วันขึ้นไป', ageType: 'specific', ageStart: null, ageEnd: null, ageSpecific: '60', details: `ปลาป่น 25%\nกากถั่วเหลือง 25%\nข้าวโพดป่น 30%\nรำละเอียด 15%\nน้ำมันพืช 3%\nวิตามินรวม 2%`, recommendations: `• ให้ 2 มื้อใหญ่ต่อวัน (เช้า-เย็น)\n• เพิ่มสัดส่วนพลังงาน (ข้าวโพด, รำ) ลดโปรตีนลงเล็กน้อย\n• อัตราโปรตีน 28-32% เพียงพอ\n• ติดตาม FCR เพื่อควบคุมต้นทุนอาหาร`, author: 'Admin 1', createdAt: '12/12/2025 - 15:23:00', updatedAt: '20/12/2025 - 12:23:00' },
-    { id: 4, name: 'สูตร 4', ageRange: 'อายุ 1-10 วัน', ageType: 'range', ageStart: '1', ageEnd: '10', ageSpecific: null, details: 'รายละเอียดสูตร 4', recommendations: 'คำแนะนำ 4', author: 'Admin 2', createdAt: '13/12/2025 - 10:00:00', updatedAt: '13/12/2025 - 10:00:00' },
-    { id: 5, name: 'สูตร 5', ageRange: 'อายุ 10-20 วัน', ageType: 'range', ageStart: '10', ageEnd: '20', ageSpecific: null, details: 'รายละเอียดสูตร 5', recommendations: 'คำแนะนำ 5', author: 'Admin 1', createdAt: '14/12/2025 - 11:00:00', updatedAt: '14/12/2025 - 11:00:00' },
-    { id: 6, name: 'สูตร 6', ageRange: 'อายุ 20-30 วัน', ageType: 'range', ageStart: '20', ageEnd: '30', ageSpecific: null, details: 'รายละเอียดสูตร 6', recommendations: 'คำแนะนำ 6', author: 'Admin 2', createdAt: '15/12/2025 - 12:00:00', updatedAt: '15/12/2025 - 12:00:00' },
-    { id: 7, name: 'สูตร 7', ageRange: 'อายุ 30-40 วัน', ageType: 'range', ageStart: '30', ageEnd: '40', ageSpecific: null, details: 'รายละเอียดสูตร 7', recommendations: 'คำแนะนำ 7', author: 'Admin 1', createdAt: '16/12/2025 - 13:00:00', updatedAt: '16/12/2025 - 13:00:00' },
-    { id: 8, name: 'สูตร 8', ageRange: 'อายุ 40-50 วัน', ageType: 'range', ageStart: '40', ageEnd: '50', ageSpecific: null, details: 'รายละเอียดสูตร 8', recommendations: 'คำแนะนำ 8', author: 'Admin 2', createdAt: '17/12/2025 - 14:00:00', updatedAt: '17/12/2025 - 14:00:00' },
-    { id: 9, name: 'สูตร 9', ageRange: 'อายุ 50-60 วัน', ageType: 'range', ageStart: '50', ageEnd: '60', ageSpecific: null, details: 'รายละเอียดสูตร 9', recommendations: 'คำแนะนำ 9', author: 'Admin 1', createdAt: '18/12/2025 - 15:00:00', updatedAt: '18/12/2025 - 15:00:00' },
-    { id: 10, name: 'สูตร 10', ageRange: 'อายุ 60-70 วัน', ageType: 'range', ageStart: '60', ageEnd: '70', ageSpecific: null, details: 'รายละเอียดสูตร 10', recommendations: 'คำแนะนำ 10', author: 'Admin 2', createdAt: '19/12/2025 - 16:00:00', updatedAt: '19/12/2025 - 16:00:00' },
-    { id: 11, name: 'สูตร 11', ageRange: 'อายุ 70 วันขึ้นไป', ageType: 'specific', ageStart: null, ageEnd: null, ageSpecific: '70', details: 'รายละเอียดสูตร 11', recommendations: 'คำแนะนำ 11', author: 'Admin 1', createdAt: '20/12/2025 - 17:00:00', updatedAt: '20/12/2025 - 17:00:00' }
-]; 
+/**
+ * Helper function to map API FeedFormula to Recipe
+ */
+const mapFeedFormulaToRecipe = (formula: FeedFormula): Recipe => {
+    return {
+        id: formula.id,
+        name: formula.name,
+        ageRange: formula.targetStage,
+        targetStage: formula.targetStage,
+        description: formula.description,
+        recommendations: formula.recommendations,
+        author: 'Admin', // API doesn't return author name, could be enhanced
+        createdAt: new Date(formula.createdAt).toLocaleString('th-TH'),
+        updatedAt: new Date(formula.updatedAt).toLocaleString('th-TH'),
+    };
+}; 
 
 
 function RecipesPage() { 
@@ -53,8 +55,9 @@ function RecipesPage() {
     const [isLoading, setIsLoading] = useState<boolean>(true); 
     const [currentPage, setCurrentPage] = useState<number>(1); 
     const [searchTerm, setSearchTerm] = useState<string>(''); 
-
     const [itemsPerPage, setItemsPerPage] = useState<number>(10); 
+    const [totalItems, setTotalItems] = useState<number>(0);
+    const [totalPages, setTotalPages] = useState<number>(0);
     
     const [modalState, setModalState] = useState<ModalState>({ 
         type: null, 
@@ -72,59 +75,96 @@ function RecipesPage() {
         };
     }, [modalState.type]);
 
-    
-    const filteredData = data.filter((item: Recipe) => { 
-        const lowerSearchTerm = searchTerm.toLowerCase();
-        const nameMatch = item.name && item.name.toLowerCase().includes(lowerSearchTerm);
-        const ageRangeMatch = item.ageRange && item.ageRange.toLowerCase().includes(lowerSearchTerm);
-        const authorMatch = item.author && item.author.toLowerCase().includes(lowerSearchTerm);
-        return nameMatch || ageRangeMatch || authorMatch;
-    });
+    /**
+     * Fetch feed formulas from API
+     */
+    const fetchFeedFormulas = async () => {
+        try {
+            setIsLoading(true);
+            const response = await feedFormulasAPI.list({
+                page: currentPage,
+                limit: itemsPerPage,
+            });
 
-    const totalItems = filteredData.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-    const paginatedData = filteredData.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
-
-    useEffect(() => {
-        setTimeout(() => {
-            setData(MOCK_RECIPES_DATA); 
+            const recipes = response.data.map(mapFeedFormulaToRecipe);
+            setData(recipes);
+            setTotalItems(response.pagination.totalItems);
+            setTotalPages(response.pagination.totalPages);
+        } catch (error) {
+            console.error('Failed to fetch feed formulas:', error);
+            
+            if (error instanceof APIError) {
+                toast.error(error.message || 'ไม่สามารถโหลดข้อมูลได้', { duration: 3000 });
+            } else {
+                toast.error('เกิดข้อผิดพลาดในการโหลดข้อมูล', { duration: 3000 });
+            }
+            
+            setData([]);
+            setTotalItems(0);
+            setTotalPages(0);
+        } finally {
             setIsLoading(false);
-        }, 500);
-    }, []);
+        }
+    };
+
+    // Fetch data on component mount and when pagination changes
+    useEffect(() => {
+        fetchFeedFormulas();
+    }, [currentPage, itemsPerPage]);
+
+    // Client-side filtering for search
+    const filteredData = searchTerm
+        ? data.filter((item: Recipe) => { 
+            const lowerSearchTerm = searchTerm.toLowerCase();
+            const nameMatch = item.name && item.name.toLowerCase().includes(lowerSearchTerm);
+            const ageRangeMatch = item.ageRange && item.ageRange.toLowerCase().includes(lowerSearchTerm);
+            const authorMatch = item.author && item.author.toLowerCase().includes(lowerSearchTerm);
+            return nameMatch || ageRangeMatch || authorMatch;
+        })
+        : data;
+
+    // Use filtered data for display
+    const displayTotalItems = searchTerm ? filteredData.length : totalItems;
+    const displayTotalPages = searchTerm ? Math.ceil(filteredData.length / itemsPerPage) : totalPages;
+    const paginatedData = searchTerm
+        ? filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+        : filteredData;
 
     const handleItemsPerPageChange = (newSize: number) => { 
         setItemsPerPage(newSize);
         setCurrentPage(1);
     };
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
         if (!modalState.data) return; 
         const itemToDelete = modalState.data;
 
-        setData((prevData) =>
-            prevData.filter((f) => f.id !== itemToDelete.id)
-        );
+        try {
+            await feedFormulasAPI.delete(itemToDelete.id);
 
-        toast.success(
-            (t_success) => ( 
-                <div className="flex items-center justify-center gap-2 w-full"> 
-                    <span>{`ลบข้อมูล "${itemToDelete.name}" สำเร็จ!`}</span>
-                </div>
-            ),
-            { 
-                duration: 2000, 
-                position: "top-right", 
+            toast.success(
+                `ลบสูตรอาหาร "${itemToDelete.name}" สำเร็จ!`,
+                { 
+                    duration: 2000, 
+                    position: "top-right", 
+                }
+            );
+
+            // Refresh data after deletion
+            await fetchFeedFormulas();
+            setModalState({ type: null, data: null });
+        } catch (error) {
+            console.error('Delete error:', error);
+            
+            if (error instanceof APIError) {
+                toast.error(error.message || 'ไม่สามารถลบข้อมูลได้', { duration: 3000 });
+            } else {
+                toast.error('เกิดข้อผิดพลาดในการลบข้อมูล', { duration: 3000 });
             }
-        );
-
-        setModalState({ type: null, data: null });
+        }
     };
 
-    const handleDeleteClick = (itemId: number) => { 
+    const handleDeleteClick = (itemId: string) => { 
         const item = data.find(d => d.id === itemId); 
         if (!item) { 
             console.error("Item to delete not found:", itemId); 
@@ -139,122 +179,89 @@ function RecipesPage() {
         setCurrentPage(1); 
     };
 
-    const handleCreateRecipe = (formData: NewRecipeFormData) => { 
-        const isCommonDataValid = 
-            formData.recipeName?.trim() && 
-            formData.details?.trim() && 
-            formData.recommendations?.trim();
-
-        let isAgeDataValid = false;
-        if (formData.ageType === 'range') {
-            isAgeDataValid = !!(formData.ageStart && formData.ageEnd);
-        } else if (formData.ageType === 'specific') {
-            isAgeDataValid = !!formData.ageSpecific;
-        }
-
-        if (!isCommonDataValid || !isAgeDataValid) {
-            toast.error("กรุณากรอกข้อมูลให้ครบถ้วน", { 
-                duration: 2000, 
-                position: "top-right" 
-            });
-            return;
-        }
-
-        let displayAgeRange = '';
+    const handleCreateRecipe = async (formData: NewRecipeFormData) => { 
+        let targetStage = '';
         if (formData.ageType === 'range') {
             const start = formData.ageStart || '...'; 
             const end = formData.ageEnd || '...'; 
-            displayAgeRange = `อายุ ${start}-${end} วัน`; 
+            targetStage = `อายุ ${start}-${end} วัน`; 
         } else if (formData.ageType === 'specific') {
-            displayAgeRange = `อายุ ${formData.ageSpecific || '...'} วันขึ้นไป`;
+            targetStage = `อายุ ${formData.ageSpecific || '...'} วันขึ้นไป`;
         }
-        const now = new Date();
-        const createdAtTimestamp = `${now.toLocaleDateString('en-GB')} - ${now.toLocaleTimeString('th-TH', { hour12: false })}`;
-        
-        setData((prevData) => {
-            const maxId = prevData.length > 0 
-                ? Math.max(...prevData.map(item => item.id))
-                : 0; 
-            const newRecipe: Recipe = { 
-                id: maxId + 1, 
-                name: formData.recipeName,
-                ageRange: displayAgeRange, 
-                ageType: formData.ageType,
-                ageStart: formData.ageStart,
-                ageEnd: formData.ageEnd,
-                ageSpecific: formData.ageSpecific,
-                details: formData.details,
-                recommendations: formData.recommendations,
-                author: 'Admin', 
-                createdAt: createdAtTimestamp,
-                updatedAt: createdAtTimestamp, 
-            };
-            return [newRecipe, ...prevData];
-        });
 
-        setModalState({ type: null, data: null });
-        toast.success("สร้างสูตรอาหารสำเร็จ!", { duration: 2000, position: "top-right" });
+        try {
+            await feedFormulasAPI.create({
+                name: formData.recipeName,
+                targetStage: targetStage,
+                description: formData.details,
+                recommendations: formData.recommendations,
+            });
+
+            toast.success("สร้างสูตรอาหารสำเร็จ!", { duration: 2000, position: "top-right" });
+            
+            // Refresh data and close modal
+            await fetchFeedFormulas();
+            setModalState({ type: null, data: null });
+        } catch (error) {
+            console.error('Create error:', error);
+            
+            if (error instanceof APIError) {
+                if (error.status === 400 && error.errors) {
+                    toast.error(error.errors.join(', '), { duration: 3000 });
+                } else {
+                    toast.error(error.message || 'ไม่สามารถสร้างข้อมูลได้', { duration: 3000 });
+                }
+            } else {
+                toast.error('เกิดข้อผิดพลาดในการสร้างข้อมูล', { duration: 3000 });
+            }
+        }
     };
 
     const handleAddClick = () => {
         setModalState({ type: 'create', data: null });
     };
 
-    const handleUpdateRecipe = (updatedData: any) => { 
-        const originalItem = data.find(item => item.id === updatedData.id);
-
-        if (!originalItem) return;
-
-        const isUnchanged = 
-            originalItem.name === updatedData.name &&
-            originalItem.details === updatedData.details &&
-            originalItem.recommendations === updatedData.recommendations &&
-            originalItem.ageType === updatedData.ageType &&
-            (originalItem.ageStart || null) === (updatedData.ageStart || null) &&
-            (originalItem.ageEnd || null) === (updatedData.ageEnd || null) &&
-            (originalItem.ageSpecific || null) === (updatedData.ageSpecific || null);
-
-        if (isUnchanged) {
-            toast.error("ยังไม่ได้มีการแก้ไขข้อมูล", {
-                duration: 2000,
-                position: "top-right",
-            });
-            return; 
-        }
-
+    const handleUpdateRecipe = async (updatedData: any) => { 
         console.log("Updated recipe data:", updatedData);
         
-        let displayAgeRange = '';
+        let targetStage = '';
         if (updatedData.ageType === 'range') {
             const start = updatedData.ageStart || '...';
             const end = updatedData.ageEnd || '...';
-            displayAgeRange = `อายุ ${start}-${end} วัน`;
+            targetStage = `อายุ ${start}-${end} วัน`;
         } else if (updatedData.ageType === 'specific') {
-            displayAgeRange = `อายุ ${updatedData.ageSpecific || '...'} วันขึ้นไป`;
+            targetStage = `อายุ ${updatedData.ageSpecific || '...'} วันขึ้นไป`;
         }
 
-        const now = new Date();
-        const updatedAtTimestamp = `${now.toLocaleDateString('en-GB')} - ${now.toLocaleTimeString('th-TH', { hour12: false })}`;
+        try {
+            await feedFormulasAPI.update(updatedData.id, {
+                name: updatedData.recipeName,
+                targetStage: targetStage,
+                description: updatedData.details,
+                recommendations: updatedData.recommendations,
+            });
 
-        setData((prevData) =>
-            prevData.map((item) => {
-                if (item.id !== updatedData.id) {
-                    return item;
+            toast.success("แก้ไขสูตรอาหารสำเร็จ!", { duration: 2000, position: "top-right" });
+            
+            // Refresh data and close modal
+            await fetchFeedFormulas();
+            setModalState({ type: null, data: null });
+        } catch (error) {
+            console.error('Update error:', error);
+            
+            if (error instanceof APIError) {
+                if (error.status === 400 && error.errors) {
+                    toast.error(error.errors.join(', '), { duration: 3000 });
+                } else {
+                    toast.error(error.message || 'ไม่สามารถแก้ไขข้อมูลได้', { duration: 3000 });
                 }
-                return {
-                    ...item, 
-                    ...updatedData, 
-                    ageRange: displayAgeRange, 
-                    updatedAt: updatedAtTimestamp, 
-                } as Recipe; 
-            })
-        );
-
-        setModalState({ type: null, data: null });
-        toast.success("แก้ไขสูตรอาหารสำเร็จ!", { duration: 2000, position: "top-right" });
+            } else {
+                toast.error('เกิดข้อผิดพลาดในการแก้ไขข้อมูล', { duration: 3000 });
+            }
+        }
     };
 
-    const handleEditClick = (itemId: number) => { 
+    const handleEditClick = (itemId: string) => { 
         const itemToEdit = data.find(item => item.id === itemId); 
         if (!itemToEdit) {
             console.error("Item to edit not found:", itemId);
@@ -265,7 +272,7 @@ function RecipesPage() {
         setModalState({ type: 'edit', data: itemToEdit });
     };
 
-    const handleViewClick = (itemId: number) => { 
+    const handleViewClick = (itemId: string) => { 
         const itemToView = data.find(item => item.id === itemId); 
         if (!itemToView) {
             console.error("Item to view not found:", itemId);
@@ -352,7 +359,7 @@ function RecipesPage() {
             <div className="p-6">
                 
                 <RecipesToolbar 
-                    totalItems={totalItems} 
+                    totalItems={displayTotalItems} 
                     onSearch={handleSearch}
                     onAddClick={handleAddClick}
                 />
@@ -364,8 +371,8 @@ function RecipesPage() {
                         <RecipesTable
                             data={paginatedData} 
                             onView={handleViewClick} 
-                            onEdit={handleEditClick}    
-                            onDelete={handleDeleteClick}  
+                            onEdit={handleEditClick}    
+                            onDelete={handleDeleteClick}  
                             startIndex={(currentPage - 1) * itemsPerPage}
                         />
                     )}
@@ -374,8 +381,8 @@ function RecipesPage() {
                 <div className="mt-4">
                     <Pagination
                         currentPage={currentPage}
-                        totalPages={totalPages} 
-                        totalItems={totalItems} 
+                        totalPages={displayTotalPages} 
+                        totalItems={displayTotalItems} 
                         itemsPerPage={itemsPerPage}
                         onItemsPerPageChange={handleItemsPerPageChange}
                         onPageChange={(page) => setCurrentPage(page)}

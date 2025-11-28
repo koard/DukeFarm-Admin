@@ -7,14 +7,11 @@ import EditIcon from '../../assets/rc-edit.svg';
 
 
 export interface Recipe {
-    id: number;
+    id: string;  // Changed to string for API UUID
     name: string;
     ageRange: string;
-    ageType: 'range' | 'specific';
-    ageStart: string | null;
-    ageEnd: string | null;
-    ageSpecific: string | null;
-    details: string;
+    targetStage: string;
+    description: string;
     recommendations: string;
     author: string;
     createdAt: string;
@@ -34,9 +31,9 @@ const TableHeader = ({ title }: TableHeaderProps) => (
 
 interface RecipesTableProps {
     data: Recipe[];
-    onView: (itemId: number) => void;
-    onEdit: (itemId: number) => void;
-    onDelete: (itemId: number) => void;
+    onView: (itemId: string) => void;
+    onEdit: (itemId: string) => void;
+    onDelete: (itemId: string) => void;
     startIndex?: number; 
 }
 

@@ -147,8 +147,8 @@ const FormTextarea = ({ label, placeholder, value, onChange, rows = 4 }: FormTex
 );
 
 interface UpdateRecipeData {
-    id: number;
-    name: string;
+    id: string;  // Changed to string for UUID
+    recipeName: string;  // Changed from 'name' to match CreateRecipe
     ageType: 'range' | 'specific';
     ageStart: string | null;
     ageEnd: string | null;
@@ -164,18 +164,35 @@ interface EditRecipeProps {
 }
 
 const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
+    // Parse targetStage back to age range components for editing
+    const parseTargetStage = (targetStage: string) => {
+        // อายุ 15-40 วัน → ageType: 'range', ageStart: '15', ageEnd: '40'
+        // อายุ 60 วันขึ้นไป → ageType: 'specific', ageSpecific: '60'
+        const rangeMatch = targetStage.match(/อายุ (\d+)-(\d+) วัน/);
+        if (rangeMatch) {
+            return { ageType: 'range' as const, ageStart: rangeMatch[1], ageEnd: rangeMatch[2], ageSpecific: '' };
+        }
+        const specificMatch = targetStage.match(/อายุ (\d+) วันขึ้นไป/);
+        if (specificMatch) {
+            return { ageType: 'specific' as const, ageStart: '', ageEnd: '', ageSpecific: specificMatch[1] };
+        }
+        return { ageType: 'range' as const, ageStart: '', ageEnd: '', ageSpecific: '' };
+    };
+
+    const parsed = parseTargetStage(initialData?.targetStage || initialData?.ageRange || '');
+
     const [name, setName] = useState(initialData?.name || '');
-    const [ageType, setAgeType] = useState<'range' | 'specific'>(initialData?.ageType || 'range');
-    const [ageStart, setAgeStart] = useState(initialData?.ageStart || '');
-    const [ageEnd, setAgeEnd] = useState(initialData?.ageEnd || '');
-    const [ageSpecific, setAgeSpecific] = useState(initialData?.ageSpecific || '');
-    const [details, setDetails] = useState(initialData?.details || '');
+    const [ageType, setAgeType] = useState<'range' | 'specific'>(parsed.ageType);
+    const [ageStart, setAgeStart] = useState(parsed.ageStart);
+    const [ageEnd, setAgeEnd] = useState(parsed.ageEnd);
+    const [ageSpecific, setAgeSpecific] = useState(parsed.ageSpecific);
+    const [details, setDetails] = useState(initialData?.description || '');
     const [recommendations, setRecommendations] = useState(initialData?.recommendations || '');
 
     const handleUpdate = () => {
         const formData: UpdateRecipeData = {
             id: initialData.id,
-            name,
+            recipeName: name,  // Changed from 'name' to 'recipeName'
             ageType,
             ageStart: ageType === 'range' ? ageStart : null,
             ageEnd: ageType === 'range' ? ageEnd : null,
