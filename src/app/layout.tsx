@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Noto_Sans_Thai } from "next/font/google";
 import "./globals.css";
-import Sidebar from "../components/layout/Sidebar";
 import { Toaster } from "react-hot-toast";
+import LayoutWrapper from "../components/layout/LayoutWrapper";
 
 const notoSansThai = Noto_Sans_Thai({
   subsets: ["thai", "latin"],
@@ -25,13 +25,7 @@ export default function RootLayout({
     <html lang="th">
       <body className={notoSansThai.className}>
         <Toaster position="top-center" />
-        
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <main className="flex-1 ml-0 lg:ml-64 transition-all duration-300 p-0 bg-[#F9FAFB] w-full min-w-0">
-            {children}
-          </main>
-        </div>
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   );
