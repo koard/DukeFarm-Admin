@@ -149,19 +149,6 @@ export default function LoginPage() {
                             )}
                         </button>
                     </form>
-
-                    {/* Demo Credentials */}
-                    <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                        <p className="text-xs text-amber-800 font-medium mb-2">
-                            🔑 ข้อมูลทดสอบ (Demo):
-                        </p>
-                        <p className="text-xs text-amber-700">
-                            Email: <code className="bg-amber-100 px-2 py-1 rounded">admin@dukefarm.com</code>
-                        </p>
-                        <p className="text-xs text-amber-700">
-                            Password: <code className="bg-amber-100 px-2 py-1 rounded">admin123</code>
-                        </p>
-                    </div>
                 </div>
 
                 {/* Footer */}
