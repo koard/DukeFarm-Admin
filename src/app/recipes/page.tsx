@@ -207,7 +207,7 @@ function RecipesPage() {
             const end = formData.ageEnd || '...'; 
             targetStage = `อายุ ${start}-${end} วัน`; 
         } else if (formData.ageType === 'specific') {
-            targetStage = `อายุ ${formData.ageSpecific || '...'} วันขึ้นไป`;
+            targetStage = `อายุ ${formData.ageSpecific || '...'} วัน`;
         }
 
         try {
@@ -254,7 +254,7 @@ function RecipesPage() {
             originalItem.recommendations === updatedData.recommendations &&
             originalItem.targetStage === (updatedData.ageType === 'range' 
                 ? `อายุ ${updatedData.ageStart}-${updatedData.ageEnd} วัน`
-                : `อายุ ${updatedData.ageSpecific} วันขึ้นไป`);
+                : `อายุ ${updatedData.ageSpecific} วัน`);
 
         if (isUnchanged) {
             toast.error("ยังไม่ได้มีการแก้ไขข้อมูล", {
@@ -272,7 +272,7 @@ function RecipesPage() {
             const end = updatedData.ageEnd || '...';
             targetStage = `อายุ ${start}-${end} วัน`;
         } else if (updatedData.ageType === 'specific') {
-            targetStage = `อายุ ${updatedData.ageSpecific || '...'} วันขึ้นไป`;
+            targetStage = `อายุ ${updatedData.ageSpecific || '...'} วัน`;
         }
 
         try {
@@ -413,8 +413,8 @@ function RecipesPage() {
                         <RecipesTable
                             data={paginatedData} 
                             onView={handleViewClick} 
-                            onEdit={handleEditClick}    
-                            onDelete={handleDeleteClick}  
+                            onEdit={handleEditClick}    
+                            onDelete={handleDeleteClick}  
                             startIndex={(currentPage - 1) * itemsPerPage}
                         />
                     )}
