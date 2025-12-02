@@ -14,15 +14,16 @@ import DeleteConfirm from "../../components/common/DeleteConfirm";
 
 import { feedFormulasAPI, APIError, type FeedFormula } from '../../services/api'; 
 
-// Recipe interface mapped from FeedFormula API
 export interface Recipe {
-    id: string;  // Changed from number to string (UUID from API)
+    id: string; 
     name: string;
-    ageRange: string;  // Derived from targetStage
-    targetStage: string;  // API field
-    description: string;  // API field (was details)
+    farmType?: string; 
+    primaryFarmType?: string; 
+    ageRange: string; 
+    targetStage: string; 
+    description: string; 
     recommendations: string;
-    author: string;  // Derived from createdBy or hardcoded
+    author: string; 
     createdAt: string;
     updatedAt: string;
 }
@@ -32,18 +33,19 @@ interface ModalState {
     data: Recipe | null;
 }
 
-/**
- * Helper function to map API FeedFormula to Recipe
- */
+
 const mapFeedFormulaToRecipe = (formula: FeedFormula): Recipe => {
     return {
         id: formula.id,
         name: formula.name,
+
+        farmType: (formula as any).primaryFarmType || (formula as any).farmType,
+        primaryFarmType: (formula as any).primaryFarmType,
         ageRange: formula.targetStage,
         targetStage: formula.targetStage,
         description: formula.description,
         recommendations: formula.recommendations,
-        author: 'Admin', // API doesn't return author name, could be enhanced
+        author: 'Admin', 
         createdAt: new Date(formula.createdAt).toLocaleString('th-TH'),
         updatedAt: new Date(formula.updatedAt).toLocaleString('th-TH'),
     };
@@ -54,7 +56,10 @@ function RecipesPage() {
     const [data, setData] = useState<Recipe[]>([]); 
     const [isLoading, setIsLoading] = useState<boolean>(true); 
     const [currentPage, setCurrentPage] = useState<number>(1); 
+    
     const [searchTerm, setSearchTerm] = useState<string>(''); 
+    const [filterType, setFilterType] = useState<string>(''); 
+
     const [itemsPerPage, setItemsPerPage] = useState<number>(10); 
     const [totalItems, setTotalItems] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
@@ -75,9 +80,7 @@ function RecipesPage() {
         };
     }, [modalState.type]);
 
-    /**
-     * Fetch feed formulas from API
-     */
+
     const fetchFeedFormulas = async () => {
         try {
             setIsLoading(true);
@@ -107,26 +110,28 @@ function RecipesPage() {
         }
     };
 
-    // Fetch data on component mount and when pagination changes
     useEffect(() => {
         fetchFeedFormulas();
     }, [currentPage, itemsPerPage]);
 
-    // Client-side filtering for search
-    const filteredData = searchTerm
-        ? data.filter((item: Recipe) => { 
-            const lowerSearchTerm = searchTerm.toLowerCase();
-            const nameMatch = item.name && item.name.toLowerCase().includes(lowerSearchTerm);
-            const ageRangeMatch = item.ageRange && item.ageRange.toLowerCase().includes(lowerSearchTerm);
-            const authorMatch = item.author && item.author.toLowerCase().includes(lowerSearchTerm);
-            return nameMatch || ageRangeMatch || authorMatch;
-        })
-        : data;
+    const filteredData = data.filter((item: Recipe) => { 
+        // 1. กรองด้วย Search Term
+        const lowerSearchTerm = searchTerm.toLowerCase();
+        const nameMatch = item.name && item.name.toLowerCase().includes(lowerSearchTerm);
+        const ageRangeMatch = item.ageRange && item.ageRange.toLowerCase().includes(lowerSearchTerm);
+        const authorMatch = item.author && item.author.toLowerCase().includes(lowerSearchTerm);
+        const isSearchMatch = !searchTerm || nameMatch || ageRangeMatch || authorMatch;
 
-    // Use filtered data for display
-    const displayTotalItems = searchTerm ? filteredData.length : totalItems;
-    const displayTotalPages = searchTerm ? Math.ceil(filteredData.length / itemsPerPage) : totalPages;
-    const paginatedData = searchTerm
+        // 2. กรองด้วย Filter Type (Dropdown)
+        const itemType = item.farmType || item.primaryFarmType || '';
+        const isTypeMatch = !filterType || itemType === filterType;
+
+        return isSearchMatch && isTypeMatch;
+    });
+
+    const displayTotalItems = (searchTerm || filterType) ? filteredData.length : totalItems;
+    const displayTotalPages = (searchTerm || filterType) ? Math.ceil(filteredData.length / itemsPerPage) : totalPages;
+    const paginatedData = (searchTerm || filterType)
         ? filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
         : filteredData;
 
@@ -150,7 +155,6 @@ function RecipesPage() {
                 }
             );
 
-            // Refresh data after deletion
             await fetchFeedFormulas();
             setModalState({ type: null, data: null });
         } catch (error) {
@@ -179,18 +183,23 @@ function RecipesPage() {
         setCurrentPage(1); 
     };
 
+    const handleFilterChange = (type: string) => {
+        setFilterType(type);
+        setCurrentPage(1);
+    };
+
     const handleCreateRecipe = async (formData: NewRecipeFormData) => { 
-        // Validation: Check if all required fields are filled
         const isCommonDataValid = 
             formData.recipeName?.trim() && 
+            formData.farmType && 
             formData.details?.trim() && 
             formData.recommendations?.trim();
 
         let isAgeDataValid = false;
         if (formData.ageType === 'range') {
-            isAgeDataValid = !!(formData.ageStart && formData.ageEnd);
+            isAgeDataValid = !!formData.ageRange;
         } else if (formData.ageType === 'specific') {
-            isAgeDataValid = !!formData.ageSpecific;
+            isAgeDataValid = !!formData.ageSpecific; 
         }
 
         if (!isCommonDataValid || !isAgeDataValid) {
@@ -203,12 +212,17 @@ function RecipesPage() {
 
         let targetStage = '';
         if (formData.ageType === 'range') {
-            const start = formData.ageStart || '...'; 
-            const end = formData.ageEnd || '...'; 
-            targetStage = `อายุ ${start}-${end} วัน`; 
+            targetStage = `อายุ ${formData.ageRange} วัน`; 
         } else if (formData.ageType === 'specific') {
-            targetStage = `อายุ ${formData.ageSpecific || '...'} วัน`;
+            targetStage = `อายุ ${formData.ageSpecific} วัน`;
         }
+
+        const farmTypeMap: Record<string, string> = {
+            'nursery-small': 'NURSERY_SMALL',
+            'nursery-large': 'NURSERY_LARGE',
+            'market-grower': 'GROWOUT'
+        };
+        const apiFarmType = farmTypeMap[formData.farmType] || formData.farmType;
 
         try {
             await feedFormulasAPI.create({
@@ -216,11 +230,11 @@ function RecipesPage() {
                 targetStage: targetStage,
                 description: formData.details,
                 recommendations: formData.recommendations,
-            });
+                farmType: apiFarmType 
+            } as any); 
 
             toast.success("สร้างสูตรอาหารสำเร็จ!", { duration: 2000, position: "top-right" });
             
-            // Refresh data and close modal
             await fetchFeedFormulas();
             setModalState({ type: null, data: null });
         } catch (error) {
@@ -243,17 +257,24 @@ function RecipesPage() {
     };
 
     const handleUpdateRecipe = async (updatedData: any) => { 
-        // Validation: Check if data has actually changed
         const originalItem = data.find(item => item.id === updatedData.id);
 
         if (!originalItem) return;
 
+        const farmTypeMap: Record<string, string> = {
+            'nursery-small': 'NURSERY_SMALL',
+            'nursery-large': 'NURSERY_LARGE',
+            'market-grower': 'GROWOUT'
+        };
+        const apiFarmType = farmTypeMap[updatedData.farmType] || updatedData.farmType;
+
         const isUnchanged = 
             originalItem.name === updatedData.recipeName &&
+            (originalItem.farmType === apiFarmType || originalItem.primaryFarmType === apiFarmType) &&
             originalItem.description === updatedData.details &&
             originalItem.recommendations === updatedData.recommendations &&
             originalItem.targetStage === (updatedData.ageType === 'range' 
-                ? `อายุ ${updatedData.ageStart}-${updatedData.ageEnd} วัน`
+                ? `อายุ ${updatedData.ageRange} วัน`
                 : `อายุ ${updatedData.ageSpecific} วัน`);
 
         if (isUnchanged) {
@@ -268,11 +289,9 @@ function RecipesPage() {
         
         let targetStage = '';
         if (updatedData.ageType === 'range') {
-            const start = updatedData.ageStart || '...';
-            const end = updatedData.ageEnd || '...';
-            targetStage = `อายุ ${start}-${end} วัน`;
+            targetStage = `อายุ ${updatedData.ageRange} วัน`;
         } else if (updatedData.ageType === 'specific') {
-            targetStage = `อายุ ${updatedData.ageSpecific || '...'} วัน`;
+            targetStage = `อายุ ${updatedData.ageSpecific} วัน`;
         }
 
         try {
@@ -281,11 +300,11 @@ function RecipesPage() {
                 targetStage: targetStage,
                 description: updatedData.details,
                 recommendations: updatedData.recommendations,
-            });
+                farmType: apiFarmType
+            } as any);
 
             toast.success("แก้ไขสูตรอาหารสำเร็จ!", { duration: 2000, position: "top-right" });
             
-            // Refresh data and close modal
             await fetchFeedFormulas();
             setModalState({ type: null, data: null });
         } catch (error) {
@@ -403,6 +422,7 @@ function RecipesPage() {
                 <RecipesToolbar 
                     totalItems={displayTotalItems} 
                     onSearch={handleSearch}
+                    onFilterChange={handleFilterChange}
                     onAddClick={handleAddClick}
                 />
                 

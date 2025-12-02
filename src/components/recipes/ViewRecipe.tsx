@@ -2,6 +2,12 @@
 
 import { Recipe } from "../../app/recipes/page"; 
 
+const FARM_TYPE_LABEL: Record<string, string> = {
+    'NURSERY_SMALL': 'กลุ่มอนุบาลขนาดเล็ก',
+    'NURSERY_LARGE': 'กลุ่มอนุบาลขนาดใหญ่',
+    'GROWOUT': 'กลุ่มผู้เลี้ยงขนาดตลาด'
+};
+
 interface InfoDisplayProps {
     label: string;
     value: string | number | null | undefined;
@@ -23,8 +29,11 @@ interface ViewRecipeProps {
 
 const ViewRecipe = ({ onClose, initialData }: ViewRecipeProps) => { 
 
+    const farmTypeValue = (initialData as any).farmType || (initialData as any).primaryFarmType;
+
     const displayData = {
         name: initialData?.name || '-',
+        farmType: FARM_TYPE_LABEL[farmTypeValue] || farmTypeValue || '-',
         ageDisplay: initialData?.ageRange || initialData?.targetStage || '-',
         description: initialData?.description || '-',
         recommendations: initialData?.recommendations || '-',
@@ -39,6 +48,11 @@ const ViewRecipe = ({ onClose, initialData }: ViewRecipeProps) => {
                 <InfoDisplay 
                     label="ชื่อสูตรอาหาร" 
                     value={displayData.name}
+                />
+
+                <InfoDisplay 
+                    label="ประเภทกลุ่มการเลี้ยง" 
+                    value={displayData.farmType}
                 />
                 
                 <InfoDisplay 
