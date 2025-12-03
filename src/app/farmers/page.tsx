@@ -4,60 +4,16 @@ import React, { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 
 import FarmerToolbar from "../../components/farmers/FarmerToolbar";
-import FarmerTable, { type Farmer as FarmerTableRow } from "../../components/farmers/FarmerTable"; 
+import FarmerTable from "../../components/farmers/FarmerTable"; 
 
 import Pagination from "../../components/common/Pagination";
 import DeleteConfirm from "../../components/common/DeleteConfirm"; 
-import { farmersAPI, type Farmer as FarmerApiResponse } from "@/services/api/farmers";
+import { farmersAPI } from "@/services/api/farmers";
 import { APIError, type PaginationMeta } from "@/services/api/types";
+import type { FarmerListItem } from "@/types/farmer";
+import { mapFarmerResponse } from "@/utils/farmerMapper";
 
-const FARM_TYPE_LABELS: Record<string, string> = {
-    NURSERY_SMALL: "กลุ่มอนุบาลขนาดเล็ก",
-    NURSERY_LARGE: "กลุ่มอนุบาลขนาดใหญ่",
-    GROWOUT: "กลุ่มผู้เลี้ยงขนาดตลาด",
-};
-
-const formatRegisteredDate = (isoString: string | null | undefined) => {
-    if (!isoString) return "-";
-    const date = new Date(isoString);
-    if (Number.isNaN(date.getTime())) return "-";
-    const datePart = date.toLocaleDateString("th-TH", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-    });
-    const timePart = date.toLocaleTimeString("th-TH", {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-    return `${datePart} - ${timePart}`;
-};
-
-const formatCoordinates = (latitude?: number | null, longitude?: number | null) => {
-    if (typeof latitude !== "number" || typeof longitude !== "number") {
-        return "-";
-    }
-    return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-};
-
-const mapFarmerResponse = (farmer: FarmerApiResponse): Farmer => ({
-    id: `farmer-${farmer.no}`,
-    rowNumber: farmer.no,
-    name: farmer.fullName || "-",
-    phone: farmer.phone || "-",
-    groupType: FARM_TYPE_LABELS[farmer.farmType] || farmer.farmType,
-    pondType: "ไม่ระบุ",
-    pondCount: typeof farmer.pondCount === "number" ? farmer.pondCount : null,
-    location: formatCoordinates(farmer.latitude, farmer.longitude),
-    registeredDate: formatRegisteredDate(farmer.registeredAt),
-    farmTypeCode: farmer.farmType,
-    registeredAtISO: farmer.registeredAt,
-});
-
-type Farmer = FarmerTableRow & {
-    farmTypeCode?: 'NURSERY_SMALL' | 'NURSERY_LARGE' | 'GROWOUT';
-    registeredAtISO?: string;
-};
+export type Farmer = FarmerListItem;
 
 const Farmers = () => {
     const [farmers, setFarmers] = useState<Farmer[]>([]); 
@@ -79,11 +35,27 @@ const Farmers = () => {
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [farmerToDelete, setFarmerToDelete] = useState<Farmer | null>(null); 
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchFarmers = useCallback(async () => {
         setIsLoading(true);
         try {
             const response = await farmersAPI.list({ page: currentPage, limit: itemsPerPage });
+
+            if (
+                response.pagination.totalPages > 0 &&
+                currentPage > response.pagination.totalPages &&
+                response.data.length === 0
+            ) {
+                setCurrentPage(response.pagination.totalPages);
+                return;
+            }
+
+            if (response.pagination.totalPages === 0 && currentPage !== 1) {
+                setCurrentPage(1);
+                return;
+            }
+
             setFarmers(response.data.map(mapFarmerResponse));
             setPaginationMeta(response.pagination);
         } catch (error) {
@@ -145,29 +117,42 @@ const Farmers = () => {
         ? (currentPage - 1) * itemsPerPage
         : (paginationMeta.itemsPerPage || itemsPerPage) * ((paginationMeta.currentPage || 1) - 1);
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
         if (!farmerToDelete) return;
 
-        setFarmers((prevFarmers) =>
-            prevFarmers.filter((f) => f.id !== farmerToDelete.id)
-        );
+        try {
+            setIsDeleting(true);
+            await farmersAPI.delete(farmerToDelete.id);
 
-        toast.success(
-            (t_success) => ( 
-                <div className="flex items-center justify-center gap-2 w-full"> 
-                    <span>{`ลบข้อมูล "${farmerToDelete.name}" สำเร็จ!`}</span>
-                </div>
-            ),
-            { duration: 2000, position: "top-right" }
-        );
+            toast.success(
+                () => ( 
+                    <div className="flex items-center justify-center gap-2 w-full"> 
+                        <span>{`ลบข้อมูล "${farmerToDelete.name}" สำเร็จ!`}</span>
+                    </div>
+                ),
+                { duration: 2000, position: "top-right" }
+            );
 
-        setIsDeleteModalOpen(false);
-        setFarmerToDelete(null);
+            setIsDeleteModalOpen(false);
+            setFarmerToDelete(null);
+            await fetchFarmers();
+        } catch (error) {
+            const message = error instanceof APIError ? error.message : 'ไม่สามารถลบข้อมูลได้';
+            toast.error(message);
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
     const handleDeleteClick = (farmer: Farmer) => {
         setFarmerToDelete(farmer);
         setIsDeleteModalOpen(true);
+    };
+
+    const handleCloseDeleteModal = () => {
+        setIsDeleteModalOpen(false);
+        setFarmerToDelete(null);
+        setIsDeleting(false);
     };
 
     const handleSearchChange = (term: string) => { setSearchTerm(term); setCurrentPage(1); };
@@ -220,10 +205,11 @@ const Farmers = () => {
 
             <DeleteConfirm 
                 isOpen={isDeleteModalOpen}
-                onClose={() => { setIsDeleteModalOpen(false); setFarmerToDelete(null); }}
+                onClose={handleCloseDeleteModal}
                 onConfirm={handleConfirmDelete}
                 title="ลบข้อมูลเกษตรกร"
-                itemName={farmerToDelete?.name} 
+                itemName={farmerToDelete?.name}
+                isConfirming={isDeleting}
             />
         </div>
     );

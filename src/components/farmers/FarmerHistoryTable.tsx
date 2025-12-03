@@ -11,12 +11,12 @@ import SortIcon from '../../assets/fm-arrow.svg';
 export interface FarmerHistory {
     id: number;
     date: string;
-    age: number;
+    age: number | string;
     weight: number;
     pondType: string;
     pondCount: number;
     fishCount: number;
-    foodAmount?: number;
+    foodAmount?: number | string;
     temp: string;
     rain: number;
     humidity: number;

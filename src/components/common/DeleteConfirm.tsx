@@ -5,10 +5,11 @@ import DeleteIcon from '../../assets/fm-delete.svg';
 
 interface DeleteConfirmProps {
     isOpen: boolean;
-    onClose: () => void;
-    onConfirm: () => void;
+    onClose: () => void | Promise<void>;
+    onConfirm: () => void | Promise<void>;
     title: string;
     itemName: string | null | undefined;
+    isConfirming?: boolean;
 }
 
 const DeleteConfirm = ({
@@ -16,7 +17,8 @@ const DeleteConfirm = ({
     onClose,     
     onConfirm,   
     title,       
-    itemName    
+    itemName,
+    isConfirming = false,
 }: DeleteConfirmProps) => {
 
     if (!isOpen) {
@@ -51,15 +53,21 @@ const DeleteConfirm = ({
                     <div className="flex gap-4 mt-8 w-full">
                         <button
                             onClick={onClose}
+                            disabled={isConfirming}
                             className="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-lg text-base font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400"
                         >
                             ยกเลิก
                         </button>
                         <button
                             onClick={onConfirm}
-                            className="flex-1 px-4 py-3 bg-red-600 border border-transparent rounded-lg text-base font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            disabled={isConfirming}
+                            className={`flex-1 px-4 py-3 border border-transparent rounded-lg text-base font-semibold text-white focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                                isConfirming
+                                    ? 'bg-red-400 cursor-not-allowed'
+                                    : 'bg-red-600 hover:bg-red-700'
+                            }`}
                         >
-                            ลบ
+                            {isConfirming ? 'กำลังลบ...' : 'ลบ'}
                         </button>
                     </div>
                 </div>

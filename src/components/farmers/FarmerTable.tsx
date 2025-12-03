@@ -6,22 +6,11 @@ import Link from 'next/link';
 import SortIcon from '../../assets/fm-arrow.svg';
 import ViewIcon from '../../assets/fm-search-table.svg';
 import DeleteIcon from '../../assets/fm-delete.svg';
-
-export interface Farmer {
-    id: number | string;
-    rowNumber?: number;
-    name: string;
-    phone: string;
-    groupType: string;
-    pondType?: string;
-    pondCount?: number | null;
-    location: string;
-    registeredDate: string;
-}
+import type { FarmerListItem } from '@/types/farmer';
 
 interface FarmerTableProps {
-  farmersData: Farmer[];
-  onDeleteClick: (farmer: Farmer) => void;
+    farmersData: FarmerListItem[];
+    onDeleteClick: (farmer: FarmerListItem) => void;
   startIndex?: number;
 }
 

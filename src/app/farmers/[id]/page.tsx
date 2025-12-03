@@ -13,10 +13,12 @@ import EditFarmerHistory from "../../../components/farmers/EditFarmerHistory";
 
 import Pagination from "../../../components/common/Pagination";
 import DeleteConfirm from "../../../components/common/DeleteConfirm";
+import { farmersAPI } from "@/services/api/farmers";
+import { APIError } from "@/services/api/types";
+import type { FarmerListItem } from "@/types/farmer";
+import { mapFarmerResponse } from "@/utils/farmerMapper";
 
-import { MOCK_FARMERS, Farmer } from "../page"; 
-
-const MOCK_HISTORY_DATA: any[] = [
+const MOCK_HISTORY_DATA: FarmerHistory[] = [
     { id: 1, date: "20/12/2025 - 06:00", age: "91-120", foodAmount: "35 กก.", weight: 1.8, pondType: "บ่อปูน", pondCount: 8, fishCount: 130, temp: "32 °C", rain: 30, humidity: 27 },
     { id: 2, date: "10/12/2025 - 06:00", age: "61-90", foodAmount: "32 กก.", weight: 1.8, pondType: "บ่อปูน", pondCount: 5, fishCount: 80, temp: "32 °C", rain: 30, humidity: 27 },
     { id: 3, date: "30/11/2025 - 06:00", age: "61-90", foodAmount: "30 กก.", weight: 1.0, pondType: "บ่อปูน", pondCount: 5, fishCount: 250, temp: "32 °C", rain: 30, humidity: 27 },
@@ -36,14 +38,15 @@ interface ModalState {
 }
 
 interface PageProps {
-  params: Promise<{
-    id: string;
-  }>;
+    params: {
+        id: string;
+    };
 }
 
 export default function FarmerDetailPage({ params }: PageProps) {
     const router = useRouter();
-    const [farmerData, setFarmerData] = useState<Farmer | null>(null);
+    const [farmerData, setFarmerData] = useState<FarmerListItem | null>(null);
+    const [isFarmerLoading, setIsFarmerLoading] = useState(true);
     const [historyData, setHistoryData] = useState<FarmerHistory[]>([]);
     
     const [currentPage, setCurrentPage] = useState(1);
@@ -63,19 +66,26 @@ export default function FarmerDetailPage({ params }: PageProps) {
     }, [modalState.type]);
 
     useEffect(() => {
-        params.then((resolvedParams) => {
-            const id = Number(resolvedParams.id);
-            const foundFarmer = MOCK_FARMERS.find(f => f.id === id);
-            
-            if (foundFarmer) {
-                setFarmerData(foundFarmer);
-                setHistoryData(MOCK_HISTORY_DATA as unknown as FarmerHistory[]); 
+        const fetchFarmer = async () => {
+            setIsFarmerLoading(true);
+            try {
+                const farmer = await farmersAPI.getById(params.id);
+                setFarmerData(mapFarmerResponse(farmer));
+                setHistoryData(MOCK_HISTORY_DATA);
+            } catch (error) {
+                const message = error instanceof APIError ? error.message : 'ไม่พบข้อมูลเกษตรกร';
+                toast.error(message, { duration: 2500, position: 'top-right' });
+                setFarmerData(null);
+            } finally {
+                setIsFarmerLoading(false);
             }
-        });
-    }, [params]);
+        };
+
+        fetchFarmer();
+    }, [params.id]);
 
     const totalItems = historyData.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage) || 1);
     const paginatedHistory = historyData.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
@@ -98,12 +108,11 @@ export default function FarmerDetailPage({ params }: PageProps) {
         setModalState({ type: 'delete', data: item });
     };
 
-    const handleUpdateHistory = (updatedData: any) => {
-        const originalData = modalState.data as any; 
-        
+    const handleUpdateHistory = (updatedData: Partial<FarmerHistory> & { ageRange?: string }) => {
+        const originalData = modalState.data; 
         if (!originalData) return;
 
-        const cleanVal = (val: any) => String(val || '').replace(/กก\.| kg\.|kg/gi, '').trim();
+        const cleanVal = (val: string | number | undefined | null) => String(val || '').replace(/กก\.| kg\.|kg/gi, '').trim();
 
         const isUnchanged = 
             String(originalData.pondType || '') === String(updatedData.pondType || '') &&
@@ -120,14 +129,12 @@ export default function FarmerDetailPage({ params }: PageProps) {
             return; 
         }
 
-        console.log("Updated Data:", updatedData);
-        
         setHistoryData(prev => prev.map(item => 
             item.id === modalState.data?.id ? { 
                 ...item, 
                 ...updatedData,
                 foodAmount: updatedData.foodAmount, 
-                age: updatedData.ageRange || item.age 
+                age: updatedData.ageRange || updatedData.age || item.age 
             } : item
         ));
         
@@ -180,7 +187,7 @@ export default function FarmerDetailPage({ params }: PageProps) {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                    <span className="text-xl font-medium">{farmerData ? farmerData.name : "กำลังโหลด..."}</span>
+                    <span className="text-xl font-medium">{isFarmerLoading ? "กำลังโหลด..." : farmerData?.name || "ไม่พบข้อมูล"}</span>
                 </button>
                 <div className="flex-1 flex justify-end items-center space-x-3 text-sm pr-5">
                     <span className="text-xl me-2">Admin</span>
@@ -237,7 +244,7 @@ export default function FarmerDetailPage({ params }: PageProps) {
                 onClose={closeModal}
                 onConfirm={handleConfirmDelete}
                 title="ลบรายการเก็บข้อมูล"
-                itemName={`ข้อมูลวันที่ ${modalState.data?.date.split(' - ')[0]}`} 
+                itemName={modalState.data ? `ข้อมูลวันที่ ${modalState.data.date.split(' - ')[0]}` : undefined}
             />
         </div>
     );

@@ -1,9 +1,9 @@
 'use client';
 
-import { Farmer } from '../../app/farmers/page';
+import type { FarmerListItem } from '@/types/farmer';
 
 interface FarmerInfoCardProps {
-    data: Farmer | null;
+    data: FarmerListItem | null;
 }
 
 const InfoRow = ({ label, value, isUnderline = false }: { label: string, value: string | number, isUnderline?: boolean }) => (

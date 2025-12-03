@@ -7,9 +7,10 @@ import TimeIcon from '../../assets/formkit_time.svg';
 import TempIcon from '../../assets/fluent_temperature-b.svg';
 import RainIcon from '../../assets/fluent_weather-b.svg';
 import HumidityIcon from '../../assets/mdi_dots-triangle.svg';
+import type { FarmerHistory } from './FarmerHistoryTable';
 
 interface ViewFarmerHistoryProps {
-    data: any;
+    data: FarmerHistory;
     onClose: () => void;
 }
 
