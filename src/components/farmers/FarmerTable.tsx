@@ -8,14 +8,15 @@ import ViewIcon from '../../assets/fm-search-table.svg';
 import DeleteIcon from '../../assets/fm-delete.svg';
 
 export interface Farmer {
-  id: number;
-  name: string;
-  phone: string;
-  groupType: string;
-  pondType: string;
-  pondCount: number;
-  location: string;
-  registeredDate: string;
+    id: number | string;
+    rowNumber?: number;
+    name: string;
+    phone: string;
+    groupType: string;
+    pondType?: string;
+    pondCount?: number | null;
+    location: string;
+    registeredDate: string;
 }
 
 interface FarmerTableProps {
@@ -64,13 +65,13 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
                 </thead>
                 <tbody className="text-sm text-gray-900 font-normal">
                     {farmersData.map((farmer, index) => (
-                        <tr key={farmer.id} className="border-b border-gray-100 last:border-b-0">
-                            <td className="p-4 text-center">{startIndex + index + 1}</td>
+                        <tr key={`${farmer.id}-${index}`} className="border-b border-gray-100 last:border-b-0">
+                            <td className="p-4 text-center">{farmer.rowNumber ?? startIndex + index + 1}</td>
                             <td className="p-4 text-left">{farmer.name}</td>
                             <td className="p-4 text-center">{farmer.phone}</td>
                             <td className="p-4 text-center">{farmer.groupType}</td>
-                            <td className="p-4 text-center">{farmer.pondType}</td>
-                            <td className="p-4 text-center">{farmer.pondCount}</td>
+                            <td className="p-4 text-center">{farmer.pondType ?? '-'}</td>
+                            <td className="p-4 text-center">{farmer.pondCount ?? '-'}</td>
                             <td className="p-4 text-center">
                                 <button className="text-gray-900 underline">{farmer.location}</button>
                             </td>

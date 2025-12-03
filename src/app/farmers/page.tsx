@@ -1,69 +1,109 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 
 import FarmerToolbar from "../../components/farmers/FarmerToolbar";
-import FarmerTable from "../../components/farmers/FarmerTable"; 
+import FarmerTable, { type Farmer as FarmerTableRow } from "../../components/farmers/FarmerTable"; 
 
 import Pagination from "../../components/common/Pagination";
 import DeleteConfirm from "../../components/common/DeleteConfirm"; 
+import { farmersAPI, type Farmer as FarmerApiResponse } from "@/services/api/farmers";
+import { APIError, type PaginationMeta } from "@/services/api/types";
 
-export interface Farmer {
-    id: number;
-    name: string;
-    phone: string;
-    groupType: string;
-    pondType: string;
-    pondCount: number;
-    location: string;
-    registeredDate: string;
-}
+const FARM_TYPE_LABELS: Record<string, string> = {
+    NURSERY_SMALL: "กลุ่มอนุบาลขนาดเล็ก",
+    NURSERY_LARGE: "กลุ่มอนุบาลขนาดใหญ่",
+    GROWOUT: "กลุ่มผู้เลี้ยงขนาดตลาด",
+};
 
-export const MOCK_FARMERS: Farmer[] = [
-    { id: 1, name: "อรพินธ์ นาดี", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อดิน", pondCount: 6, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
-    { id: 2, name: "สมปอง มองการไกล", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อดิน", pondCount: 7, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
-    { id: 3, name: "สมหมาย มีดี", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดใหญ่", pondType: "บ่อดิน", pondCount: 4, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
-    { id: 4, name: "มานี มีสุข", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดใหญ่", pondType: "บ่อปูน", pondCount: 12, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
-    { id: 5, name: "แก้วตา นาวา", phone: "0812232343", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อดิน", pondCount: 10, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
-    { id: 6, name: "นภัทร ชื่นชม", phone: "0812232343", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อปูน", pondCount: 8, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
-    { id: 7, name: "วิทยา สุดสวย", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อปูน", pondCount: 9, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
-    { id: 8, name: "ปานเทพ รัศมี", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดใหญ่", pondType: "บ่อดิน", pondCount: 8, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
-    { id: 9, name: "ธนัช จิตใคร่", phone: "0812232343", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อปูน", pondCount: 9, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
-    { id: 10, name: "ธีรศ ยาหมาย", phone: "0812232343", groupType: "กลุ่มอนุบาลขนาดเล็ก", pondType: "บ่อปูน", pondCount: 11, location: "145690.903764", registeredDate: "12/12/2025 - 15:23:00" },
-    { id: 11, name: "เกษตรกร 11", phone: "0811111111", groupType: "กลุ่มผู้เลี้ยงขนาดตลาด", pondType: "บ่อดิน", pondCount: 5, location: "145690.903764", registeredDate: "13/12/2025 - 10:00:00" },
-];
+const formatRegisteredDate = (isoString: string | null | undefined) => {
+    if (!isoString) return "-";
+    const date = new Date(isoString);
+    if (Number.isNaN(date.getTime())) return "-";
+    const datePart = date.toLocaleDateString("th-TH", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    });
+    const timePart = date.toLocaleTimeString("th-TH", {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+    return `${datePart} - ${timePart}`;
+};
 
-const parseDateString = (dateStr: string) => {
-    if (!dateStr || !dateStr.includes('/')) return null;
-    const parts = dateStr.split(' ')[0].split('/');
-    if (parts.length === 3) {
-        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+const formatCoordinates = (latitude?: number | null, longitude?: number | null) => {
+    if (typeof latitude !== "number" || typeof longitude !== "number") {
+        return "-";
     }
-    return null;
+    return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+};
+
+const mapFarmerResponse = (farmer: FarmerApiResponse): Farmer => ({
+    id: `farmer-${farmer.no}`,
+    rowNumber: farmer.no,
+    name: farmer.fullName || "-",
+    phone: farmer.phone || "-",
+    groupType: FARM_TYPE_LABELS[farmer.farmType] || farmer.farmType,
+    pondType: "ไม่ระบุ",
+    pondCount: typeof farmer.pondCount === "number" ? farmer.pondCount : null,
+    location: formatCoordinates(farmer.latitude, farmer.longitude),
+    registeredDate: formatRegisteredDate(farmer.registeredAt),
+    farmTypeCode: farmer.farmType,
+    registeredAtISO: farmer.registeredAt,
+});
+
+type Farmer = FarmerTableRow & {
+    farmTypeCode?: 'NURSERY_SMALL' | 'NURSERY_LARGE' | 'GROWOUT';
+    registeredAtISO?: string;
 };
 
 const Farmers = () => {
     const [farmers, setFarmers] = useState<Farmer[]>([]); 
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    
+
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedPondType, setSelectedPondType] = useState('');
     const [selectedDate, setSelectedDate] = useState(''); 
     const [selectedGroupType, setSelectedGroupType] = useState('');
 
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0,
+        itemsPerPage: 10,
+    });
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [farmerToDelete, setFarmerToDelete] = useState<Farmer | null>(null); 
 
-    useEffect(() => {
-        setTimeout(() => {
-            setFarmers(MOCK_FARMERS); 
+    const fetchFarmers = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const response = await farmersAPI.list({ page: currentPage, limit: itemsPerPage });
+            setFarmers(response.data.map(mapFarmerResponse));
+            setPaginationMeta(response.pagination);
+        } catch (error) {
+            const message = error instanceof APIError ? error.message : 'ไม่สามารถโหลดข้อมูลเกษตรกรได้';
+            toast.error(message);
+            setFarmers([]);
+            setPaginationMeta((prev) => ({
+                ...prev,
+                totalItems: 0,
+                totalPages: 1,
+                currentPage: 1,
+            }));
+        } finally {
             setIsLoading(false);
-        }, 500);
-    }, []);
+        }
+    }, [currentPage, itemsPerPage]);
+
+    useEffect(() => {
+        fetchFarmers();
+    }, [fetchFarmers]);
 
     useEffect(() => {
         if (isDeleteModalOpen) {
@@ -76,24 +116,34 @@ const Farmers = () => {
         };
     }, [isDeleteModalOpen]); 
 
+    const filtersActive = Boolean(
+        searchTerm.trim() || selectedPondType || selectedDate || selectedGroupType
+    );
+
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
     const filteredFarmers = farmers.filter(farmer => { 
-        const nameMatch = farmer.name && farmer.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const phoneMatch = farmer.phone && farmer.phone.includes(searchTerm);
+        const nameMatch = normalizedSearch ? farmer.name?.toLowerCase().includes(normalizedSearch) : true;
+        const phoneMatch = normalizedSearch ? farmer.phone?.includes(searchTerm.trim()) : true;
         const typeMatch = selectedPondType ? farmer.pondType === selectedPondType : true; 
-        const farmerRegisteredDate = parseDateString(farmer.registeredDate);
-        const dateMatch = selectedDate ? farmerRegisteredDate === selectedDate : true; 
+        const dateMatch = selectedDate ? farmer.registeredAtISO?.startsWith(selectedDate) : true; 
         const groupMatch = selectedGroupType ? farmer.groupType === selectedGroupType : true;
 
         return (nameMatch || phoneMatch) && typeMatch && dateMatch && groupMatch; 
     });
 
-    const totalItems = filteredFarmers.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const clientTotalItems = filteredFarmers.length;
+    const clientTotalPages = Math.max(1, Math.ceil(clientTotalItems / itemsPerPage) || 1);
 
-    const paginatedFarmers = filteredFarmers.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
+    const paginatedFarmers = filtersActive
+        ? filteredFarmers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+        : farmers;
+
+    const totalItems = filtersActive ? clientTotalItems : paginationMeta.totalItems;
+    const totalPages = filtersActive ? clientTotalPages : (paginationMeta.totalPages || 1);
+    const tableStartIndex = filtersActive
+        ? (currentPage - 1) * itemsPerPage
+        : (paginationMeta.itemsPerPage || itemsPerPage) * ((paginationMeta.currentPage || 1) - 1);
 
     const handleConfirmDelete = () => {
         if (!farmerToDelete) return;
@@ -151,7 +201,7 @@ const Farmers = () => {
                         <FarmerTable
                             farmersData={paginatedFarmers} 
                             onDeleteClick={handleDeleteClick}
-                            startIndex={(currentPage - 1) * itemsPerPage}
+                            startIndex={tableStartIndex}
                         />
                     )}
                 </div>
