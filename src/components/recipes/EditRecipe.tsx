@@ -6,7 +6,20 @@ import DownArrowIcon from '../../assets/fm-down.svg';
 
 import { Recipe } from "../../app/recipes/page";
 
-const DAY_OPTIONS = [1, 10, 15, 20, 25, 30, 40, 45, 50, 60, 75, 90, 120, 150];
+const FARM_TYPE_OPTIONS = [
+    { value: 'NURSERY_SMALL', label: 'กลุ่มอนุบาลขนาดเล็ก' },
+    { value: 'NURSERY_LARGE', label: 'กลุ่มอนุบาลขนาดใหญ่' },
+    { value: 'GROWOUT', label: 'กลุ่มผู้เลี้ยงขนาดตลาด' },
+];
+
+const AGE_RANGE_OPTIONS = [
+    { value: '0-15', label: '0-15 วัน' },
+    { value: '16-30', label: '16-30 วัน' },
+    { value: '31-60', label: '31-60 วัน' },
+    { value: '61-90', label: '61-90 วัน' },
+    { value: '91-120', label: '91-120 วัน' },
+    { value: '>120', label: '>120 วัน' },
+];
 
 interface FormInputProps {
     label: string;
@@ -49,7 +62,9 @@ const FormInput = ({ label, placeholder, value, onChange, type = "text" }: FormI
 
     return (
         <div className="w-full">
-            <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+            <label className={`block text-sm font-medium text-gray-700 mb-1 ${!label ? 'hidden' : ''}`}>
+                {label}
+            </label>
             <div className="relative">
                 <input
                     ref={inputRef}
@@ -87,9 +102,9 @@ const FormInput = ({ label, placeholder, value, onChange, type = "text" }: FormI
     )
 };
 
-const FormSelect = ({ label, value, onChange, labelClassName, options, placeholder = "เลือกวัน" }: FormSelectProps) => (
-    <div className="flex-1">
-        <label className={`block text-sm font-medium text-gray-700 mb-1 ${labelClassName || ''} ${!label ? 'h-[20px]' : ''}`}>
+const FormSelect = ({ label, value, onChange, labelClassName, options, placeholder = "เลือก" }: FormSelectProps) => (
+    <div className="w-full">
+        <label className={`block text-sm font-medium text-gray-700 mb-1 ${labelClassName || ''} ${!label ? 'hidden' : ''}`}>
             {label}
         </label>
         <div className="relative">
@@ -101,15 +116,9 @@ const FormSelect = ({ label, value, onChange, labelClassName, options, placehold
                 }`}
             >
                 <option value="">{placeholder}</option>
-                {options && options.length > 0 ? (
-                    options.map(option => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                    ))
-                ) : (
-                    DAY_OPTIONS.map(day => (
-                        <option key={day} value={day.toString()}>{`${day} วัน`}</option>
-                    ))
-                )}
+                {options?.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
             </select>
             <img src={DownArrowIcon.src || DownArrowIcon} alt="arrow" className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
@@ -132,9 +141,9 @@ const FormTextarea = ({ label, placeholder, value, onChange, rows = 4 }: FormTex
 interface UpdateRecipeData {
     id: string;
     recipeName: string;
+    farmType: string;
     ageType: 'range' | 'specific';
-    ageStart: string | null;
-    ageEnd: string | null;
+    ageRange: string;
     ageSpecific: string | null;
     details: string;
     recommendations: string;
@@ -149,33 +158,39 @@ interface EditRecipeProps {
 const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
 
     const parseTargetStage = (targetStage: string) => {
-        
-        const rangeMatch = targetStage.match(/อายุ (\d+)-(\d+) วัน/);
+        if (!targetStage) return { ageType: 'range' as const, ageRange: '', ageSpecific: '' };
+
+        const rangeMatch = targetStage.match(/อายุ\s*(\d+)\s*[-–]\s*(\d+)\s*วัน/);
         if (rangeMatch) {
-            return { ageType: 'range' as const, ageStart: rangeMatch[1], ageEnd: rangeMatch[2], ageSpecific: '' };
+            return {
+                ageType: 'range' as const,
+                ageRange: `${rangeMatch[1]}-${rangeMatch[2]}`, 
+                ageSpecific: ''
+            };
         }
 
-    
-        const specificMatch = targetStage.match(/อายุ (\d+) วัน/);
+        const specificMatch = targetStage.match(/อายุ\s*(\d+)\s*วัน/);
         if (specificMatch) {
-            return { ageType: 'specific' as const, ageStart: '', ageEnd: '', ageSpecific: specificMatch[1] };
+            return { ageType: 'specific' as const, ageRange: '', ageSpecific: specificMatch[1] };
+        }
+        
+        const gtMatch = targetStage.match(/>120/);
+        if(gtMatch) {
+             return { ageType: 'range' as const, ageRange: '>120', ageSpecific: '' };
         }
 
-    
-        const oldSpecificMatch = targetStage.match(/อายุ (\d+) วันขึ้นไป/);
-        if (oldSpecificMatch) {
-             return { ageType: 'specific' as const, ageStart: '', ageEnd: '', ageSpecific: oldSpecificMatch[1] };
-        }
-
-        return { ageType: 'range' as const, ageStart: '', ageEnd: '', ageSpecific: '' };
+        return { ageType: 'range' as const, ageRange: '', ageSpecific: '' };
     };
 
     const parsed = parseTargetStage(initialData?.targetStage || initialData?.ageRange || '');
 
     const [name, setName] = useState(initialData?.name || '');
+    
+    const initialFarmType = (initialData as any).farmType || (initialData as any).primaryFarmType || '';
+    const [farmType, setFarmType] = useState<string>(initialFarmType.toUpperCase());
+    
     const [ageType, setAgeType] = useState<'range' | 'specific'>(parsed.ageType);
-    const [ageStart, setAgeStart] = useState(parsed.ageStart);
-    const [ageEnd, setAgeEnd] = useState(parsed.ageEnd);
+    const [ageRange, setAgeRange] = useState<string>(parsed.ageRange);
     const [ageSpecific, setAgeSpecific] = useState(parsed.ageSpecific);
     const [details, setDetails] = useState(initialData?.description || '');
     const [recommendations, setRecommendations] = useState(initialData?.recommendations || '');
@@ -184,9 +199,9 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
         const formData: UpdateRecipeData = {
             id: initialData.id,
             recipeName: name,
+            farmType,
             ageType,
-            ageStart: ageType === 'range' ? ageStart : null,
-            ageEnd: ageType === 'range' ? ageEnd : null,
+            ageRange: ageType === 'range' ? ageRange : '',
             ageSpecific: ageType === 'specific' ? ageSpecific : null,
             details,
             recommendations,
@@ -206,6 +221,14 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     type="text"
+                />
+
+                <FormSelect
+                    label="ประเภทกลุ่มการเลี้ยง"
+                    placeholder="เลือกประเภท"
+                    value={farmType}
+                    onChange={(e) => setFarmType(e.target.value)}
+                    options={FARM_TYPE_OPTIONS}
                 />
 
                 <div>
@@ -231,28 +254,19 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
                 </div>
 
                 {ageType === 'range' ? (
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
+                    <div>
                         <FormSelect
-                            label="ตั้งแต่"
-                            value={ageStart || ''} 
-                            onChange={(e) => setAgeStart(e.target.value)}
-                            placeholder="เลือกวัน"
+                            label=""
+                            placeholder="เลือกช่วงอายุ"
+                            value={ageRange}
+                            onChange={(e) => setAgeRange(e.target.value)}
+                            options={AGE_RANGE_OPTIONS}
                         />
-                        <span className="text-gray-500 pb-3 hidden sm:block">ถึง</span>
-                        <div className="flex-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1 sm:hidden">ถึง</label>
-                            <FormSelect
-                                label=""
-                                value={ageEnd || ''}
-                                onChange={(e) => setAgeEnd(e.target.value)}
-                                placeholder="เลือกวัน"
-                            />
-                        </div>
                     </div>
                 ) : (
                     <div className="flex items-end gap-4">
                         <FormInput
-                            label="อายุ (วัน)"
+                            label=""
                             type="number"
                             value={ageSpecific || ''}
                             onChange={(e) => setAgeSpecific(e.target.value)}

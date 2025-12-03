@@ -3,7 +3,22 @@
 import React, { useState, useRef, ChangeEvent } from 'react'; 
 import DownArrowIcon from '../../assets/fm-down.svg';
 
-const DAY_OPTIONS = [1, 10, 15, 20, 25, 30, 40, 45, 50, 60, 75, 90, 120, 150];
+// ตัวเลือกสำหรับ Dropdown ประเภทฟาร์ม
+const FARM_TYPE_OPTIONS = [
+    { value: 'NURSERY_SMALL', label: 'กลุ่มอนุบาลขนาดเล็ก' },
+    { value: 'NURSERY_LARGE', label: 'กลุ่มอนุบาลขนาดใหญ่' },
+    { value: 'GROWOUT', label: 'กลุ่มผู้เลี้ยงขนาดตลาด' },
+];
+
+// ตัวเลือกช่วงอายุ
+const AGE_RANGE_OPTIONS = [
+    { value: '0–15', label: '0–15 วัน' },
+    { value: '16–30', label: '16–30 วัน' },
+    { value: '31–60', label: '31–60 วัน' },
+    { value: '61–90', label: '61–90 วัน' },
+    { value: '91–120', label: '91–120 วัน' },
+    { value: '>120', label: '>120 วัน' },
+];
 
 interface FormInputProps {
     label: string;
@@ -19,6 +34,7 @@ interface FormSelectProps {
     onChange: (e: ChangeEvent<HTMLSelectElement>) => void;
     labelClassName?: string;
     placeholder?: string;
+    options: { value: string; label: string }[];
 }
 
 interface FormTextareaProps {
@@ -45,7 +61,9 @@ const FormInput = ({ label, placeholder, value, onChange, type = "text" }: FormI
 
     return (
         <div className="w-full">
-            <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+            <label className={`block text-sm font-medium text-gray-700 mb-1 ${!label ? 'hidden' : ''}`}>
+                {label}
+            </label>
             
             <div className="relative">
                 <input
@@ -66,9 +84,9 @@ const FormInput = ({ label, placeholder, value, onChange, type = "text" }: FormI
     )
 };
 
-const FormSelect = ({ label, value, onChange, labelClassName, placeholder = "เลือกวัน" }: FormSelectProps) => ( 
-    <div className="flex-1">
-        <label className={`block text-sm font-medium text-gray-700 mb-1 ${labelClassName || ''} ${!label ? 'h-[20px]' : ''}`}>
+const FormSelect = ({ label, value, onChange, labelClassName, placeholder = "เลือก", options }: FormSelectProps) => ( 
+    <div className="w-full">
+        <label className={`block text-sm font-medium text-gray-700 mb-1 ${labelClassName || ''} ${!label ? 'hidden' : ''}`}>
             {label}
         </label>
         
@@ -82,8 +100,8 @@ const FormSelect = ({ label, value, onChange, labelClassName, placeholder = "เ
             >
                 <option value="">{placeholder}</option> 
                 
-                {DAY_OPTIONS.map(day => (
-                    <option key={day} value={day.toString()}>{`${day} วัน`}</option>
+                {options.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
             </select>
             
@@ -112,10 +130,10 @@ const FormTextarea = ({ label, placeholder, value, onChange, rows = 4 }: FormTex
 
 export interface NewRecipeFormData {
     recipeName: string;
+    farmType: string;
     ageType: 'range' | 'specific';
-    ageStart: string | null;
-    ageEnd: string | null;
-    ageSpecific: string | null;
+    ageRange: string;
+    ageSpecific: string;
     details: string;
     recommendations: string;
 }
@@ -128,10 +146,10 @@ interface CreateRecipeProps {
 
 const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => { 
     const [recipeName, setRecipeName] = useState<string>('');
+    const [farmType, setFarmType] = useState<string>('');
     const [ageType, setAgeType] = useState<'range' | 'specific'>('range'); 
-    const [ageStart, setAgeStart] = useState<string>(''); 
-    const [ageEnd, setAgeEnd] = useState<string>(''); 
-    const [ageSpecific, setAgeSpecific] = useState<string>('');
+    const [ageRange, setAgeRange] = useState<string>('');
+    const [ageSpecific, setAgeSpecific] = useState<string>(''); 
     const [details, setDetails] = useState<string>('');
     const [recommendations, setRecommendations] = useState<string>('');
 
@@ -139,10 +157,10 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
     const handleCreate = () => {
         const formData: NewRecipeFormData = { 
             recipeName,
+            farmType,
             ageType,
-            ageStart: ageType === 'range' ? ageStart : null,
-            ageEnd: ageType === 'range' ? ageEnd : null,
-            ageSpecific: ageType === 'specific' ? ageSpecific : null,
+            ageRange: ageType === 'range' ? ageRange : '', 
+            ageSpecific: ageType === 'specific' ? ageSpecific : '',
             details,
             recommendations,
         };
@@ -163,6 +181,14 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
                     placeholder="ระบุข้อมูล" 
                     value={recipeName}
                     onChange={(e) => setRecipeName(e.target.value)}
+                />
+
+                <FormSelect 
+                    label="ประเภทกลุ่มการเลี้ยง" 
+                    placeholder="เลือกประเภท" 
+                    value={farmType}
+                    onChange={(e) => setFarmType(e.target.value)}
+                    options={FARM_TYPE_OPTIONS}
                 />
 
                 <div>
@@ -194,33 +220,19 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
                 </div>
 
                 {ageType === 'range' ? (
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
-                        
+                    <div>
                         <FormSelect 
-                            label="ตั้งแต่" 
-                            value={ageStart}
-                            onChange={(e) => setAgeStart(e.target.value)}
-                            placeholder="เลือกวัน" 
+                            label="" 
+                            placeholder="เลือกช่วงอายุ" 
+                            value={ageRange}
+                            onChange={(e) => setAgeRange(e.target.value)}
+                            options={AGE_RANGE_OPTIONS}
                         />
-
-                        <span className="text-gray-500 pb-3 hidden sm:block">ถึง</span>
-                        
-                        <div className="flex-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1 sm:hidden">ถึง</label>
-                            
-                            <FormSelect 
-                                label="" 
-                                value={ageEnd}
-                                onChange={(e) => setAgeEnd(e.target.value)}
-                                placeholder="เลือกวัน" 
-                            />
-                        </div>
-
                     </div>
                 ) : (
-                    <div className="flex items-end gap-4">
+                    <div>
                         <FormInput 
-                            label="อายุ (วัน)" 
+                            label="" 
                             type="number"
                             value={ageSpecific}
                             onChange={(e) => setAgeSpecific(e.target.value)}
@@ -265,4 +277,4 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
     );
 };
 
-export default CreateRecipe;
+export default CreateRecipe; 
