@@ -35,14 +35,28 @@ interface ModalState {
 
 
 const mapFeedFormulaToRecipe = (formula: FeedFormula): Recipe => {
+    const rawFarmType = (formula as any).primaryFarmType || (formula as any).farmType;
+    const farmType = rawFarmType ? String(rawFarmType).toUpperCase() : undefined;
+
+    const pickNumericRange = (value?: string | null) => {
+        if (!value) return '';
+        const match = value.match(/(\d+)\s*[-–]\s*(\d+)/);
+        if (match) return `${match[1]}-${match[2]}`;
+        const single = value.match(/(\d+)/g);
+        if (single && single.length === 2) return `${single[0]}-${single[1]}`;
+        if (single && single.length === 1) return `${single[0]}-${single[0]}`;
+        return value;
+    };
+
+    const ageRange = pickNumericRange(formula.targetStage);
+
     return {
         id: formula.id,
         name: formula.name,
-
-        farmType: (formula as any).primaryFarmType || (formula as any).farmType,
+        farmType,
         primaryFarmType: (formula as any).primaryFarmType,
-        ageRange: formula.targetStage,
-        targetStage: formula.targetStage,
+        ageRange,
+        targetStage: ageRange,
         description: formula.description,
         recommendations: formula.recommendations,
         author: 'Admin', 
@@ -207,7 +221,7 @@ function RecipesPage() {
             return;
         }
 
-        const targetStage = `อายุ ${formData.ageFrom}-${formData.ageTo} วัน`;
+        const targetStage = `${formData.ageFrom}-${formData.ageTo}`;
 
         const apiFarmType = formData.farmType;
 
@@ -254,7 +268,7 @@ function RecipesPage() {
             (originalItem.farmType === apiFarmType || originalItem.primaryFarmType === apiFarmType) &&
             originalItem.description === updatedData.details &&
             originalItem.recommendations === updatedData.recommendations &&
-            originalItem.targetStage === `อายุ ${updatedData.ageFrom}-${updatedData.ageTo} วัน`;
+            originalItem.targetStage === `${updatedData.ageFrom}-${updatedData.ageTo}`;
 
         if (isUnchanged) {
             toast.error("ยังไม่ได้มีการแก้ไขข้อมูล", {
@@ -266,7 +280,7 @@ function RecipesPage() {
 
         console.log("Updated recipe data:", updatedData);
         
-        const targetStage = `อายุ ${updatedData.ageFrom}-${updatedData.ageTo} วัน`;
+        const targetStage = `${updatedData.ageFrom}-${updatedData.ageTo}`;
 
         try {
             await feedFormulasAPI.update(updatedData.id, {

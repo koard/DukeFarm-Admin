@@ -6,9 +6,9 @@ import DeleteIcon from '../../assets/fm-delete.svg';
 import EditIcon from '../../assets/rc-edit.svg';
 
 const FARM_TYPE_LABEL: Record<string, string> = {
-    'NURSERY_SMALL': 'กลุ่มอนุบาลขนาดเล็ก',
-    'NURSERY_LARGE': 'กลุ่มอนุบาลขนาดใหญ่',
-    'GROWOUT': 'กลุ่มผู้เลี้ยงขนาดตลาด'
+    SMALL: 'ปลาตุ้ม',
+    LARGE: 'ปลานิ้ว',
+    MARKET: 'ปลาตลาด',
 };
 
 export interface Recipe {
@@ -81,8 +81,15 @@ const RecipesTable = ({ data = [], onView, onEdit, onDelete, startIndex = 0 }: R
                 <tbody className="text-sm text-gray-900 font-normal bg-white">
                     
                     {data.map((item, index) => {
-                        const rawFarmType = item.farmType || (item as any).farm_type || (item as any).primaryFarmType;
-                        const displayFarmType = FARM_TYPE_LABEL[rawFarmType] || rawFarmType || '-';
+                                                const rawFarmType = (item.farmType || (item as any).farm_type || (item as any).primaryFarmType || '').toUpperCase();
+                                                const normalized = rawFarmType === 'NURSERY_SMALL'
+                                                        ? 'SMALL'
+                                                        : rawFarmType === 'NURSERY_LARGE'
+                                                            ? 'LARGE'
+                                                            : rawFarmType === 'GROWOUT'
+                                                                ? 'MARKET'
+                                                                : rawFarmType;
+                                                const displayFarmType = FARM_TYPE_LABEL[normalized] || normalized || '-';
 
                         return (
                             <tr key={item.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">

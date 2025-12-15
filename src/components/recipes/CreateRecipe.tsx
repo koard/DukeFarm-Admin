@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, ChangeEvent } from 'react'; 
+import React, { useState, useRef, ChangeEvent, useEffect } from 'react'; 
 import DownArrowIcon from '../../assets/fm-down.svg';
 
 // ตัวเลือกสำหรับ Dropdown ประเภทฟาร์ม
@@ -9,6 +9,12 @@ const FARM_TYPE_OPTIONS = [
     { value: 'LARGE', label: 'ปลานิ้ว' },
     { value: 'MARKET', label: 'ปลาตลาด' },
 ];
+
+const AGE_PRESETS: Record<string, { from: string; to: string }> = {
+    SMALL: { from: '7', to: '10' },
+    LARGE: { from: '11', to: '30' },
+    MARKET: { from: '31', to: '180' },
+};
 
 interface FormInputProps {
     label: string;
@@ -141,6 +147,15 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
     const [details, setDetails] = useState<string>('');
     const [recommendations, setRecommendations] = useState<string>('');
 
+    useEffect(() => {
+        if (!farmType) return;
+        const preset = AGE_PRESETS[farmType];
+        if (preset) {
+            setAgeFrom(preset.from);
+            setAgeTo(preset.to);
+        }
+    }, [farmType]);
+
 
     const handleCreate = () => {
         const formData: NewRecipeFormData = { 
@@ -160,9 +175,9 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
 
     return (
         <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-6 sm:p-8 pointer-events-auto overflow-y-auto max-h-[90vh]">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">สร้างสูตรอาหาร</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">สร้างสูตรอาหาร</h2>
 
-            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-4 pb-2" onSubmit={(e) => e.preventDefault()}>
                 <FormInput 
                     label="ชื่อสูตรอาหาร" 
                     placeholder="ระบุข้อมูล" 
@@ -170,26 +185,32 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
                     onChange={(e) => setRecipeName(e.target.value)}
                 />
 
-                <FormSelect 
-                    label="ประเภทกลุ่มการเลี้ยง" 
-                    placeholder="เลือกประเภท" 
-                    value={farmType}
-                    onChange={(e) => setFarmType(e.target.value)}
-                    options={FARM_TYPE_OPTIONS}
-                />
+                <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white via-white to-[#f3f7f5] p-4 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800">ประเภทกลุ่มการเลี้ยง</p>
+                        </div>
+                        <span className="text-[11px] font-semibold px-2 py-1 rounded-full bg-[#e7f5ef] text-[#0f5132] border border-[#c7e9d9]">กำหนดง่าย</span>
+                    </div>
 
-                <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">อายุปลาที่แนะนำ (วัน)</label>
+                    <FormSelect 
+                        label=""
+                        placeholder="เลือกประเภท" 
+                        value={farmType}
+                        onChange={(e) => setFarmType(e.target.value)}
+                        options={FARM_TYPE_OPTIONS}
+                    />
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <FormInput 
-                            label="ตั้งแต่"
+                            label="ตั้งแต่ (วัน)"
                             type="number"
-                            placeholder="เช่น 10"
+                            placeholder="เช่น 7"
                             value={ageFrom}
                             onChange={(e) => setAgeFrom(e.target.value)}
                         />
                         <FormInput 
-                            label="จนถึง"
+                            label="จนถึง (วัน)"
                             type="number"
                             placeholder="เช่น 30"
                             value={ageTo}
@@ -210,10 +231,10 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
                     placeholder="ระบุข้อมูล" 
                     value={recommendations}
                     onChange={(e) => setRecommendations(e.target.value)}
-                    rows={5}
+                    rows={4}
                 />
 
-                <div className="flex flex-col sm:flex-row gap-4 mt-8 w-full pt-4">
+                <div className="flex flex-col sm:flex-row gap-4 w-full pt-2">
                     <button
                         type="button"
                         onClick={onClose} 

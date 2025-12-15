@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, ChangeEvent } from 'react';
+import React, { useState, useRef, ChangeEvent, useEffect } from 'react';
 import CalendarIcon from '../../assets/fm-calendar.svg';
 import DownArrowIcon from '../../assets/fm-down.svg';
 
@@ -11,6 +11,20 @@ const FARM_TYPE_OPTIONS = [
     { value: 'LARGE', label: 'ปลานิ้ว' },
     { value: 'MARKET', label: 'ปลาตลาด' },
 ];
+
+const AGE_PRESETS: Record<string, { from: string; to: string }> = {
+    SMALL: { from: '7', to: '10' },
+    LARGE: { from: '11', to: '30' },
+    MARKET: { from: '31', to: '180' },
+};
+
+const normalizeFarmType = (value: string): string => {
+    const upper = value?.toUpperCase?.() || '';
+    if (upper === 'NURSERY_SMALL') return 'SMALL';
+    if (upper === 'NURSERY_LARGE') return 'LARGE';
+    if (upper === 'GROWOUT') return 'MARKET';
+    return upper;
+};
 
 interface FormInputProps {
     label: string;
@@ -168,11 +182,25 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
     const [name, setName] = useState(initialData?.name || '');
     
     const initialFarmType = (initialData as any).farmType || (initialData as any).primaryFarmType || '';
-    const [farmType, setFarmType] = useState<string>(initialFarmType.toUpperCase());
+    const [farmType, setFarmType] = useState<string>(normalizeFarmType(initialFarmType));
     const [ageFrom, setAgeFrom] = useState<string>(parsed.ageFrom);
     const [ageTo, setAgeTo] = useState<string>(parsed.ageTo);
     const [details, setDetails] = useState(initialData?.description || '');
     const [recommendations, setRecommendations] = useState(initialData?.recommendations || '');
+
+    useEffect(() => {
+        if (!farmType) return;
+        const preset = AGE_PRESETS[farmType];
+        if (!preset) return;
+
+        const isEmpty = !ageFrom && !ageTo;
+        const typeChanged = true;
+        if (isEmpty || typeChanged) {
+            setAgeFrom(preset.from);
+            setAgeTo(preset.to);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [farmType]);
 
     const handleUpdate = () => {
         const formData: UpdateRecipeData = {
@@ -190,9 +218,9 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
 
     return (
         <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-6 sm:p-8 pointer-events-auto overflow-y-auto max-h-[90vh]">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">แก้ไขสูตรอาหาร</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">แก้ไขสูตรอาหาร</h2>
 
-            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-4 pb-2" onSubmit={(e) => e.preventDefault()}>
                 <FormInput
                     label="ชื่อสูตรอาหาร"
                     placeholder="ระบุข้อมูล"
@@ -201,26 +229,32 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
                     type="text"
                 />
 
-                <FormSelect
-                    label="ประเภทกลุ่มการเลี้ยง"
-                    placeholder="เลือกประเภท"
-                    value={farmType}
-                    onChange={(e) => setFarmType(e.target.value)}
-                    options={FARM_TYPE_OPTIONS}
-                />
+                <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white via-white to-[#f3f7f5] p-4 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800">ประเภทกลุ่มการเลี้ยง</p>
+                        </div>
+                        <span className="text-[11px] font-semibold px-2 py-1 rounded-full bg-[#e7f5ef] text-[#0f5132] border border-[#c7e9d9]">อัตโนมัติ</span>
+                    </div>
 
-                <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">อายุปลาที่แนะนำ (วัน)</label>
+                    <FormSelect
+                        label=""
+                        placeholder="เลือกประเภท"
+                        value={farmType}
+                        onChange={(e) => setFarmType(e.target.value)}
+                        options={FARM_TYPE_OPTIONS}
+                    />
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <FormInput
-                            label="ตั้งแต่"
+                            label="ตั้งแต่ (วัน)"
                             type="number"
                             value={ageFrom}
                             onChange={(e) => setAgeFrom(e.target.value)}
-                            placeholder="เช่น 10"
+                            placeholder="เช่น 7"
                         />
                         <FormInput
-                            label="จนถึง"
+                            label="จนถึง (วัน)"
                             type="number"
                             value={ageTo}
                             onChange={(e) => setAgeTo(e.target.value)}
@@ -241,10 +275,10 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
                     placeholder="ระบุข้อมูล"
                     value={recommendations}
                     onChange={(e) => setRecommendations(e.target.value)}
-                    rows={5}
+                    rows={4}
                 />
 
-                <div className="flex flex-col sm:flex-row gap-4 mt-8 w-full pt-4">
+                <div className="flex flex-col sm:flex-row gap-4 w-full pt-2">
                     <button
                         type="button"
                         onClick={onClose}
