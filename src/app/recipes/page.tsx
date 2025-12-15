@@ -189,18 +189,15 @@ function RecipesPage() {
     };
 
     const handleCreateRecipe = async (formData: NewRecipeFormData) => { 
-        const isCommonDataValid = 
-            formData.recipeName?.trim() && 
-            formData.farmType && 
-            formData.details?.trim() && 
+        const isCommonDataValid =
+            formData.recipeName?.trim() &&
+            formData.farmType &&
+            formData.details?.trim() &&
             formData.recommendations?.trim();
 
-        let isAgeDataValid = false;
-        if (formData.ageType === 'range') {
-            isAgeDataValid = !!formData.ageRange;
-        } else if (formData.ageType === 'specific') {
-            isAgeDataValid = !!formData.ageSpecific; 
-        }
+        const hasAgeFrom = formData.ageFrom !== undefined && formData.ageFrom !== '';
+        const hasAgeTo = formData.ageTo !== undefined && formData.ageTo !== '';
+        const isAgeDataValid = hasAgeFrom && hasAgeTo;
 
         if (!isCommonDataValid || !isAgeDataValid) {
             toast.error("กรุณากรอกข้อมูลให้ครบถ้วน", { 
@@ -210,19 +207,9 @@ function RecipesPage() {
             return;
         }
 
-        let targetStage = '';
-        if (formData.ageType === 'range') {
-            targetStage = `อายุ ${formData.ageRange} วัน`; 
-        } else if (formData.ageType === 'specific') {
-            targetStage = `อายุ ${formData.ageSpecific} วัน`;
-        }
+        const targetStage = `อายุ ${formData.ageFrom}-${formData.ageTo} วัน`;
 
-        const farmTypeMap: Record<string, string> = {
-            'nursery-small': 'NURSERY_SMALL',
-            'nursery-large': 'NURSERY_LARGE',
-            'market-grower': 'GROWOUT'
-        };
-        const apiFarmType = farmTypeMap[formData.farmType] || formData.farmType;
+        const apiFarmType = formData.farmType;
 
         try {
             await feedFormulasAPI.create({
@@ -230,7 +217,7 @@ function RecipesPage() {
                 targetStage: targetStage,
                 description: formData.details,
                 recommendations: formData.recommendations,
-                farmType: apiFarmType 
+                farmType: apiFarmType,
             } as any); 
 
             toast.success("สร้างสูตรอาหารสำเร็จ!", { duration: 2000, position: "top-right" });
@@ -260,22 +247,14 @@ function RecipesPage() {
         const originalItem = data.find(item => item.id === updatedData.id);
 
         if (!originalItem) return;
-
-        const farmTypeMap: Record<string, string> = {
-            'nursery-small': 'NURSERY_SMALL',
-            'nursery-large': 'NURSERY_LARGE',
-            'market-grower': 'GROWOUT'
-        };
-        const apiFarmType = farmTypeMap[updatedData.farmType] || updatedData.farmType;
+        const apiFarmType = updatedData.farmType;
 
         const isUnchanged = 
             originalItem.name === updatedData.recipeName &&
             (originalItem.farmType === apiFarmType || originalItem.primaryFarmType === apiFarmType) &&
             originalItem.description === updatedData.details &&
             originalItem.recommendations === updatedData.recommendations &&
-            originalItem.targetStage === (updatedData.ageType === 'range' 
-                ? `อายุ ${updatedData.ageRange} วัน`
-                : `อายุ ${updatedData.ageSpecific} วัน`);
+            originalItem.targetStage === `อายุ ${updatedData.ageFrom}-${updatedData.ageTo} วัน`;
 
         if (isUnchanged) {
             toast.error("ยังไม่ได้มีการแก้ไขข้อมูล", {
@@ -287,12 +266,7 @@ function RecipesPage() {
 
         console.log("Updated recipe data:", updatedData);
         
-        let targetStage = '';
-        if (updatedData.ageType === 'range') {
-            targetStage = `อายุ ${updatedData.ageRange} วัน`;
-        } else if (updatedData.ageType === 'specific') {
-            targetStage = `อายุ ${updatedData.ageSpecific} วัน`;
-        }
+        const targetStage = `อายุ ${updatedData.ageFrom}-${updatedData.ageTo} วัน`;
 
         try {
             await feedFormulasAPI.update(updatedData.id, {
@@ -300,7 +274,7 @@ function RecipesPage() {
                 targetStage: targetStage,
                 description: updatedData.details,
                 recommendations: updatedData.recommendations,
-                farmType: apiFarmType
+                farmType: apiFarmType,
             } as any);
 
             toast.success("แก้ไขสูตรอาหารสำเร็จ!", { duration: 2000, position: "top-right" });

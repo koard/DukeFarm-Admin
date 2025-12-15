@@ -5,19 +5,9 @@ import DownArrowIcon from '../../assets/fm-down.svg';
 
 // ตัวเลือกสำหรับ Dropdown ประเภทฟาร์ม
 const FARM_TYPE_OPTIONS = [
-    { value: 'NURSERY_SMALL', label: 'กลุ่มอนุบาลขนาดเล็ก' },
-    { value: 'NURSERY_LARGE', label: 'กลุ่มอนุบาลขนาดใหญ่' },
-    { value: 'GROWOUT', label: 'กลุ่มผู้เลี้ยงขนาดตลาด' },
-];
-
-// ตัวเลือกช่วงอายุ
-const AGE_RANGE_OPTIONS = [
-    { value: '0–15', label: '0–15 วัน' },
-    { value: '16–30', label: '16–30 วัน' },
-    { value: '31–60', label: '31–60 วัน' },
-    { value: '61–90', label: '61–90 วัน' },
-    { value: '91–120', label: '91–120 วัน' },
-    { value: '>120', label: '>120 วัน' },
+    { value: 'SMALL', label: 'ปลาตุ้ม' },
+    { value: 'LARGE', label: 'ปลานิ้ว' },
+    { value: 'MARKET', label: 'ปลาตลาด' },
 ];
 
 interface FormInputProps {
@@ -131,9 +121,8 @@ const FormTextarea = ({ label, placeholder, value, onChange, rows = 4 }: FormTex
 export interface NewRecipeFormData {
     recipeName: string;
     farmType: string;
-    ageType: 'range' | 'specific';
-    ageRange: string;
-    ageSpecific: string;
+    ageFrom: string;
+    ageTo: string;
     details: string;
     recommendations: string;
 }
@@ -147,9 +136,8 @@ interface CreateRecipeProps {
 const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => { 
     const [recipeName, setRecipeName] = useState<string>('');
     const [farmType, setFarmType] = useState<string>('');
-    const [ageType, setAgeType] = useState<'range' | 'specific'>('range'); 
-    const [ageRange, setAgeRange] = useState<string>('');
-    const [ageSpecific, setAgeSpecific] = useState<string>(''); 
+    const [ageFrom, setAgeFrom] = useState<string>('');
+    const [ageTo, setAgeTo] = useState<string>('');
     const [details, setDetails] = useState<string>('');
     const [recommendations, setRecommendations] = useState<string>('');
 
@@ -158,9 +146,8 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
         const formData: NewRecipeFormData = { 
             recipeName,
             farmType,
-            ageType,
-            ageRange: ageType === 'range' ? ageRange : '', 
-            ageSpecific: ageType === 'specific' ? ageSpecific : '',
+            ageFrom,
+            ageTo,
             details,
             recommendations,
         };
@@ -191,55 +178,25 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
                     options={FARM_TYPE_OPTIONS}
                 />
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">อายุปลาที่แนะนำ (วัน)</label>
-                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio"
-                                name="ageType"
-                                value="range"
-                                checked={ageType === 'range'}
-                                onChange={() => setAgeType('range')}
-                                className="w-5 h-5 accent-[#093832] focus:ring-[#093832]/50 border-gray-300" 
-                            />
-                            <span className="text-sm text-gray-700">ระบุช่วงอายุ (วัน)</span> 
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio"
-                                name="ageType"
-                                value="specific"
-                                checked={ageType === 'specific'}
-                                onChange={() => setAgeType('specific')}
-                                className="w-5 h-5 accent-[#093832] focus:ring-[#093832]/50 border-gray-300" 
-                            />
-                            <span className="text-sm text-gray-700">ระบุอายุ (วัน)</span>
-                        </label>
+                <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">อายุปลาที่แนะนำ (วัน)</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <FormInput 
+                            label="ตั้งแต่"
+                            type="number"
+                            placeholder="เช่น 10"
+                            value={ageFrom}
+                            onChange={(e) => setAgeFrom(e.target.value)}
+                        />
+                        <FormInput 
+                            label="จนถึง"
+                            type="number"
+                            placeholder="เช่น 30"
+                            value={ageTo}
+                            onChange={(e) => setAgeTo(e.target.value)}
+                        />
                     </div>
                 </div>
-
-                {ageType === 'range' ? (
-                    <div>
-                        <FormSelect 
-                            label="" 
-                            placeholder="เลือกช่วงอายุ" 
-                            value={ageRange}
-                            onChange={(e) => setAgeRange(e.target.value)}
-                            options={AGE_RANGE_OPTIONS}
-                        />
-                    </div>
-                ) : (
-                    <div>
-                        <FormInput 
-                            label="" 
-                            type="number"
-                            value={ageSpecific}
-                            onChange={(e) => setAgeSpecific(e.target.value)}
-                            placeholder="ระบุอายุ" 
-                        />
-                    </div>
-                )}
 
                 <FormTextarea 
                     label="รายละเอียด" 

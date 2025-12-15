@@ -7,18 +7,9 @@ import DownArrowIcon from '../../assets/fm-down.svg';
 import { Recipe } from "../../app/recipes/page";
 
 const FARM_TYPE_OPTIONS = [
-    { value: 'NURSERY_SMALL', label: 'กลุ่มอนุบาลขนาดเล็ก' },
-    { value: 'NURSERY_LARGE', label: 'กลุ่มอนุบาลขนาดใหญ่' },
-    { value: 'GROWOUT', label: 'กลุ่มผู้เลี้ยงขนาดตลาด' },
-];
-
-const AGE_RANGE_OPTIONS = [
-    { value: '0-15', label: '0-15 วัน' },
-    { value: '16-30', label: '16-30 วัน' },
-    { value: '31-60', label: '31-60 วัน' },
-    { value: '61-90', label: '61-90 วัน' },
-    { value: '91-120', label: '91-120 วัน' },
-    { value: '>120', label: '>120 วัน' },
+    { value: 'SMALL', label: 'ปลาตุ้ม' },
+    { value: 'LARGE', label: 'ปลานิ้ว' },
+    { value: 'MARKET', label: 'ปลาตลาด' },
 ];
 
 interface FormInputProps {
@@ -142,9 +133,8 @@ interface UpdateRecipeData {
     id: string;
     recipeName: string;
     farmType: string;
-    ageType: 'range' | 'specific';
-    ageRange: string;
-    ageSpecific: string | null;
+    ageFrom: string;
+    ageTo: string;
     details: string;
     recommendations: string;
 }
@@ -158,28 +148,19 @@ interface EditRecipeProps {
 const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
 
     const parseTargetStage = (targetStage: string) => {
-        if (!targetStage) return { ageType: 'range' as const, ageRange: '', ageSpecific: '' };
+        if (!targetStage) return { ageFrom: '', ageTo: '' };
 
         const rangeMatch = targetStage.match(/อายุ\s*(\d+)\s*[-–]\s*(\d+)\s*วัน/);
         if (rangeMatch) {
-            return {
-                ageType: 'range' as const,
-                ageRange: `${rangeMatch[1]}-${rangeMatch[2]}`, 
-                ageSpecific: ''
-            };
+            return { ageFrom: rangeMatch[1], ageTo: rangeMatch[2] };
         }
 
-        const specificMatch = targetStage.match(/อายุ\s*(\d+)\s*วัน/);
-        if (specificMatch) {
-            return { ageType: 'specific' as const, ageRange: '', ageSpecific: specificMatch[1] };
-        }
-        
-        const gtMatch = targetStage.match(/>120/);
-        if(gtMatch) {
-             return { ageType: 'range' as const, ageRange: '>120', ageSpecific: '' };
+        const singleMatch = targetStage.match(/อายุ\s*(\d+)\s*วัน/);
+        if (singleMatch) {
+            return { ageFrom: singleMatch[1], ageTo: singleMatch[1] };
         }
 
-        return { ageType: 'range' as const, ageRange: '', ageSpecific: '' };
+        return { ageFrom: '', ageTo: '' };
     };
 
     const parsed = parseTargetStage(initialData?.targetStage || initialData?.ageRange || '');
@@ -188,10 +169,8 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
     
     const initialFarmType = (initialData as any).farmType || (initialData as any).primaryFarmType || '';
     const [farmType, setFarmType] = useState<string>(initialFarmType.toUpperCase());
-    
-    const [ageType, setAgeType] = useState<'range' | 'specific'>(parsed.ageType);
-    const [ageRange, setAgeRange] = useState<string>(parsed.ageRange);
-    const [ageSpecific, setAgeSpecific] = useState(parsed.ageSpecific);
+    const [ageFrom, setAgeFrom] = useState<string>(parsed.ageFrom);
+    const [ageTo, setAgeTo] = useState<string>(parsed.ageTo);
     const [details, setDetails] = useState(initialData?.description || '');
     const [recommendations, setRecommendations] = useState(initialData?.recommendations || '');
 
@@ -200,9 +179,8 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
             id: initialData.id,
             recipeName: name,
             farmType,
-            ageType,
-            ageRange: ageType === 'range' ? ageRange : '',
-            ageSpecific: ageType === 'specific' ? ageSpecific : null,
+            ageFrom,
+            ageTo,
             details,
             recommendations,
         };
@@ -231,49 +209,25 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
                     options={FARM_TYPE_OPTIONS}
                 />
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">อายุปลาที่แนะนำ (วัน)</label>
-                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio" name="ageType" value="range"
-                                checked={ageType === 'range'} onChange={() => setAgeType('range')}
-                                className="w-5 h-5 accent-[#093832] focus:ring-[#093832]/50 border-gray-300"
-                            />
-                            <span className="text-sm text-gray-700">ระบุช่วงอายุ (วัน)</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio" name="ageType" value="specific"
-                                checked={ageType === 'specific'} onChange={() => setAgeType('specific')}
-                                className="w-5 h-5 accent-[#093832] focus:ring-[#093832]/50 border-gray-300"
-                            />
-                            <span className="text-sm text-gray-700">ระบุอายุ (วัน)</span>
-                        </label>
+                <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">อายุปลาที่แนะนำ (วัน)</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <FormInput
+                            label="ตั้งแต่"
+                            type="number"
+                            value={ageFrom}
+                            onChange={(e) => setAgeFrom(e.target.value)}
+                            placeholder="เช่น 10"
+                        />
+                        <FormInput
+                            label="จนถึง"
+                            type="number"
+                            value={ageTo}
+                            onChange={(e) => setAgeTo(e.target.value)}
+                            placeholder="เช่น 30"
+                        />
                     </div>
                 </div>
-
-                {ageType === 'range' ? (
-                    <div>
-                        <FormSelect
-                            label=""
-                            placeholder="เลือกช่วงอายุ"
-                            value={ageRange}
-                            onChange={(e) => setAgeRange(e.target.value)}
-                            options={AGE_RANGE_OPTIONS}
-                        />
-                    </div>
-                ) : (
-                    <div className="flex items-end gap-4">
-                        <FormInput
-                            label=""
-                            type="number"
-                            value={ageSpecific || ''}
-                            onChange={(e) => setAgeSpecific(e.target.value)}
-                            placeholder="ระบุอายุ"
-                        />
-                    </div>
-                )}
 
                 <FormTextarea
                     label="รายละเอียด"
