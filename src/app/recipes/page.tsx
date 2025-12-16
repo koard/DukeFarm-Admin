@@ -33,10 +33,18 @@ interface ModalState {
     data: Recipe | null;
 }
 
+const normalizeFarmType = (value: any): string | undefined => {
+    if (!value) return undefined;
+    const upper = String(value).toUpperCase();
+    if (upper === 'NURSERY_SMALL') return 'SMALL';
+    if (upper === 'NURSERY_LARGE') return 'LARGE';
+    if (upper === 'GROWOUT') return 'MARKET';
+    return upper;
+};
 
 const mapFeedFormulaToRecipe = (formula: FeedFormula): Recipe => {
     const rawFarmType = (formula as any).primaryFarmType || (formula as any).farmType;
-    const farmType = rawFarmType ? String(rawFarmType).toUpperCase() : undefined;
+    const farmType = normalizeFarmType(rawFarmType);
 
     const pickNumericRange = (value?: string | null) => {
         if (!value) return '';
@@ -75,8 +83,6 @@ function RecipesPage() {
     const [filterType, setFilterType] = useState<string>(''); 
 
     const [itemsPerPage, setItemsPerPage] = useState<number>(10); 
-    const [totalItems, setTotalItems] = useState<number>(0);
-    const [totalPages, setTotalPages] = useState<number>(0);
     
     const [modalState, setModalState] = useState<ModalState>({ 
         type: null, 
@@ -99,14 +105,13 @@ function RecipesPage() {
         try {
             setIsLoading(true);
             const response = await feedFormulasAPI.list({
-                page: currentPage,
-                limit: itemsPerPage,
+                page: 1,
+                limit: 100, 
             });
 
             const recipes = response.data.map(mapFeedFormulaToRecipe);
             setData(recipes);
-            setTotalItems(response.pagination.totalItems);
-            setTotalPages(response.pagination.totalPages);
+            console.log("Fetched Data:", recipes);
         } catch (error) {
             console.error('Failed to fetch feed formulas:', error);
             
@@ -117,8 +122,6 @@ function RecipesPage() {
             }
             
             setData([]);
-            setTotalItems(0);
-            setTotalPages(0);
         } finally {
             setIsLoading(false);
         }
@@ -126,7 +129,7 @@ function RecipesPage() {
 
     useEffect(() => {
         fetchFeedFormulas();
-    }, [currentPage, itemsPerPage]);
+    }, []); 
 
     const filteredData = data.filter((item: Recipe) => { 
         // 1. กรองด้วย Search Term
@@ -137,17 +140,19 @@ function RecipesPage() {
         const isSearchMatch = !searchTerm || nameMatch || ageRangeMatch || authorMatch;
 
         // 2. กรองด้วย Filter Type (Dropdown)
-        const itemType = item.farmType || item.primaryFarmType || '';
+        const itemType = item.farmType || ''; 
         const isTypeMatch = !filterType || itemType === filterType;
 
         return isSearchMatch && isTypeMatch;
     });
 
-    const displayTotalItems = (searchTerm || filterType) ? filteredData.length : totalItems;
-    const displayTotalPages = (searchTerm || filterType) ? Math.ceil(filteredData.length / itemsPerPage) : totalPages;
-    const paginatedData = (searchTerm || filterType)
-        ? filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-        : filteredData;
+    const displayTotalItems = filteredData.length;
+    const displayTotalPages = Math.ceil(displayTotalItems / itemsPerPage) || 1;
+
+    const paginatedData = filteredData.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
 
     const handleItemsPerPageChange = (newSize: number) => { 
         setItemsPerPage(newSize);
@@ -173,7 +178,6 @@ function RecipesPage() {
             setModalState({ type: null, data: null });
         } catch (error) {
             console.error('Delete error:', error);
-            
             if (error instanceof APIError) {
                 toast.error(error.message || 'ไม่สามารถลบข้อมูลได้', { duration: 3000 });
             } else {
@@ -222,7 +226,6 @@ function RecipesPage() {
         }
 
         const targetStage = `${formData.ageFrom}-${formData.ageTo}`;
-
         const apiFarmType = formData.farmType;
 
         try {
@@ -240,7 +243,6 @@ function RecipesPage() {
             setModalState({ type: null, data: null });
         } catch (error) {
             console.error('Create error:', error);
-            
             if (error instanceof APIError) {
                 if (error.status === 400 && error.errors) {
                     toast.error(error.errors.join(', '), { duration: 3000 });
@@ -259,13 +261,32 @@ function RecipesPage() {
 
     const handleUpdateRecipe = async (updatedData: any) => { 
         const originalItem = data.find(item => item.id === updatedData.id);
-
         if (!originalItem) return;
+
+        const isCommonDataValid =
+            updatedData.recipeName?.trim() &&
+            updatedData.farmType &&
+            updatedData.details?.trim() &&
+            updatedData.recommendations?.trim();
+
+        const hasAgeFrom = updatedData.ageFrom !== undefined && updatedData.ageFrom !== '';
+        const hasAgeTo = updatedData.ageTo !== undefined && updatedData.ageTo !== '';
+        const isAgeDataValid = hasAgeFrom && hasAgeTo;
+
+        if (!isCommonDataValid || !isAgeDataValid) {
+            toast.error("กรุณากรอกข้อมูลให้ครบถ้วน", { 
+                duration: 2000, 
+                position: "top-right" 
+            });
+            return;
+        }
+
         const apiFarmType = updatedData.farmType;
+        const currentMappedFarmType = normalizeFarmType(originalItem.primaryFarmType || originalItem.farmType);
 
         const isUnchanged = 
             originalItem.name === updatedData.recipeName &&
-            (originalItem.farmType === apiFarmType || originalItem.primaryFarmType === apiFarmType) &&
+            (currentMappedFarmType === updatedData.farmType || originalItem.farmType === updatedData.farmType) &&
             originalItem.description === updatedData.details &&
             originalItem.recommendations === updatedData.recommendations &&
             originalItem.targetStage === `${updatedData.ageFrom}-${updatedData.ageTo}`;
@@ -278,8 +299,6 @@ function RecipesPage() {
             return; 
         }
 
-        console.log("Updated recipe data:", updatedData);
-        
         const targetStage = `${updatedData.ageFrom}-${updatedData.ageTo}`;
 
         try {
@@ -297,7 +316,6 @@ function RecipesPage() {
             setModalState({ type: null, data: null });
         } catch (error) {
             console.error('Update error:', error);
-            
             if (error instanceof APIError) {
                 if (error.status === 400 && error.errors) {
                     toast.error(error.errors.join(', '), { duration: 3000 });
@@ -317,7 +335,6 @@ function RecipesPage() {
             toast.error("ไม่พบข้อมูลที่ต้องการแก้ไข", { duration: 2000 });
             return;
         }
-        
         setModalState({ type: 'edit', data: itemToEdit });
     };
 
@@ -328,16 +345,12 @@ function RecipesPage() {
             toast.error("ไม่พบข้อมูลที่ต้องการดู", { duration: 2000 });
             return;
         }
-        
         setModalState({ type: 'view', data: itemToView });
     };
 
-
     const renderModal = () => {
         const itemData = modalState.data as Recipe; 
-        
         const isContentModal = modalState.type && modalState.type !== 'delete';
-
         let modalContent = null;
         
         switch (modalState.type) {
@@ -382,23 +395,18 @@ function RecipesPage() {
 
         if (isContentModal && modalContent) {
             return (
-                <div 
-                    className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-[rgba(0,0,0,0.5)]"
-                >
+                <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-[rgba(0,0,0,0.5)]">
                     {modalContent}
                 </div>
             );
         }
-        
         return null;
     };
 
 
     return (
         <div className="min-h-screen bg-gray-50"> 
-            <header
-                className={`h-16 flex justify-between items-center px-5 text-white mb-2 bg-[#034A30] sticky top-0 z-20 shadow-md pl-16 lg:pl-5`}
-            >
+            <header className={`h-16 flex justify-between items-center px-5 text-white mb-2 bg-[#034A30] sticky top-0 z-20 shadow-md pl-16 lg:pl-5`}>
                 <h1 className="text-xl ms-2">สูตรอาหาร</h1>
                 <div className="flex items-center space-x-3 text-sm">
                     <span className="text-xl me-2">Admin</span>
@@ -406,7 +414,6 @@ function RecipesPage() {
             </header>
             
             <div className="p-6">
-                
                 <RecipesToolbar 
                     totalItems={displayTotalItems} 
                     onSearch={handleSearch}
@@ -441,7 +448,6 @@ function RecipesPage() {
             </div>
 
             {modalState.type && renderModal()}
-
         </div>
     );
 }

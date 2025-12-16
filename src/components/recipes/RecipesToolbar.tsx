@@ -7,9 +7,9 @@ import PlusIcon from '../../assets/rc-plus.svg';
 import DownArrowIcon from '../../assets/fm-down.svg';
 
 const FARM_TYPE_OPTIONS = [
-    { value: 'NURSERY_SMALL', label: 'กลุ่มอนุบาลขนาดเล็ก' },
-    { value: 'NURSERY_LARGE', label: 'กลุ่มอนุบาลขนาดใหญ่' },
-    { value: 'GROWOUT', label: 'กลุ่มผู้เลี้ยงขนาดตลาด' },
+    { value: 'SMALL', label: 'ปลาตุ้ม' },
+    { value: 'LARGE', label: 'ปลานิ้ว' },
+    { value: 'MARKET', label: 'ปลาตลาด' },
 ];
 
 interface RecipesToolbarProps {

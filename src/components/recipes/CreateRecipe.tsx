@@ -190,7 +190,7 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
                         <div>
                             <p className="text-sm font-semibold text-gray-800">ประเภทกลุ่มการเลี้ยง</p>
                         </div>
-                        <span className="text-[11px] font-semibold px-2 py-1 rounded-full bg-[#e7f5ef] text-[#0f5132] border border-[#c7e9d9]">กำหนดง่าย</span>
+                        <span className="text-[11px] font-semibold px-2 py-1 rounded-full bg-[#e7f5ef] text-[#0f5132] border border-[#c7e9d9]">อัตโนมัติ</span>
                     </div>
 
                     <FormSelect 

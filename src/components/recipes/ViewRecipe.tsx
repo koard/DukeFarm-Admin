@@ -3,9 +3,9 @@
 import { Recipe } from "../../app/recipes/page"; 
 
 const FARM_TYPE_LABEL: Record<string, string> = {
-    'NURSERY_SMALL': 'กลุ่มอนุบาลขนาดเล็ก',
-    'NURSERY_LARGE': 'กลุ่มอนุบาลขนาดใหญ่',
-    'GROWOUT': 'กลุ่มผู้เลี้ยงขนาดตลาด'
+    'SMALL': 'ปลาตุ้ม',
+    'LARGE': 'ปลานิ้ว',
+    'MARKET': 'ปลาตลาด'
 };
 
 interface InfoDisplayProps {
@@ -31,9 +31,11 @@ const ViewRecipe = ({ onClose, initialData }: ViewRecipeProps) => {
 
     const farmTypeValue = (initialData as any).farmType || (initialData as any).primaryFarmType;
 
+    const displayFarmType = FARM_TYPE_LABEL[farmTypeValue] || farmTypeValue || '-';
+
     const displayData = {
         name: initialData?.name || '-',
-        farmType: FARM_TYPE_LABEL[farmTypeValue] || farmTypeValue || '-',
+        farmType: displayFarmType,
         ageDisplay: initialData?.ageRange || initialData?.targetStage || '-',
         description: initialData?.description || '-',
         recommendations: initialData?.recommendations || '-',

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, ChangeEvent, useEffect } from 'react';
+import React, { useState, useRef, ChangeEvent } from 'react';
 import CalendarIcon from '../../assets/fm-calendar.svg';
 import DownArrowIcon from '../../assets/fm-down.svg';
 
@@ -84,7 +84,6 @@ const FormInput = ({ label, placeholder, value, onChange, type = "text" }: FormI
                     }`}
                     style={type === 'date' && !value && !isFocused ? { color: 'transparent' } : {}}
                 />
-
                 {type === 'date' && !value && !isFocused && (
                     <span
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
@@ -93,7 +92,6 @@ const FormInput = ({ label, placeholder, value, onChange, type = "text" }: FormI
                         เลือกวัน
                     </span>
                 )}
-
                 {type === 'date' && (
                     <img
                         src={CalendarIcon.src || CalendarIcon}
@@ -163,13 +161,13 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
 
     const parseTargetStage = (targetStage: string) => {
         if (!targetStage) return { ageFrom: '', ageTo: '' };
-
-        const rangeMatch = targetStage.match(/อายุ\s*(\d+)\s*[-–]\s*(\d+)\s*วัน/);
+        
+        const rangeMatch = targetStage.match(/(\d+)\s*[-–]\s*(\d+)/); 
         if (rangeMatch) {
             return { ageFrom: rangeMatch[1], ageTo: rangeMatch[2] };
         }
-
-        const singleMatch = targetStage.match(/อายุ\s*(\d+)\s*วัน/);
+        
+        const singleMatch = targetStage.match(/(\d+)/);
         if (singleMatch) {
             return { ageFrom: singleMatch[1], ageTo: singleMatch[1] };
         }
@@ -181,28 +179,28 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
 
     const [name, setName] = useState(initialData?.name || '');
     
-    const initialFarmType = (initialData as any).farmType || (initialData as any).primaryFarmType || '';
-    const [farmType, setFarmType] = useState<string>(normalizeFarmType(initialFarmType));
+    const initialRawFarmType = (initialData as any).farmType || (initialData as any).primaryFarmType || '';
+    const [farmType, setFarmType] = useState<string>(normalizeFarmType(initialRawFarmType));
+    
     const [ageFrom, setAgeFrom] = useState<string>(parsed.ageFrom);
     const [ageTo, setAgeTo] = useState<string>(parsed.ageTo);
+    
     const [details, setDetails] = useState(initialData?.description || '');
     const [recommendations, setRecommendations] = useState(initialData?.recommendations || '');
 
-    useEffect(() => {
-        if (!farmType) return;
-        const preset = AGE_PRESETS[farmType];
-        if (!preset) return;
+    const handleFarmTypeChange = (e: ChangeEvent<HTMLSelectElement>) => {
+        const newType = e.target.value;
+        setFarmType(newType);
 
-        const isEmpty = !ageFrom && !ageTo;
-        const typeChanged = true;
-        if (isEmpty || typeChanged) {
+        const preset = AGE_PRESETS[newType];
+        if (preset) {
             setAgeFrom(preset.from);
             setAgeTo(preset.to);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [farmType]);
+    };
 
     const handleUpdate = () => {
+        
         const formData: UpdateRecipeData = {
             id: initialData.id,
             recipeName: name,
@@ -241,7 +239,7 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
                         label=""
                         placeholder="เลือกประเภท"
                         value={farmType}
-                        onChange={(e) => setFarmType(e.target.value)}
+                        onChange={handleFarmTypeChange} 
                         options={FARM_TYPE_OPTIONS}
                     />
 
