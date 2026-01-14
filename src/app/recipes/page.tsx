@@ -20,6 +20,7 @@ export interface Recipe {
     farmType?: string; 
     primaryFarmType?: string; 
     ageRange: string; 
+    ageUnit?: string; 
     targetStage: string; 
     description: string; 
     recommendations: string;
@@ -45,6 +46,8 @@ const normalizeFarmType = (value: any): string | undefined => {
 const mapFeedFormulaToRecipe = (formula: FeedFormula): Recipe => {
     const rawFarmType = (formula as any).primaryFarmType || (formula as any).farmType;
     const farmType = normalizeFarmType(rawFarmType);
+    
+    const targetStageStr = formula.targetStage || ''; 
 
     const pickNumericRange = (value?: string | null) => {
         if (!value) return '';
@@ -56,7 +59,22 @@ const mapFeedFormulaToRecipe = (formula: FeedFormula): Recipe => {
         return value;
     };
 
-    const ageRange = pickNumericRange(formula.targetStage);
+    const ageRange = pickNumericRange(targetStageStr);
+
+    let detectedUnit = '';
+    if (targetStageStr.includes('วัน') || targetStageStr.toLowerCase().includes('day')) {
+        detectedUnit = 'DAY';
+    } else if (targetStageStr.includes('เดือน') || targetStageStr.toLowerCase().includes('month')) {
+        detectedUnit = 'MONTH';
+    } 
+
+    if (!detectedUnit) {
+        if (farmType === 'SMALL') {
+            detectedUnit = 'DAY';
+        } else if (farmType === 'LARGE' || farmType === 'MARKET') {
+            detectedUnit = 'MONTH';
+        }
+    }
 
     return {
         id: formula.id,
@@ -64,7 +82,8 @@ const mapFeedFormulaToRecipe = (formula: FeedFormula): Recipe => {
         farmType,
         primaryFarmType: (formula as any).primaryFarmType,
         ageRange,
-        targetStage: ageRange,
+        ageUnit: detectedUnit, 
+        targetStage: ageRange, 
         description: formula.description,
         recommendations: formula.recommendations,
         author: 'Admin', 
@@ -111,16 +130,13 @@ function RecipesPage() {
 
             const recipes = response.data.map(mapFeedFormulaToRecipe);
             setData(recipes);
-            console.log("Fetched Data:", recipes);
         } catch (error) {
             console.error('Failed to fetch feed formulas:', error);
-            
             if (error instanceof APIError) {
                 toast.error(error.message || 'ไม่สามารถโหลดข้อมูลได้', { duration: 3000 });
             } else {
                 toast.error('เกิดข้อผิดพลาดในการโหลดข้อมูล', { duration: 3000 });
             }
-            
             setData([]);
         } finally {
             setIsLoading(false);
@@ -132,14 +148,12 @@ function RecipesPage() {
     }, []); 
 
     const filteredData = data.filter((item: Recipe) => { 
-        // 1. กรองด้วย Search Term
         const lowerSearchTerm = searchTerm.toLowerCase();
         const nameMatch = item.name && item.name.toLowerCase().includes(lowerSearchTerm);
         const ageRangeMatch = item.ageRange && item.ageRange.toLowerCase().includes(lowerSearchTerm);
         const authorMatch = item.author && item.author.toLowerCase().includes(lowerSearchTerm);
         const isSearchMatch = !searchTerm || nameMatch || ageRangeMatch || authorMatch;
 
-        // 2. กรองด้วย Filter Type (Dropdown)
         const itemType = item.farmType || ''; 
         const isTypeMatch = !filterType || itemType === filterType;
 
@@ -165,15 +179,7 @@ function RecipesPage() {
 
         try {
             await feedFormulasAPI.delete(itemToDelete.id);
-
-            toast.success(
-                `ลบสูตรอาหาร "${itemToDelete.name}" สำเร็จ!`,
-                { 
-                    duration: 2000, 
-                    position: "top-right", 
-                }
-            );
-
+            toast.success(`ลบสูตรอาหาร "${itemToDelete.name}" สำเร็จ!`, { duration: 2000, position: "top-right" });
             await fetchFeedFormulas();
             setModalState({ type: null, data: null });
         } catch (error) {
@@ -189,7 +195,6 @@ function RecipesPage() {
     const handleDeleteClick = (itemId: string) => { 
         const item = data.find(d => d.id === itemId); 
         if (!item) { 
-            console.error("Item to delete not found:", itemId); 
             toast.error("ไม่พบข้อมูลที่ต้องการลบ", { duration: 2000 });
             return; 
         }
@@ -225,13 +230,16 @@ function RecipesPage() {
             return;
         }
 
-        const targetStage = `${formData.ageFrom}-${formData.ageTo}`;
+        const unitLabel = formData.ageUnit === 'month' ? 'เดือน' : 'วัน'; 
+        
+        const targetStage = `${formData.ageFrom}-${formData.ageTo} ${unitLabel}`;
+
         const apiFarmType = formData.farmType;
 
         try {
             await feedFormulasAPI.create({
                 name: formData.recipeName,
-                targetStage: targetStage,
+                targetStage: targetStage, 
                 description: formData.details,
                 recommendations: formData.recommendations,
                 farmType: apiFarmType,
@@ -281,6 +289,9 @@ function RecipesPage() {
             return;
         }
 
+        const unitLabel = updatedData.ageUnit === 'month' ? 'เดือน' : 'วัน';
+        const targetStage = `${updatedData.ageFrom}-${updatedData.ageTo} ${unitLabel}`;
+
         const apiFarmType = updatedData.farmType;
         const currentMappedFarmType = normalizeFarmType(originalItem.primaryFarmType || originalItem.farmType);
 
@@ -289,7 +300,7 @@ function RecipesPage() {
             (currentMappedFarmType === updatedData.farmType || originalItem.farmType === updatedData.farmType) &&
             originalItem.description === updatedData.details &&
             originalItem.recommendations === updatedData.recommendations &&
-            originalItem.targetStage === `${updatedData.ageFrom}-${updatedData.ageTo}`;
+            originalItem.targetStage === targetStage; 
 
         if (isUnchanged) {
             toast.error("ยังไม่ได้มีการแก้ไขข้อมูล", {
@@ -299,12 +310,10 @@ function RecipesPage() {
             return; 
         }
 
-        const targetStage = `${updatedData.ageFrom}-${updatedData.ageTo}`;
-
         try {
             await feedFormulasAPI.update(updatedData.id, {
                 name: updatedData.recipeName,
-                targetStage: targetStage,
+                targetStage: targetStage, 
                 description: updatedData.details,
                 recommendations: updatedData.recommendations,
                 farmType: apiFarmType,
@@ -331,7 +340,6 @@ function RecipesPage() {
     const handleEditClick = (itemId: string) => { 
         const itemToEdit = data.find(item => item.id === itemId); 
         if (!itemToEdit) {
-            console.error("Item to edit not found:", itemId);
             toast.error("ไม่พบข้อมูลที่ต้องการแก้ไข", { duration: 2000 });
             return;
         }
@@ -341,7 +349,6 @@ function RecipesPage() {
     const handleViewClick = (itemId: string) => { 
         const itemToView = data.find(item => item.id === itemId); 
         if (!itemToView) {
-            console.error("Item to view not found:", itemId);
             toast.error("ไม่พบข้อมูลที่ต้องการดู", { duration: 2000 });
             return;
         }

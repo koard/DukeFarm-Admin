@@ -3,18 +3,22 @@
 import React, { useState, useRef, ChangeEvent, useEffect } from 'react'; 
 import DownArrowIcon from '../../assets/fm-down.svg';
 
-// ตัวเลือกสำหรับ Dropdown ประเภทฟาร์ม
 const FARM_TYPE_OPTIONS = [
     { value: 'SMALL', label: 'ปลาตุ้ม' },
     { value: 'LARGE', label: 'ปลานิ้ว' },
     { value: 'MARKET', label: 'ปลาตลาด' },
 ];
 
-const AGE_PRESETS: Record<string, { from: string; to: string }> = {
-    SMALL: { from: '7', to: '10' },
-    LARGE: { from: '11', to: '30' },
-    MARKET: { from: '31', to: '180' },
+const AGE_PRESETS: Record<string, { from: string; to: string; unit: string }> = {
+    SMALL:  { from: '0', to: '30', unit: 'day' },  
+    LARGE:  { from: '1', to: '2',  unit: 'month' }, 
+    MARKET: { from: '3', to: '6',  unit: 'month' }, 
 };
+
+const UNIT_OPTIONS = [
+    { value: 'day', label: 'วัน' },
+    { value: 'month', label: 'เดือน' },
+];
 
 interface FormInputProps {
     label: string;
@@ -44,16 +48,6 @@ interface FormTextareaProps {
 const FormInput = ({ label, placeholder, value, onChange, type = "text" }: FormInputProps) => {
     const inputRef = useRef<HTMLInputElement>(null); 
     const [isFocused, setIsFocused] = useState<boolean>(false); 
-
-    const handleIconClick = () => { 
-        if (inputRef.current && type === 'date') { 
-            try { 
-                (inputRef.current as any).showPicker(); 
-            } catch (error) { 
-                console.error("Browser doesn't support showPicker():", error); 
-            } 
-        } 
-    };
 
     return (
         <div className="w-full">
@@ -123,12 +117,12 @@ const FormTextarea = ({ label, placeholder, value, onChange, rows = 4 }: FormTex
     </div>
 );
 
-
 export interface NewRecipeFormData {
     recipeName: string;
     farmType: string;
     ageFrom: string;
     ageTo: string;
+    ageUnit: string; 
     details: string;
     recommendations: string;
 }
@@ -138,12 +132,15 @@ interface CreateRecipeProps {
     onCreate: (formData: NewRecipeFormData) => void;
 }
 
-
 const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => { 
     const [recipeName, setRecipeName] = useState<string>('');
     const [farmType, setFarmType] = useState<string>('');
+    
     const [ageFrom, setAgeFrom] = useState<string>('');
     const [ageTo, setAgeTo] = useState<string>('');
+    
+    const [selectedUnit, setSelectedUnit] = useState<string>('');
+
     const [details, setDetails] = useState<string>('');
     const [recommendations, setRecommendations] = useState<string>('');
 
@@ -151,8 +148,9 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
         if (!farmType) return;
         const preset = AGE_PRESETS[farmType];
         if (preset) {
-            setAgeFrom(preset.from);
-            setAgeTo(preset.to);
+            setSelectedUnit(preset.unit);
+            setAgeFrom(preset.from); 
+            setAgeTo(preset.to);     
         }
     }, [farmType]);
 
@@ -161,8 +159,9 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
         const formData: NewRecipeFormData = { 
             recipeName,
             farmType,
-            ageFrom,
-            ageTo,
+            ageFrom,    
+            ageTo,      
+            ageUnit: selectedUnit, 
             details,
             recommendations,
         };
@@ -172,6 +171,7 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
         }
     };
 
+    const currentUnitLabel = UNIT_OPTIONS.find(u => u.value === selectedUnit)?.label || 'ระบุ';
 
     return (
         <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-6 sm:p-8 pointer-events-auto overflow-y-auto max-h-[90vh]">
@@ -201,18 +201,26 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
                         options={FARM_TYPE_OPTIONS}
                     />
 
+                    <FormSelect 
+                        label="หน่วยของช่วงเวลา"
+                        placeholder="เลือกหน่วย" 
+                        value={selectedUnit}
+                        onChange={(e) => setSelectedUnit(e.target.value)}
+                        options={UNIT_OPTIONS}
+                    />
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <FormInput 
-                            label="ตั้งแต่ (วัน)"
+                            label={`ตั้งแต่ (${currentUnitLabel})`}
                             type="number"
-                            placeholder="เช่น 7"
+                            placeholder="ระบุ"
                             value={ageFrom}
                             onChange={(e) => setAgeFrom(e.target.value)}
                         />
                         <FormInput 
-                            label="จนถึง (วัน)"
+                            label={`จนถึง (${currentUnitLabel})`}
                             type="number"
-                            placeholder="เช่น 30"
+                            placeholder="ระบุ"
                             value={ageTo}
                             onChange={(e) => setAgeTo(e.target.value)}
                         />
@@ -255,4 +263,4 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
     );
 };
 
-export default CreateRecipe; 
+export default CreateRecipe;

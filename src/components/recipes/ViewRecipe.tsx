@@ -8,6 +8,26 @@ const FARM_TYPE_LABEL: Record<string, string> = {
     'MARKET': 'ปลาตลาด'
 };
 
+const AGE_UNIT_LABEL: Record<string, string> = {
+    DAY: 'วัน',
+    DAYS: 'วัน',
+    MONTH: 'เดือน',
+    MONTHS: 'เดือน',
+
+    day: 'วัน',
+    days: 'วัน',
+    month: 'เดือน',
+    months: 'เดือน',
+};
+
+const normalizeFarmType = (value: string): string => {
+    const upper = value?.toUpperCase?.() || '';
+    if (upper === 'NURSERY_SMALL') return 'SMALL';
+    if (upper === 'NURSERY_LARGE') return 'LARGE';
+    if (upper === 'GROWOUT') return 'MARKET';
+    return upper;
+};
+
 interface InfoDisplayProps {
     label: string;
     value: string | number | null | undefined;
@@ -29,18 +49,30 @@ interface ViewRecipeProps {
 
 const ViewRecipe = ({ onClose, initialData }: ViewRecipeProps) => { 
 
-    const farmTypeValue = (initialData as any).farmType || (initialData as any).primaryFarmType;
+    const rawFarmType = (initialData as any).farmType || (initialData as any).primaryFarmType || '';
+    const normalizedType = normalizeFarmType(rawFarmType);
+    const displayFarmType = FARM_TYPE_LABEL[normalizedType] || normalizedType || '-';
 
-    const displayFarmType = FARM_TYPE_LABEL[farmTypeValue] || farmTypeValue || '-';
+    const rawUnit = (initialData.ageUnit || '').toString();
+    let displayUnit = AGE_UNIT_LABEL[rawUnit.toUpperCase()] || rawUnit || '';
+
+    const rawAge = initialData?.ageRange || initialData?.targetStage || '-';
+    
+    if (rawAge.includes('วัน') || rawAge.includes('เดือน')) {
+        displayUnit = ''; 
+    }
+
+    const ageDisplayWithUnit = rawAge !== '-' 
+        ? (displayUnit ? `${rawAge} ${displayUnit}` : rawAge) 
+        : '-';
 
     const displayData = {
         name: initialData?.name || '-',
         farmType: displayFarmType,
-        ageDisplay: initialData?.ageRange || initialData?.targetStage || '-',
+        ageDisplay: ageDisplayWithUnit, 
         description: initialData?.description || '-',
         recommendations: initialData?.recommendations || '-',
     };
-
 
     return (
         <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-6 sm:p-8 pointer-events-auto overflow-y-auto max-h-[90vh]">
@@ -58,7 +90,7 @@ const ViewRecipe = ({ onClose, initialData }: ViewRecipeProps) => {
                 />
                 
                 <InfoDisplay 
-                    label="อายุปลาที่แนะนำ (วัน)" 
+                    label="ช่วงอายุการเลี้ยง" 
                     value={displayData.ageDisplay} 
                 />
 
