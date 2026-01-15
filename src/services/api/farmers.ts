@@ -10,9 +10,11 @@ export interface Farmer {
   no: number;
   fullName: string;
   phone: string;
-  farmType: 'NURSERY_SMALL' | 'NURSERY_LARGE' | 'GROWOUT';
+  farmType: string;
+  farmTypes: string[];         
   registrationStatus: 'PENDING' | 'COMPLETED';
   pondCount: number | null;
+  farmAreaRai: number | null; 
   latitude: number | null;
   longitude: number | null;
   registeredAt: string;

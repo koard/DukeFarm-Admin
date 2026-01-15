@@ -8,25 +8,23 @@ import DownArrowIcon from '../../assets/fm-down.svg';
 import SearchIcon from '../../assets/fm-search.svg';
 
 interface FarmerToolbarProps {
-  count?: number;
-  onSearchChange: (value: string) => void;
-  onDateChange: (value: string) => void;
-  onTypeChange: (value: string) => void;
-  onGroupTypeChange: (value: string) => void;
+    count?: number;
+    onSearchChange: (value: string) => void;
+    onDateChange: (value: string) => void;
+    // ลบ onTypeChange ออก เพราะไม่ได้ใช้กรองประเภทบ่อแล้ว
+    onGroupTypeChange: (value: string) => void;
 }
 
 const FarmerToolbar = ({
     count = 50,
     onSearchChange,
     onDateChange,
-    onTypeChange,
     onGroupTypeChange,
 }: FarmerToolbarProps) => {
     const [selectedDate, setSelectedDate] = useState('');
-    
     const dateInputRef = useRef<HTMLInputElement>(null); 
     
-    const [selectedPondType, setSelectedPondType] = useState(''); 
+    // ลบ state selectedPondType ออก
     const [selectedGroupType, setSelectedGroupType] = useState('');
 
     const handleDateSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,12 +44,7 @@ const FarmerToolbar = ({
         }
     };
 
-    const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedPondType(e.target.value);
-        if (onTypeChange) {
-            onTypeChange(e.target.value);
-        }
-    };
+    // ลบ handleTypeChange ออก
 
     const handleGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedGroupType(e.target.value);
@@ -66,6 +59,7 @@ const FarmerToolbar = ({
 
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                 
+                {/* 1. ตัวกรองวันที่ */}
                 <div className="relative w-full sm:w-auto h-10 focus-within:border-[#034A30] focus-within:ring-1 focus-within:ring-[#034A30] border border-gray-300 rounded-md">
                     <div className="flex items-center justify-between w-full h-full pl-4 pr-10"> 
                         <span className={`text-sm ${selectedDate ? 'text-gray-900' : 'text-gray-600' } pointer-events-none`}>
@@ -88,6 +82,7 @@ const FarmerToolbar = ({
                     />
                 </div>
 
+                {/* 2. ตัวกรองกลุ่มการเลี้ยง (แก้ไขค่าให้ตรงกับ API) */}
                 <div className="relative w-full sm:w-auto h-10 focus-within:border-[#034A30] focus-within:ring-1 focus-within:ring-[#034A30] border border-gray-300 rounded-md">
                     <select
                         className={`w-full h-full pl-4 pr-10 text-sm bg-transparent rounded-md appearance-none focus:outline-none ${selectedGroupType === "" ? 'text-gray-600' : 'text-gray-600'}`}
@@ -95,9 +90,10 @@ const FarmerToolbar = ({
                         onChange={handleGroupChange}
                     >
                         <option value="">ประเภทกลุ่ม ทั้งหมด</option>
-                        <option value="กลุ่มอนุบาลขนาดเล็ก">กลุ่มอนุบาลขนาดเล็ก</option>
-                        <option value="กลุ่มอนุบาลขนาดใหญ่">กลุ่มอนุบาลขนาดใหญ่</option>
-                        <option value="กลุ่มผู้เลี้ยงขนาดตลาด">กลุ่มผู้เลี้ยงขนาดตลาด</option>
+                        {/* ส่งค่าภาษาอังกฤษไปหลังบ้าน แต่โชว์ภาษาไทย */}
+                        <option value="SMALL">ปลาตุ้ม</option>
+                        <option value="LARGE">ปลานิ้ว</option>
+                        <option value="MARKET">ปลาตลาด</option>
                     </select>
                     <Image 
                         src={DownArrowIcon} 
@@ -108,25 +104,9 @@ const FarmerToolbar = ({
                     />
                 </div>
 
-                <div className="relative w-full sm:w-auto h-10 focus-within:border-[#034A30] focus-within:ring-1 focus-within:ring-[#034A30] border border-gray-300 rounded-md">
-                    <select
-                        className={`w-full h-full pl-4 pr-10 text-sm bg-transparent rounded-md appearance-none focus:outline-none ${selectedPondType === "" ? 'text-gray-600' : 'text-gray-600'}`}
-                        value={selectedPondType} 
-                        onChange={handleTypeChange} 
-                    >
-                        <option value="">ประเภทบ่อ ทั้งหมด</option>
-                        <option value="บ่อดิน">บ่อดิน</option>
-                        <option value="บ่อปูน">บ่อปูน</option>
-                    </select>
-                    <Image 
-                        src={DownArrowIcon} 
-                        alt="arrow" 
-                        width={16} 
-                        height={16} 
-                        className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" 
-                    />
-                </div>
+                {/* (ลบ Dropdown ประเภทบ่อ ออกไปแล้ว) */}
 
+                {/* 3. ช่องค้นหา */}
                 <div className="relative w-full sm:w-50 h-10 focus-within:border-[#034A30] focus-within:ring-1 focus-within:ring-[#034A30] border border-gray-300 rounded-md">
                     <input 
                         type="text" 

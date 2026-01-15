@@ -2,6 +2,10 @@ import type { Farmer as FarmerApiResponse } from '@/services/api/farmers';
 import type { FarmerListItem } from '@/types/farmer';
 
 const FARM_TYPE_LABELS: Record<string, string> = {
+  SMALL: 'ปลาตุ้ม',
+  LARGE: 'ปลานิ้ว',
+  MARKET: 'ปลาตลาด',
+
   NURSERY_SMALL: 'กลุ่มอนุบาลขนาดเล็ก',
   NURSERY_LARGE: 'กลุ่มอนุบาลขนาดใหญ่',
   GROWOUT: 'กลุ่มผู้เลี้ยงขนาดตลาด',
@@ -35,11 +39,15 @@ export const mapFarmerResponse = (farmer: FarmerApiResponse): FarmerListItem => 
   rowNumber: farmer.no,
   name: farmer.fullName || '-',
   phone: farmer.phone || '-',
+  farmType: farmer.farmType,
+  farmTypes: farmer.farmTypes || [], 
+  farmAreaRai: farmer.farmAreaRai,
   groupType: FARM_TYPE_LABELS[farmer.farmType] || farmer.farmType,
-  pondType: 'ไม่ระบุ',
+
+
+  pondType: 'ไม่ระบุ', 
   pondCount: typeof farmer.pondCount === 'number' ? farmer.pondCount : null,
   location: formatCoordinates(farmer.latitude, farmer.longitude),
   registeredDate: formatRegisteredDate(farmer.registeredAt),
-  farmTypeCode: farmer.farmType,
   registeredAtISO: farmer.registeredAt,
 });

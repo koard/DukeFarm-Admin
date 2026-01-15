@@ -8,10 +8,36 @@ import ViewIcon from '../../assets/fm-search-table.svg';
 import DeleteIcon from '../../assets/fm-delete.svg';
 import type { FarmerListItem } from '@/types/farmer';
 
+const FARM_TYPE_LABEL: Record<string, string> = {
+    SMALL: 'ปลาตุ้ม',
+    LARGE: 'ปลานิ้ว',
+    MARKET: 'ปลาตลาด',
+
+    small: 'ปลาตุ้ม',
+    large: 'ปลานิ้ว',
+    market: 'ปลาตลาด',
+};
+
+const getFarmTypeArray = (farmer: any): string[] => {
+    let types: string[] = [];
+
+    if (Array.isArray(farmer.farmTypes) && farmer.farmTypes.length > 0) {
+        types = farmer.farmTypes;
+    } 
+    else if (farmer.farmType) {
+        types = [farmer.farmType];
+    }
+    else if (farmer.groupType) {
+        types = farmer.groupType.split(',').map((t: string) => t.trim());
+    }
+
+    return types;
+};
+
 interface FarmerTableProps {
     farmersData: FarmerListItem[];
     onDeleteClick: (farmer: FarmerListItem) => void;
-  startIndex?: number;
+    startIndex?: number;
 }
 
 const TableHeader = ({ title }: { title: string }) => (
@@ -45,7 +71,7 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
                         </th>
                         <th className="p-4 text-center"><TableHeader title="เบอร์โทร" /></th>
                         <th className="p-4 text-center"><TableHeader title="ประเภทกลุ่มการเลี้ยง" /></th>
-                        <th className="p-4 text-center"><TableHeader title="ประเภทบ่อ" /></th>
+                        <th className="p-4 text-center"><TableHeader title="พื้นที่ฟาร์มทั้งหมด" /></th>
                         <th className="p-4 text-center"><TableHeader title="จำนวนบ่อ" /></th>
                         <th className="p-4 text-center"><TableHeader title="ตำแหน่งฟาร์ม" /></th>
                         <th className="p-4 text-center"><TableHeader title="วันที่ลงทะเบียน" /></th>
@@ -53,35 +79,72 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
                     </tr>
                 </thead>
                 <tbody className="text-sm text-gray-900 font-normal">
-                    {farmersData.map((farmer, index) => (
-                        <tr key={`${farmer.id}-${index}`} className="border-b border-gray-100 last:border-b-0">
-                            <td className="p-4 text-center">{farmer.rowNumber ?? startIndex + index + 1}</td>
-                            <td className="p-4 text-left">{farmer.name}</td>
-                            <td className="p-4 text-center">{farmer.phone}</td>
-                            <td className="p-4 text-center">{farmer.groupType}</td>
-                            <td className="p-4 text-center">{farmer.pondType ?? '-'}</td>
-                            <td className="p-4 text-center">{farmer.pondCount ?? '-'}</td>
-                            <td className="p-4 text-center">
-                                <button className="text-gray-900 underline">{farmer.location}</button>
-                            </td>
-                            <td className="p-4 text-center">{farmer.registeredDate}</td>
-                            <td className="p-4">
-                                <div className="flex justify-center items-center gap-3">
-                                    
-                                    <Link 
-                                        href={`/farmers/${farmer.id}?name=${encodeURIComponent(farmer.name)}`} 
-                                        className="hover:opacity-75"
-                                    >
-                                        <Image src={ViewIcon} alt="view" width={20} height={20} className="w-5 h-5" />
-                                    </Link>
-                                    
-                                    <button onClick={() => onDeleteClick(farmer)} className="hover:opacity-75">
-                                        <Image src={DeleteIcon} alt="delete" width={20} height={20} className="w-5 h-5" />
+                    {farmersData.map((farmer, index) => {
+                        const typeArray = getFarmTypeArray(farmer);
+
+                        const areaRai = (farmer as any).farmAreaRai; 
+                        const displayArea = (areaRai !== undefined && areaRai !== null) ? `${areaRai} ไร่` : '-';
+
+                        const lat = (farmer as any).latitude;
+                        const long = (farmer as any).longitude;
+                        const displayLocation = farmer.location || (lat && long ? `${lat}, ${long}` : '-');
+
+                        const regDate = farmer.registeredDate || 
+                                      ((farmer as any).registeredAt ? new Date((farmer as any).registeredAt).toLocaleDateString('th-TH') : '-');
+
+                        return (
+                            <tr key={`${farmer.id}-${index}`} className="border-b border-gray-100 last:border-b-0">
+                                <td className="p-4 text-center">{farmer.rowNumber ?? startIndex + index + 1}</td>
+                                <td className="p-4 text-left">{farmer.name || (farmer as any).fullName}</td>
+                                <td className="p-4 text-center">{farmer.phone}</td>
+                                
+                                <td className="p-4">
+                                    <div className="flex flex-wrap justify-center gap-2 max-w-[250px] mx-auto">
+                                        {typeArray.length > 0 ? (
+                                            typeArray.map((t, idx) => {
+                                                const label = FARM_TYPE_LABEL[t] || FARM_TYPE_LABEL[t.toUpperCase()] || t;
+                                                return (
+                                                    <span 
+                                                        key={idx} 
+                                                        className="px-2 py-1 text-xs font-medium rounded-full bg-green-50 text-green-700 border border-green-600 whitespace-nowrap"
+                                                    >
+                                                        {label}
+                                                    </span>
+                                                );
+                                            })
+                                        ) : (
+                                            <span>-</span>
+                                        )}
+                                    </div>
+                                </td>
+                              
+                                <td className="p-4 text-center">{displayArea}</td>
+                                <td className="p-4 text-center">{farmer.pondCount ?? '-'}</td>
+                                <td className="p-4 text-center">
+                                    <button className="text-gray-900 underline truncate max-w-[150px]">
+                                        {displayLocation}
                                     </button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
+                                </td>
+                                <td className="p-4 text-center whitespace-nowrap">
+                                    {regDate}
+                                </td>
+                                <td className="p-4">
+                                    <div className="flex justify-center items-center gap-3">
+                                        <Link 
+                                            href={`/farmers/${farmer.id}?name=${encodeURIComponent(farmer.name || (farmer as any).fullName || '')}`} 
+                                            className="hover:opacity-75"
+                                        >
+                                            <Image src={ViewIcon} alt="view" width={20} height={20} className="w-5 h-5" />
+                                        </Link>
+                                        
+                                        <button onClick={() => onDeleteClick(farmer)} className="hover:opacity-75">
+                                            <Image src={DeleteIcon} alt="delete" width={20} height={20} className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>

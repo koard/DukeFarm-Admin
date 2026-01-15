@@ -21,7 +21,6 @@ const Farmers = () => {
     const [currentPage, setCurrentPage] = useState(1);
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedPondType, setSelectedPondType] = useState('');
     const [selectedDate, setSelectedDate] = useState(''); 
     const [selectedGroupType, setSelectedGroupType] = useState('');
 
@@ -89,7 +88,7 @@ const Farmers = () => {
     }, [isDeleteModalOpen]); 
 
     const filtersActive = Boolean(
-        searchTerm.trim() || selectedPondType || selectedDate || selectedGroupType
+        searchTerm.trim() || selectedDate || selectedGroupType
     );
 
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -97,11 +96,32 @@ const Farmers = () => {
     const filteredFarmers = farmers.filter(farmer => { 
         const nameMatch = normalizedSearch ? farmer.name?.toLowerCase().includes(normalizedSearch) : true;
         const phoneMatch = normalizedSearch ? farmer.phone?.includes(searchTerm.trim()) : true;
-        const typeMatch = selectedPondType ? farmer.pondType === selectedPondType : true; 
-        const dateMatch = selectedDate ? farmer.registeredAtISO?.startsWith(selectedDate) : true; 
-        const groupMatch = selectedGroupType ? farmer.groupType === selectedGroupType : true;
+        
+        const dateMatch = selectedDate ? (() => {
+            if (!farmer.registeredAtISO) return false;
+            const d = new Date(farmer.registeredAtISO);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const localDateStr = `${year}-${month}-${day}`;
+            return localDateStr === selectedDate;
+        })() : true;
+        
+        let groupMatch = true;
+        if (selectedGroupType) {
+            if (Array.isArray((farmer as any).farmTypes)) {
+                groupMatch = (farmer as any).farmTypes.includes(selectedGroupType);
+            } 
+            else if (farmer.groupType) {
+                groupMatch = farmer.groupType === selectedGroupType;
+            } else if ((farmer as any).farmType) {
+                groupMatch = (farmer as any).farmType === selectedGroupType;
+            } else {
+                groupMatch = false; 
+            }
+        }
 
-        return (nameMatch || phoneMatch) && typeMatch && dateMatch && groupMatch; 
+        return (nameMatch || phoneMatch) && dateMatch && groupMatch; 
     });
 
     const clientTotalItems = filteredFarmers.length;
@@ -157,7 +177,6 @@ const Farmers = () => {
 
     const handleSearchChange = (term: string) => { setSearchTerm(term); setCurrentPage(1); };
     const handleDateChange = (date: string) => { setSelectedDate(date); setCurrentPage(1); };
-    const handleTypeChange = (type: string) => { setSelectedPondType(type); setCurrentPage(1); };
     const handleGroupTypeChange = (group: string) => { setSelectedGroupType(group); setCurrentPage(1); };
     const handleItemsPerPageChange = (newSize: number) => { setItemsPerPage(newSize); setCurrentPage(1); };
 
@@ -175,7 +194,6 @@ const Farmers = () => {
                     count={totalItems} 
                     onSearchChange={handleSearchChange} 
                     onDateChange={handleDateChange} 
-                    onTypeChange={handleTypeChange}
                     onGroupTypeChange={handleGroupTypeChange}
                 />
                 

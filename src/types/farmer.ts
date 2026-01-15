@@ -1,10 +1,13 @@
-export type FarmTypeCode = 'NURSERY_SMALL' | 'NURSERY_LARGE' | 'GROWOUT';
+export type FarmTypeCode = string; 
 
 export interface FarmerListItem {
-  id: string; // userId from backend
+  id: string; 
   rowNumber?: number;
   name: string;
   phone: string;
+  farmType: string;      
+  farmTypes?: string[];   
+  farmAreaRai?: number | null; 
   groupType: string;
   pondType?: string;
   pondCount?: number | null;

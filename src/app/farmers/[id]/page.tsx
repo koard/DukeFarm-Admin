@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation"; 
 import toast from "react-hot-toast";
 
@@ -9,7 +9,6 @@ import FarmerDashboard from "../../../components/farmers/FarmerDashboard";
 import FarmerHistoryTable, { FarmerHistory } from "../../../components/farmers/FarmerHistoryTable";
 import ViewFarmerHistory from "../../../components/farmers/ViewFarmerHistory";
 import EditFarmerHistory from "../../../components/farmers/EditFarmerHistory";
-
 
 import Pagination from "../../../components/common/Pagination";
 import DeleteConfirm from "../../../components/common/DeleteConfirm";
@@ -38,12 +37,15 @@ interface ModalState {
 }
 
 interface PageProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
-export default function FarmerDetailPage({ params }: PageProps) {
+export default function FarmerDetailPage(props: PageProps) {
+    const params = use(props.params);
+    const { id } = params;
+
     const router = useRouter();
     const [farmerData, setFarmerData] = useState<FarmerListItem | null>(null);
     const [isFarmerLoading, setIsFarmerLoading] = useState(true);
@@ -69,7 +71,7 @@ export default function FarmerDetailPage({ params }: PageProps) {
         const fetchFarmer = async () => {
             setIsFarmerLoading(true);
             try {
-                const farmer = await farmersAPI.getById(params.id);
+                const farmer = await farmersAPI.getById(id);
                 setFarmerData(mapFarmerResponse(farmer));
                 setHistoryData(MOCK_HISTORY_DATA);
             } catch (error) {
@@ -82,7 +84,7 @@ export default function FarmerDetailPage({ params }: PageProps) {
         };
 
         fetchFarmer();
-    }, [params.id]);
+    }, [id]);
 
     const totalItems = historyData.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage) || 1);
