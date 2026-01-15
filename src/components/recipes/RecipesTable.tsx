@@ -5,6 +5,8 @@ import ViewIcon from '../../assets/fm-search-table.svg';
 import DeleteIcon from '../../assets/fm-delete.svg';
 import EditIcon from '../../assets/rc-edit.svg';
 
+import type { Recipe } from '@/app/recipes/page';
+
 const AGE_UNIT_LABEL: Record<string, string> = {
     DAY: 'วัน',
     DAYS: 'วัน',
@@ -22,19 +24,6 @@ const FARM_TYPE_LABEL: Record<string, string> = {
     MARKET: 'ปลาตลาด',
 };
 
-export interface Recipe {
-    id: string;
-    name: string;
-    farmType?: string;
-    ageRange: string;
-    ageUnit?: string;
-    targetStage: string;
-    description: string;
-    recommendations: string;
-    author: string;
-    createdAt: string;
-    updatedAt: string;
-}
 
 interface TableHeaderProps {
     title: string;

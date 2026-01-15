@@ -11,9 +11,9 @@ const FARM_TYPE_OPTIONS = [
 ];
 
 const AGE_PRESETS: Record<string, { from: string; to: string; unit: string }> = {
-    SMALL: { from: '0', to: '30', unit: 'day' },
-    LARGE: { from: '1', to: '2', unit: 'month' },
-    MARKET: { from: '3', to: '6', unit: 'month' },
+    SMALL:  { from: '0', to: '30', unit: 'day' },  
+    LARGE:  { from: '1', to: '2',  unit: 'month' }, 
+    MARKET: { from: '3', to: '6',  unit: 'month' }, 
 };
 
 const UNIT_OPTIONS = [
@@ -88,8 +88,9 @@ const FormSelect = ({ label, value, onChange, labelClassName, options, placehold
             <select
                 value={value}
                 onChange={onChange}
-                className={`w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#179678]/50 bg-white pr-8 h-[42px] ${value === "" ? 'text-gray-400' : 'text-gray-900'
-                    }`}
+                className={`w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#179678]/50 bg-white pr-8 h-[42px] ${
+                    value === "" ? 'text-gray-400' : 'text-gray-900'
+                }`}
             >
                 <option value="">{placeholder}</option>
                 {options?.map(option => (
@@ -120,8 +121,9 @@ interface UpdateRecipeData {
     farmType: string;
     ageFrom: string;
     ageTo: string;
-    ageUnit: string;
-    details: string;
+    ageUnit: string; 
+    ingredients: string;
+    instruction: string;
     recommendations: string;
 }
 
@@ -135,7 +137,7 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
 
     const parseTargetStage = (targetStage: string) => {
         if (!targetStage) return { ageFrom: '', ageTo: '' };
-        const rangeMatch = targetStage.match(/(\d+)\s*[-–]\s*(\d+)/);
+        const rangeMatch = targetStage.match(/(\d+)\s*[-–]\s*(\d+)/); 
         if (rangeMatch) return { ageFrom: rangeMatch[1], ageTo: rangeMatch[2] };
         const singleMatch = targetStage.match(/(\d+)/);
         if (singleMatch) return { ageFrom: singleMatch[1], ageTo: singleMatch[1] };
@@ -144,31 +146,41 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
 
     const getInitialUnit = (data: Recipe) => {
         const str = (data.targetStage || data.ageRange || '').toString();
-
+        
         if (str.includes('เดือน') || str.toLowerCase().includes('month')) return 'month';
         if (str.includes('วัน') || str.toLowerCase().includes('day')) return 'day';
-
+        
         if (data.ageUnit) {
             return data.ageUnit.toLowerCase();
         }
-
+        
         return 'day';
     };
 
-    const parsed = parseTargetStage(initialData?.targetStage || initialData?.ageRange || '');
+    const [name, setName] = useState('');
+    const [farmType, setFarmType] = useState('');
+    const [selectedUnit, setSelectedUnit] = useState('day');
+    const [ageFrom, setAgeFrom] = useState('');
+    const [ageTo, setAgeTo] = useState('');
+    const [ingredients, setIngredients] = useState('');
+    const [instruction, setInstruction] = useState('');
+    const [recommendations, setRecommendations] = useState('');
 
-    const [name, setName] = useState(initialData?.name || '');
-
-    const initialRawFarmType = (initialData as any).farmType || (initialData as any).primaryFarmType || '';
-    const [farmType, setFarmType] = useState<string>(normalizeFarmType(initialRawFarmType));
-
-    const [selectedUnit, setSelectedUnit] = useState<string>(getInitialUnit(initialData));
-
-    const [ageFrom, setAgeFrom] = useState<string>(parsed.ageFrom);
-    const [ageTo, setAgeTo] = useState<string>(parsed.ageTo);
-
-    const [details, setDetails] = useState(initialData?.description || '');
-    const [recommendations, setRecommendations] = useState(initialData?.recommendations || '');
+    useEffect(() => {
+        if (initialData) {
+            const parsed = parseTargetStage(initialData?.targetStage || initialData?.ageRange || '');
+            const initialRawFarmType = (initialData as any).farmType || (initialData as any).primaryFarmType || '';
+            
+            setName(initialData.name || '');
+            setFarmType(normalizeFarmType(initialRawFarmType));
+            setSelectedUnit(getInitialUnit(initialData));
+            setAgeFrom(parsed.ageFrom);
+            setAgeTo(parsed.ageTo);
+            setIngredients((initialData as any).ingredients || '');
+            setInstruction((initialData as any).instruction || '');
+            setRecommendations(initialData.recommendations || '');
+        }
+    }, [initialData]);
 
     const handleFarmTypeChange = (e: ChangeEvent<HTMLSelectElement>) => {
         const newType = e.target.value;
@@ -191,17 +203,18 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
             id: initialData.id,
             recipeName: name,
             farmType,
-            ageFrom,
-            ageTo,
-            ageUnit: selectedUnit,
-            details,
+            ageFrom,    
+            ageTo,      
+            ageUnit: selectedUnit, 
+            ingredients,  
+            instruction,  
             recommendations,
         };
 
         if (onUpdate) onUpdate(formData);
     };
 
-    const currentUnitLabel = UNIT_OPTIONS.find(u => u.value === selectedUnit)?.label || 'ระบุ';
+    const currentUnitLabel = UNIT_OPTIONS.find(u => u.value === selectedUnit)?.label || 'ระบุข้อมูล';
 
     return (
         <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-6 sm:p-8 pointer-events-auto overflow-y-auto max-h-[90vh]">
@@ -228,13 +241,13 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
                         label=""
                         placeholder="เลือกประเภท"
                         value={farmType}
-                        onChange={handleFarmTypeChange}
+                        onChange={handleFarmTypeChange} 
                         options={FARM_TYPE_OPTIONS}
                     />
 
-                    <FormSelect
+                    <FormSelect 
                         label="หน่วยของช่วงเวลา"
-                        placeholder="เลือกหน่วย"
+                        placeholder="เลือกหน่วย" 
                         value={selectedUnit}
                         onChange={(e) => handleUnitChange(e.target.value)}
                         options={UNIT_OPTIONS}
@@ -244,14 +257,14 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
                         <FormInput
                             label={`ตั้งแต่ (${currentUnitLabel})`}
                             type="number"
-                            placeholder="ระบุ"
+                            placeholder="ระบุข้อมูล"
                             value={ageFrom}
                             onChange={(e) => setAgeFrom(e.target.value)}
                         />
                         <FormInput
                             label={`จนถึง (${currentUnitLabel})`}
                             type="number"
-                            placeholder="ระบุ"
+                            placeholder="ระบุข้อมูล"
                             value={ageTo}
                             onChange={(e) => setAgeTo(e.target.value)}
                         />
@@ -259,12 +272,21 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
                 </div>
 
                 <FormTextarea
-                    label="รายละเอียด"
+                    label="ส่วนผสม"
                     placeholder="ระบุข้อมูล"
-                    value={details}
-                    onChange={(e) => setDetails(e.target.value)}
+                    value={ingredients}
+                    onChange={(e) => setIngredients(e.target.value)}
                     rows={6}
                 />
+
+                <FormTextarea
+                    label="วิธีการทำ"
+                    placeholder="ระบุข้อมูล"
+                    value={instruction}
+                    onChange={(e) => setInstruction(e.target.value)}
+                    rows={6}
+                />
+
                 <FormTextarea
                     label="คำแนะนำ"
                     placeholder="ระบุข้อมูล"

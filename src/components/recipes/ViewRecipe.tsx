@@ -1,6 +1,6 @@
 'use client';
 
-import { Recipe } from "../../app/recipes/page";
+import { Recipe } from "../../app/recipes/page"; 
 
 const FARM_TYPE_LABEL: Record<string, string> = {
     'SMALL': 'ปลาตุ้ม',
@@ -36,18 +36,18 @@ interface InfoDisplayProps {
 const InfoDisplay = ({ label, value }: InfoDisplayProps) => (
     <div className="w-full mb-3">
         <label className="block text-sm font-medium text-gray-500 mb-1">{label}</label>
-        <p className="text-sm text-gray-900 whitespace-pre-wrap bg-gray-50 p-2 rounded-md border border-gray-200 min-h-[40px]">
-            {value || '-'}
+        <p className="text-sm text-gray-900 whitespace-pre-wrap bg-gray-50 p-3 rounded-md border border-gray-200 min-h-[40px]">
+            {value || '-'} 
         </p>
     </div>
 );
 
 interface ViewRecipeProps {
     onClose: () => void;
-    initialData: Recipe;
+    initialData: Recipe; 
 }
 
-const ViewRecipe = ({ onClose, initialData }: ViewRecipeProps) => {
+const ViewRecipe = ({ onClose, initialData }: ViewRecipeProps) => { 
 
     const rawFarmType = (initialData as any).farmType || (initialData as any).primaryFarmType || '';
     const normalizedType = normalizeFarmType(rawFarmType);
@@ -57,20 +57,22 @@ const ViewRecipe = ({ onClose, initialData }: ViewRecipeProps) => {
     let displayUnit = AGE_UNIT_LABEL[rawUnit.toUpperCase()] || rawUnit || '';
 
     const rawAge = initialData?.ageRange || initialData?.targetStage || '-';
-
+    
     if (rawAge.includes('วัน') || rawAge.includes('เดือน')) {
-        displayUnit = '';
+        displayUnit = ''; 
     }
 
-    const ageDisplayWithUnit = rawAge !== '-'
-        ? (displayUnit ? `${rawAge} ${displayUnit}` : rawAge)
+    const ageDisplayWithUnit = rawAge !== '-' 
+        ? (displayUnit ? `${rawAge} ${displayUnit}` : rawAge) 
         : '-';
 
     const displayData = {
         name: initialData?.name || '-',
         farmType: displayFarmType,
-        ageDisplay: ageDisplayWithUnit,
-        description: initialData?.description || '-',
+        ageDisplay: ageDisplayWithUnit, 
+        ingredients: initialData?.ingredients || '-',
+        instruction: initialData?.instruction || '-',
+        
         recommendations: initialData?.recommendations || '-',
     };
 
@@ -79,28 +81,35 @@ const ViewRecipe = ({ onClose, initialData }: ViewRecipeProps) => {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">รายละเอียดสูตรอาหาร</h2>
 
             <div className="space-y-4">
-                <InfoDisplay
-                    label="ชื่อสูตรอาหาร"
+                <InfoDisplay 
+                    label="ชื่อสูตรอาหาร" 
                     value={displayData.name}
                 />
 
-                <InfoDisplay
-                    label="ประเภทกลุ่มการเลี้ยง"
-                    value={displayData.farmType}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                    <InfoDisplay 
+                        label="ประเภทกลุ่มการเลี้ยง" 
+                        value={displayData.farmType}
+                    />
+                    
+                    <InfoDisplay 
+                        label="ช่วงอายุการเลี้ยง" 
+                        value={displayData.ageDisplay} 
+                    />
+                </div>
 
-                <InfoDisplay
-                    label="ช่วงอายุการเลี้ยง"
-                    value={displayData.ageDisplay}
+                <InfoDisplay 
+                    label="ส่วนผสม" 
+                    value={displayData.ingredients}
                 />
-
-                <InfoDisplay
-                    label="รายละเอียด"
-                    value={displayData.description}
+                
+                <InfoDisplay 
+                    label="วิธีการทำ" 
+                    value={displayData.instruction}
                 />
-
-                <InfoDisplay
-                    label="คำแนะนำ"
+                
+                <InfoDisplay 
+                    label="คำแนะนำ" 
                     value={displayData.recommendations}
                 />
 

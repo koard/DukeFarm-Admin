@@ -21,8 +21,10 @@ export interface Recipe {
     primaryFarmType?: string; 
     ageRange: string; 
     ageUnit?: string; 
-    targetStage: string; 
-    description: string; 
+    targetStage: string;
+    ingredients: string; 
+    instruction: string;
+    description?: string;  
     recommendations: string;
     author: string; 
     createdAt: string;
@@ -83,8 +85,11 @@ const mapFeedFormulaToRecipe = (formula: FeedFormula): Recipe => {
         primaryFarmType: (formula as any).primaryFarmType,
         ageRange,
         ageUnit: detectedUnit, 
-        targetStage: ageRange, 
-        description: formula.description,
+        targetStage: targetStageStr, 
+        ingredients: formula.ingredients || '',
+        instruction: formula.instruction || '',
+        description: (formula as any).description,
+        
         recommendations: formula.recommendations,
         author: 'Admin', 
         createdAt: new Date(formula.createdAt).toLocaleString('th-TH'),
@@ -215,7 +220,8 @@ function RecipesPage() {
         const isCommonDataValid =
             formData.recipeName?.trim() &&
             formData.farmType &&
-            formData.details?.trim() &&
+            formData.ingredients?.trim() && 
+            formData.instruction?.trim() && 
             formData.recommendations?.trim();
 
         const hasAgeFrom = formData.ageFrom !== undefined && formData.ageFrom !== '';
@@ -240,10 +246,11 @@ function RecipesPage() {
             await feedFormulasAPI.create({
                 name: formData.recipeName,
                 targetStage: targetStage, 
-                description: formData.details,
+                ingredients: formData.ingredients,
+                instruction: formData.instruction,
                 recommendations: formData.recommendations,
                 farmType: apiFarmType,
-            } as any); 
+            }); 
 
             toast.success("สร้างสูตรอาหารสำเร็จ!", { duration: 2000, position: "top-right" });
             
@@ -274,7 +281,8 @@ function RecipesPage() {
         const isCommonDataValid =
             updatedData.recipeName?.trim() &&
             updatedData.farmType &&
-            updatedData.details?.trim() &&
+            updatedData.ingredients?.trim() &&
+            updatedData.instruction?.trim() && 
             updatedData.recommendations?.trim();
 
         const hasAgeFrom = updatedData.ageFrom !== undefined && updatedData.ageFrom !== '';
@@ -298,7 +306,8 @@ function RecipesPage() {
         const isUnchanged = 
             originalItem.name === updatedData.recipeName &&
             (currentMappedFarmType === updatedData.farmType || originalItem.farmType === updatedData.farmType) &&
-            originalItem.description === updatedData.details &&
+            originalItem.ingredients === updatedData.ingredients && 
+            originalItem.instruction === updatedData.instruction &&
             originalItem.recommendations === updatedData.recommendations &&
             originalItem.targetStage === targetStage; 
 
@@ -314,10 +323,11 @@ function RecipesPage() {
             await feedFormulasAPI.update(updatedData.id, {
                 name: updatedData.recipeName,
                 targetStage: targetStage, 
-                description: updatedData.details,
+                ingredients: updatedData.ingredients,
+                instruction: updatedData.instruction,
                 recommendations: updatedData.recommendations,
                 farmType: apiFarmType,
-            } as any);
+            });
 
             toast.success("แก้ไขสูตรอาหารสำเร็จ!", { duration: 2000, position: "top-right" });
             
