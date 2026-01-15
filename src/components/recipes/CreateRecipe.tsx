@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, ChangeEvent, useEffect } from 'react'; 
+import React, { useState, useRef, ChangeEvent, useEffect } from 'react';
 import DownArrowIcon from '../../assets/fm-down.svg';
 
 const FARM_TYPE_OPTIONS = [
@@ -10,9 +10,9 @@ const FARM_TYPE_OPTIONS = [
 ];
 
 const AGE_PRESETS: Record<string, { from: string; to: string; unit: string }> = {
-    SMALL:  { from: '0', to: '30', unit: 'day' },  
-    LARGE:  { from: '1', to: '2',  unit: 'month' }, 
-    MARKET: { from: '3', to: '6',  unit: 'month' }, 
+    SMALL: { from: '0', to: '30', unit: 'day' },
+    LARGE: { from: '1', to: '2', unit: 'month' },
+    MARKET: { from: '3', to: '6', unit: 'month' },
 };
 
 const UNIT_OPTIONS = [
@@ -46,27 +46,26 @@ interface FormTextareaProps {
 }
 
 const FormInput = ({ label, placeholder, value, onChange, type = "text" }: FormInputProps) => {
-    const inputRef = useRef<HTMLInputElement>(null); 
-    const [isFocused, setIsFocused] = useState<boolean>(false); 
+    const inputRef = useRef<HTMLInputElement>(null);
+    const [isFocused, setIsFocused] = useState<boolean>(false);
 
     return (
         <div className="w-full">
             <label className={`block text-sm font-medium text-gray-700 mb-1 ${!label ? 'hidden' : ''}`}>
                 {label}
             </label>
-            
+
             <div className="relative">
                 <input
                     ref={inputRef}
-                    type={type} 
-                    placeholder={placeholder || (type === 'date' ? 'เลือกวัน' : '')} 
+                    type={type}
+                    placeholder={placeholder || (type === 'date' ? 'เลือกวัน' : '')}
                     value={value}
                     onChange={onChange}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
-                    className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#179678]/50 placeholder-gray-400 ${
-                        type === 'date' ? 'pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0' : '' 
-                    }`} 
+                    className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#179678]/50 placeholder-gray-400 ${type === 'date' ? 'pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0' : ''
+                        }`}
                     style={type === 'date' && !value && !isFocused ? { color: 'transparent' } : {}}
                 />
             </div>
@@ -74,32 +73,31 @@ const FormInput = ({ label, placeholder, value, onChange, type = "text" }: FormI
     )
 };
 
-const FormSelect = ({ label, value, onChange, labelClassName, placeholder = "เลือก", options }: FormSelectProps) => ( 
+const FormSelect = ({ label, value, onChange, labelClassName, placeholder = "เลือก", options }: FormSelectProps) => (
     <div className="w-full">
         <label className={`block text-sm font-medium text-gray-700 mb-1 ${labelClassName || ''} ${!label ? 'hidden' : ''}`}>
             {label}
         </label>
-        
+
         <div className="relative">
-            <select 
-                value={value} 
+            <select
+                value={value}
                 onChange={onChange}
-                className={`w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#179678]/50 bg-white pr-8 ${
-                    value === "" ? 'text-gray-400' : 'text-gray-900'
-                }`}
+                className={`w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#179678]/50 bg-white pr-8 ${value === "" ? 'text-gray-400' : 'text-gray-900'
+                    }`}
             >
-                <option value="">{placeholder}</option> 
-                
+                <option value="">{placeholder}</option>
+
                 {options.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
             </select>
-            
+
             <img
-                src={DownArrowIcon.src || DownArrowIcon} 
+                src={DownArrowIcon.src || DownArrowIcon}
                 alt="arrow"
                 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-            /> 
+            />
         </div>
     </div>
 );
@@ -122,7 +120,7 @@ export interface NewRecipeFormData {
     farmType: string;
     ageFrom: string;
     ageTo: string;
-    ageUnit: string; 
+    ageUnit: string;
     details: string;
     recommendations: string;
 }
@@ -132,13 +130,13 @@ interface CreateRecipeProps {
     onCreate: (formData: NewRecipeFormData) => void;
 }
 
-const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => { 
+const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
     const [recipeName, setRecipeName] = useState<string>('');
     const [farmType, setFarmType] = useState<string>('');
-    
+
     const [ageFrom, setAgeFrom] = useState<string>('');
     const [ageTo, setAgeTo] = useState<string>('');
-    
+
     const [selectedUnit, setSelectedUnit] = useState<string>('');
 
     const [details, setDetails] = useState<string>('');
@@ -149,25 +147,25 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
         const preset = AGE_PRESETS[farmType];
         if (preset) {
             setSelectedUnit(preset.unit);
-            setAgeFrom(preset.from); 
-            setAgeTo(preset.to);     
+            setAgeFrom(preset.from);
+            setAgeTo(preset.to);
         }
     }, [farmType]);
 
 
     const handleCreate = () => {
-        const formData: NewRecipeFormData = { 
+        const formData: NewRecipeFormData = {
             recipeName,
             farmType,
-            ageFrom,    
-            ageTo,      
-            ageUnit: selectedUnit, 
+            ageFrom,
+            ageTo,
+            ageUnit: selectedUnit,
             details,
             recommendations,
         };
-        
+
         if (onCreate) {
-            onCreate(formData); 
+            onCreate(formData);
         }
     };
 
@@ -178,9 +176,9 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
             <h2 className="text-2xl font-bold text-gray-900 mb-4">สร้างสูตรอาหาร</h2>
 
             <form className="space-y-4 pb-2" onSubmit={(e) => e.preventDefault()}>
-                <FormInput 
-                    label="ชื่อสูตรอาหาร" 
-                    placeholder="ระบุข้อมูล" 
+                <FormInput
+                    label="ชื่อสูตรอาหาร"
+                    placeholder="ระบุข้อมูล"
                     value={recipeName}
                     onChange={(e) => setRecipeName(e.target.value)}
                 />
@@ -193,31 +191,31 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
                         <span className="text-[11px] font-semibold px-2 py-1 rounded-full bg-[#e7f5ef] text-[#0f5132] border border-[#c7e9d9]">อัตโนมัติ</span>
                     </div>
 
-                    <FormSelect 
+                    <FormSelect
                         label=""
-                        placeholder="เลือกประเภท" 
+                        placeholder="เลือกประเภท"
                         value={farmType}
                         onChange={(e) => setFarmType(e.target.value)}
                         options={FARM_TYPE_OPTIONS}
                     />
 
-                    <FormSelect 
+                    <FormSelect
                         label="หน่วยของช่วงเวลา"
-                        placeholder="เลือกหน่วย" 
+                        placeholder="เลือกหน่วย"
                         value={selectedUnit}
                         onChange={(e) => setSelectedUnit(e.target.value)}
                         options={UNIT_OPTIONS}
                     />
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <FormInput 
+                        <FormInput
                             label={`ตั้งแต่ (${currentUnitLabel})`}
                             type="number"
                             placeholder="ระบุ"
                             value={ageFrom}
                             onChange={(e) => setAgeFrom(e.target.value)}
                         />
-                        <FormInput 
+                        <FormInput
                             label={`จนถึง (${currentUnitLabel})`}
                             type="number"
                             placeholder="ระบุ"
@@ -227,16 +225,16 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
                     </div>
                 </div>
 
-                <FormTextarea 
-                    label="รายละเอียด" 
-                    placeholder="ระบุข้อมูล" 
+                <FormTextarea
+                    label="รายละเอียด"
+                    placeholder="ระบุข้อมูล"
                     value={details}
-                    onChange={(e) => setDetails(e.target.value)} 
+                    onChange={(e) => setDetails(e.target.value)}
                     rows={6}
                 />
-                <FormTextarea 
-                    label="คำแนะนำเพิ่มเติม" 
-                    placeholder="ระบุข้อมูล" 
+                <FormTextarea
+                    label="คำแนะนำ"
+                    placeholder="ระบุข้อมูล"
                     value={recommendations}
                     onChange={(e) => setRecommendations(e.target.value)}
                     rows={4}
@@ -245,13 +243,13 @@ const CreateRecipe = ({ onClose, onCreate }: CreateRecipeProps) => {
                 <div className="flex flex-col sm:flex-row gap-4 w-full pt-2">
                     <button
                         type="button"
-                        onClick={onClose} 
+                        onClick={onClose}
                         className="flex-1 px-4 py-3 bg-white border border-[#179678] rounded-lg text-base font-semibold text-[#179678] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#179678]/50"
                     >
                         ยกเลิก
                     </button>
                     <button
-                        type="submit" 
+                        type="submit"
                         onClick={handleCreate}
                         className="flex-1 px-4 py-3 bg-[#179678] border border-transparent rounded-lg text-base font-semibold text-white hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-[#179678]/50"
                     >

@@ -11,9 +11,9 @@ const FARM_TYPE_OPTIONS = [
 ];
 
 const AGE_PRESETS: Record<string, { from: string; to: string; unit: string }> = {
-    SMALL:  { from: '0', to: '30', unit: 'day' },  
-    LARGE:  { from: '1', to: '2',  unit: 'month' }, 
-    MARKET: { from: '3', to: '6',  unit: 'month' }, 
+    SMALL: { from: '0', to: '30', unit: 'day' },
+    LARGE: { from: '1', to: '2', unit: 'month' },
+    MARKET: { from: '3', to: '6', unit: 'month' },
 };
 
 const UNIT_OPTIONS = [
@@ -88,9 +88,8 @@ const FormSelect = ({ label, value, onChange, labelClassName, options, placehold
             <select
                 value={value}
                 onChange={onChange}
-                className={`w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#179678]/50 bg-white pr-8 h-[42px] ${
-                    value === "" ? 'text-gray-400' : 'text-gray-900'
-                }`}
+                className={`w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#179678]/50 bg-white pr-8 h-[42px] ${value === "" ? 'text-gray-400' : 'text-gray-900'
+                    }`}
             >
                 <option value="">{placeholder}</option>
                 {options?.map(option => (
@@ -121,7 +120,7 @@ interface UpdateRecipeData {
     farmType: string;
     ageFrom: string;
     ageTo: string;
-    ageUnit: string; 
+    ageUnit: string;
     details: string;
     recommendations: string;
 }
@@ -136,7 +135,7 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
 
     const parseTargetStage = (targetStage: string) => {
         if (!targetStage) return { ageFrom: '', ageTo: '' };
-        const rangeMatch = targetStage.match(/(\d+)\s*[-–]\s*(\d+)/); 
+        const rangeMatch = targetStage.match(/(\d+)\s*[-–]\s*(\d+)/);
         if (rangeMatch) return { ageFrom: rangeMatch[1], ageTo: rangeMatch[2] };
         const singleMatch = targetStage.match(/(\d+)/);
         if (singleMatch) return { ageFrom: singleMatch[1], ageTo: singleMatch[1] };
@@ -145,29 +144,29 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
 
     const getInitialUnit = (data: Recipe) => {
         const str = (data.targetStage || data.ageRange || '').toString();
-        
+
         if (str.includes('เดือน') || str.toLowerCase().includes('month')) return 'month';
         if (str.includes('วัน') || str.toLowerCase().includes('day')) return 'day';
-        
+
         if (data.ageUnit) {
             return data.ageUnit.toLowerCase();
         }
-        
+
         return 'day';
     };
 
     const parsed = parseTargetStage(initialData?.targetStage || initialData?.ageRange || '');
 
     const [name, setName] = useState(initialData?.name || '');
-    
+
     const initialRawFarmType = (initialData as any).farmType || (initialData as any).primaryFarmType || '';
     const [farmType, setFarmType] = useState<string>(normalizeFarmType(initialRawFarmType));
-    
+
     const [selectedUnit, setSelectedUnit] = useState<string>(getInitialUnit(initialData));
 
     const [ageFrom, setAgeFrom] = useState<string>(parsed.ageFrom);
     const [ageTo, setAgeTo] = useState<string>(parsed.ageTo);
-    
+
     const [details, setDetails] = useState(initialData?.description || '');
     const [recommendations, setRecommendations] = useState(initialData?.recommendations || '');
 
@@ -192,9 +191,9 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
             id: initialData.id,
             recipeName: name,
             farmType,
-            ageFrom,    
-            ageTo,      
-            ageUnit: selectedUnit, 
+            ageFrom,
+            ageTo,
+            ageUnit: selectedUnit,
             details,
             recommendations,
         };
@@ -229,13 +228,13 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
                         label=""
                         placeholder="เลือกประเภท"
                         value={farmType}
-                        onChange={handleFarmTypeChange} 
+                        onChange={handleFarmTypeChange}
                         options={FARM_TYPE_OPTIONS}
                     />
 
-                    <FormSelect 
+                    <FormSelect
                         label="หน่วยของช่วงเวลา"
-                        placeholder="เลือกหน่วย" 
+                        placeholder="เลือกหน่วย"
                         value={selectedUnit}
                         onChange={(e) => handleUnitChange(e.target.value)}
                         options={UNIT_OPTIONS}
@@ -267,7 +266,7 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
                     rows={6}
                 />
                 <FormTextarea
-                    label="คำแนะนำเพิ่มเติม"
+                    label="คำแนะนำ"
                     placeholder="ระบุข้อมูล"
                     value={recommendations}
                     onChange={(e) => setRecommendations(e.target.value)}
