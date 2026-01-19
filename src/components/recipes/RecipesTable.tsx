@@ -1,6 +1,6 @@
 'use client';
 
-import SortIcon from '../../assets/fm-arrow.svg';
+// import SortIcon from '../../assets/fm-arrow.svg';
 import ViewIcon from '../../assets/fm-search-table.svg';
 import DeleteIcon from '../../assets/fm-delete.svg';
 import EditIcon from '../../assets/rc-edit.svg';
@@ -32,7 +32,7 @@ interface TableHeaderProps {
 const TableHeader = ({ title }: TableHeaderProps) => (
     <div className="flex items-center justify-center gap-2">
         <span>{title}</span>
-        <img src={SortIcon.src || SortIcon} alt="sort" className="w-4 h-4 opacity-60" />
+        {/* <img src={SortIcon.src || SortIcon} alt="sort" className="w-4 h-4 opacity-60" /> */}
     </div>
 );
 
@@ -63,7 +63,7 @@ const RecipesTable = ({ data = [], onView, onEdit, onDelete, startIndex = 0 }: R
                         <th className="p-4 text-left">
                             <div className="flex items-center gap-2">
                                 <span>ชื่อสูตรอาหาร</span>
-                                <img src={SortIcon.src || SortIcon} alt="sort" className="w-4 h-4 opacity-60" />
+                                {/* <img src={SortIcon.src || SortIcon} alt="sort" className="w-4 h-4 opacity-60" /> */}
                             </div>
                         </th>
                         <th className="p-4 text-center"><TableHeader title="กลุ่มการเลี้ยง" /></th>

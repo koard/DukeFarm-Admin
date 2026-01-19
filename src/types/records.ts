@@ -20,6 +20,7 @@ export interface CreateRecordRequest {
   farmType: string; 
   recordedAt: string;
   fishAgeLabel: string;
+  
   pondType?: string;     
   pondCount?: number;
   fishCountText?: string; 
@@ -35,5 +36,32 @@ export interface CreateRecordRequest {
   weatherRainMm?: number;
   weatherHumidityPct?: number;
 
+  metadata?: {
+    cycleStartDate?: string;
+    initialAgeOffsetDays?: number;
+  };
+
   notes?: string;
+}
+export interface RecordEntry {
+  id: string;
+  recordedAt: string;
+  farmType: string;
+  
+  fishAgeDays: number;
+  fishAgeLabel: string;
+  
+  pondType: string;
+  pondCount: number;
+  
+  fishCount: number;
+  fishCountText: string;
+  
+  foodAmountKg: number | null; 
+  
+  weatherTemperatureC: number;
+  weatherRainMm: number;
+  weatherHumidityPct: number;
+  
+  fishAverageWeight: number | null;
 }

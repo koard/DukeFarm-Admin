@@ -11,7 +11,12 @@ import SortIcon from '../../assets/fm-arrow.svg';
 export interface FarmerHistory {
     id: string;
     date: string;
-    age: number | string;
+    
+    // ✅ ตัวแปรตามเอกสาร
+    farmType?: string | null;    
+    fishAgeDays?: number | null;   
+    
+    age: number | string; 
     weight?: number;
 
     pondType: string;
@@ -25,7 +30,6 @@ export interface FarmerHistory {
     humidity: number;
 }
 
-
 interface FarmerHistoryTableProps {
     data: FarmerHistory[];
     onView?: (item: FarmerHistory) => void;
@@ -37,9 +41,26 @@ interface FarmerHistoryTableProps {
 const TableHeader = ({ title }: { title: string }) => (
     <div className="flex items-center justify-center gap-2">
         <span>{title}</span>
-        <Image src={SortIcon} alt="sort" width={16} height={16} className="w-4 h-4 opacity-60" />
+        {/* <Image src={SortIcon} alt="sort" width={16} height={16} className="w-4 h-4 opacity-60" /> */}
     </div>
 );
+
+const POND_TYPE_MAP: Record<string, string> = {
+    'EARTHEN': 'บ่อดิน',
+    'CONCRETE': 'บ่อปูน',
+    'earthen': 'บ่อดิน',
+    'concrete': 'บ่อปูน'
+};
+
+const FARM_TYPE_MAP: Record<string, string> = {
+    'SMALL': 'ปลาตุ้ม',
+    'LARGE': 'ปลานิ้ว',
+    'MARKET': 'ปลาตลาด',
+    'small': 'ปลาตุ้ม',
+    'large': 'ปลานิ้ว',
+    'market': 'ปลาตลาด',
+    'ALL': 'ทั้งหมด'
+};
 
 const FarmerHistoryTable = ({ 
     data, 
@@ -49,12 +70,11 @@ const FarmerHistoryTable = ({
     startIndex = 0 
 }: FarmerHistoryTableProps) => {
 
-        const formatNumber = (num: number | string) => {
+    const formatNumber = (num: number | string) => {
         if (num === null || num === undefined || num === '-') return '-';
         if (typeof num === 'string') return num;
         return num.toLocaleString();
     };
-
 
     if (!data || data.length === 0) {
         return (
@@ -85,9 +105,10 @@ const FarmerHistoryTable = ({
                             <tr className="text-sm font-medium text-[#ACACAC] bg-black">
                                 <th className="p-3 text-center w-[60px]"><TableHeader title="No." /></th>
                                 <th className="p-3 text-center"><TableHeader title="วันที่เก็บข้อมูล" /></th>
-                                <th className="p-3 text-center"><TableHeader title="อายุปลา (วัน)" /></th>
                                 
-                                {/* <th className="p-3 text-center"><TableHeader title="น้ำหนักเฉลี่ย (Kg.)" /></th> */}
+                                <th className="p-3 text-center"><TableHeader title="ประเภทฟาร์ม" /></th>
+                                
+                                <th className="p-3 text-center"><TableHeader title="อายุปลา (วัน)" /></th>
                                 
                                 <th className="p-3 text-center"><TableHeader title="ประเภทบ่อ" /></th>
                                 <th className="p-3 text-center"><TableHeader title="จำนวนบ่อ" /></th>
@@ -104,11 +125,19 @@ const FarmerHistoryTable = ({
                                 <tr key={item.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
                                     <td className="p-4 text-center">{startIndex + index + 1}</td>
                                     <td className="p-4 text-center whitespace-nowrap">{item.date}</td>
-                                    <td className="p-4 text-center">{item.age}</td>
                                     
-                                    {/* <td className="p-4 text-center">{item.weight ? item.weight.toFixed(2) : '-'}</td> */}
+                                    <td className="p-4 text-center">
+                                        {item.farmType ? (FARM_TYPE_MAP[item.farmType] || item.farmType) : '-'}
+                                    </td>
+
+                                    <td className="p-4 text-center">
+                                        {item.fishAgeDays !== null && item.fishAgeDays !== undefined ? item.fishAgeDays : '-'}
+                                    </td>
                                     
-                                    <td className="p-4 text-center">{item.pondType}</td>
+                                    <td className="p-4 text-center">
+                                        {POND_TYPE_MAP[item.pondType] || item.pondType}
+                                    </td>
+
                                     <td className="p-4 text-center">{item.pondCount}</td>
                                     <td className="p-4 text-center">{formatNumber(item.fishCount)}</td>
                                     

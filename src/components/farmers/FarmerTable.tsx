@@ -42,7 +42,7 @@ interface FarmerTableProps {
 const TableHeader = ({ title }: { title: string }) => (
     <div className="flex items-center justify-center gap-2">
         <span>{title}</span>
-        <Image src={SortIcon} alt="sort" width={16} height={16} className="w-4 h-4 opacity-60" />
+        {/* <Image src={SortIcon} alt="sort" width={16} height={16} className="w-4 h-4 opacity-60" /> */}
     </div>
 );
 
@@ -65,7 +65,7 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
                         <th className="p-4 text-left">
                             <div className="flex items-center gap-2">
                                 <span>ชื่อ-นามสกุล</span>
-                                <Image src={SortIcon} alt="sort" width={16} height={16} className="w-4 h-4 opacity-60" />
+                                {/* <Image src={SortIcon} alt="sort" width={16} height={16} className="w-4 h-4 opacity-60" /> */}
                             </div>
                         </th>
                         <th className="p-4 text-center"><TableHeader title="เบอร์โทร" /></th>
@@ -96,7 +96,7 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
                         }
 
                         const regDate = farmer.registeredDate || 
-                                    ((farmer as any).registeredAt ? new Date((farmer as any).registeredAt).toLocaleDateString('th-TH') : '-');
+                                      ((farmer as any).registeredAt ? new Date((farmer as any).registeredAt).toLocaleDateString('th-TH') : '-');
 
                         return (
                             <tr key={`${farmer.id}-${index}`} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
