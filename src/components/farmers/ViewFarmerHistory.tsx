@@ -93,7 +93,7 @@ const ViewFarmerHistory = ({ data, onClose }: ViewFarmerHistoryProps) => {
                 <div>
                     <label className="text-lg text-gray-900 mb-2 block">ปริมาณอาหาร (กิโลกรัม.)</label>
                     <div className="w-full border border-gray-300 rounded-lg p-3 text-lg text-gray-700 bg-gray-50">
-                        {data?.foodAmount || '-'}
+                        {data?.foodAmountKg || '-'}
                     </div>
                 </div>
             </div>

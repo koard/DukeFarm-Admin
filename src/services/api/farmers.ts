@@ -2,8 +2,34 @@ import { httpClient } from './client';
 import { PaginatedResponse } from './types';
 
 /**
- * Farmers API Service
+ * Interfaces (เพิ่ม FarmerEntry เพื่อรองรับตารางประวัติ)
  */
+
+export interface FarmerEntry {
+  id: string;
+  recordedAt: string;
+  fishAgeDays: number;
+  fishAgeLabel: string;
+  pondType: string;
+  pondCount: number;
+  fishCount: number;
+  fishCountText: string;
+  foodAmountKg?: number | null;     
+  fishAverageWeight?: number | null; 
+  weatherTemperatureC?: number;
+  weatherRainMm?: number;
+  weatherHumidityPct?: number;
+}
+
+export interface FarmerStats {
+  averageFishWeight?: number | null;
+  survivalRate: number;
+  survivalRatePct: number;
+  latestFishAgeDays: number;
+  latestFishAgeLabel: string;
+  latestFishCount: number;
+  totalPonds: number;
+}
 
 export interface Farmer {
   userId: string;
@@ -12,12 +38,16 @@ export interface Farmer {
   phone: string;
   farmType: string;
   farmTypes: string[];         
+  availableFarmTypes?: string[]; 
+
   registrationStatus: 'PENDING' | 'COMPLETED';
   pondCount: number | null;
   farmAreaRai: number | null; 
   latitude: number | null;
   longitude: number | null;
   registeredAt: string;
+  stats?: FarmerStats;
+  entries?: FarmerEntry[];
 }
 
 export interface FarmersListParams {

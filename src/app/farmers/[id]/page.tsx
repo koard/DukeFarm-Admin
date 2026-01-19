@@ -3,6 +3,8 @@
 import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation"; 
 import toast from "react-hot-toast";
+import dayjs from 'dayjs'; 
+import 'dayjs/locale/th'; 
 
 import FarmerInfoCard from "../../../components/farmers/FarmerInfoCard";
 import FarmerDashboard from "../../../components/farmers/FarmerDashboard"; 
@@ -12,24 +14,13 @@ import EditFarmerHistory from "../../../components/farmers/EditFarmerHistory";
 
 import Pagination from "../../../components/common/Pagination";
 import DeleteConfirm from "../../../components/common/DeleteConfirm";
+
 import { farmersAPI } from "@/services/api/farmers";
+import { recordsAPI } from "@/services/api/records"; 
 import { APIError } from "@/services/api/types";
 import type { FarmerListItem } from "@/types/farmer";
 import { mapFarmerResponse } from "@/utils/farmerMapper";
-
-const MOCK_HISTORY_DATA: FarmerHistory[] = [
-    { id: 1, date: "20/12/2025 - 06:00", age: "91-120", foodAmount: "35 กก.", weight: 1.8, pondType: "บ่อปูน", pondCount: 8, fishCount: 130, temp: "32 °C", rain: 30, humidity: 27 },
-    { id: 2, date: "10/12/2025 - 06:00", age: "61-90", foodAmount: "32 กก.", weight: 1.8, pondType: "บ่อปูน", pondCount: 5, fishCount: 80, temp: "32 °C", rain: 30, humidity: 27 },
-    { id: 3, date: "30/11/2025 - 06:00", age: "61-90", foodAmount: "30 กก.", weight: 1.0, pondType: "บ่อปูน", pondCount: 5, fishCount: 250, temp: "32 °C", rain: 30, humidity: 27 },
-    { id: 4, date: "20/11/2025 - 06:00", age: "61-90", foodAmount: "28 กก.", weight: 1.8, pondType: "บ่อปูน", pondCount: 7, fishCount: 250, temp: "32 °C", rain: 30, humidity: 27 },
-    { id: 5, date: "10/11/2025 - 06:00", age: "31-60", foodAmount: "25 กก.", weight: 1.8, pondType: "บ่อปูน", pondCount: 4, fishCount: 250, temp: "32 °C", rain: 30, humidity: 27 },
-    { id: 6, date: "01/11/2025 - 06:00", age: "31-60", foodAmount: "22 กก.", weight: 1.8, pondType: "บ่อปูน", pondCount: 4, fishCount: 320, temp: "32 °C", rain: 30, humidity: 27 },
-    { id: 7, date: "30/10/2025 - 06:00", age: "31-60", foodAmount: "20 กก.", weight: 1.8, pondType: "บ่อปูน", pondCount: 4, fishCount: 170, temp: "32 °C", rain: 30, humidity: 27 },
-    { id: 8, date: "20/10/2025 - 06:00", age: "16-30", foodAmount: "15 กก.", weight: 1.8, pondType: "บ่อปูน", pondCount: 4, fishCount: 250, temp: "32 °C", rain: 30, humidity: 27 },
-    { id: 9, date: "10/10/2025 - 06:00", age: "16-30", foodAmount: "12 กก.", weight: 1.8, pondType: "บ่อปูน", pondCount: 4, fishCount: 250, temp: "32 °C", rain: 30, humidity: 27 },
-    { id: 10, date: "01/10/2025 - 06:00", age: "0-15", foodAmount: "8 กก.", weight: 1.8, pondType: "บ่อปูน", pondCount: 4, fishCount: 250, temp: "32 °C", rain: 30, humidity: 27 },
-    { id: 11, date: "20/09/2025 - 06:00", age: "0-15", foodAmount: "5 กก.", weight: 0.5, pondType: "บ่อปูน", pondCount: 4, fishCount: 250, temp: "32 °C", rain: 30, humidity: 27 },
-];
+import { mapRecordToHistory } from "@/utils/recordMapper";
 
 interface ModalState {
     type: 'view' | 'edit' | 'delete' | null;
@@ -49,7 +40,11 @@ export default function FarmerDetailPage(props: PageProps) {
     const router = useRouter();
     const [farmerData, setFarmerData] = useState<FarmerListItem | null>(null);
     const [isFarmerLoading, setIsFarmerLoading] = useState(true);
+    
     const [historyData, setHistoryData] = useState<FarmerHistory[]>([]);
+    
+    const [feedChartData, setFeedChartData] = useState<any[]>([]); 
+    const [growthChartData, setGrowthChartData] = useState<any[]>([]); 
     
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -67,13 +62,51 @@ export default function FarmerDetailPage(props: PageProps) {
         };
     }, [modalState.type]);
 
+    const processChartData = (entries: any[]) => {
+        const sortedForChart = [...entries].sort((a, b) => 
+            new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime()
+        );
+
+        const recentEntries = sortedForChart.slice(-10);
+
+        const feedData = recentEntries.map((entry: any) => ({
+            name: dayjs(entry.recordedAt).format('DD/MM'), 
+            food: entry.foodAmountKg ?? 0,                
+            temp: entry.weatherTemperatureC               
+        }));
+        setFeedChartData(feedData);
+
+        const growthData = recentEntries.map((entry: any) => ({
+            name: dayjs(entry.recordedAt).format('DD/MM'),
+            weight: (entry.fishAverageWeight ?? entry.averageFishWeightGr ?? 0)
+        }));
+        setGrowthChartData(growthData);
+    };
+
     useEffect(() => {
-        const fetchFarmer = async () => {
+        const fetchData = async () => {
             setIsFarmerLoading(true);
             try {
-                const farmer = await farmersAPI.getById(id);
-                setFarmerData(mapFarmerResponse(farmer));
-                setHistoryData(MOCK_HISTORY_DATA);
+                const farmerRes = await farmersAPI.getById(id);
+                setFarmerData(mapFarmerResponse(farmerRes));
+
+                const rawEntries = (farmerRes as any).entries; 
+
+                if (rawEntries && Array.isArray(rawEntries) && rawEntries.length > 0) {
+                    console.log("Found entries:", rawEntries);
+                    
+                    const mappedHistory = rawEntries.map(mapRecordToHistory);
+                    mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                    setHistoryData(mappedHistory);
+
+                    processChartData(rawEntries);
+
+                } else {
+                    setHistoryData([]);
+                    setFeedChartData([]);
+                    setGrowthChartData([]);
+                }
+
             } catch (error) {
                 const message = error instanceof APIError ? error.message : 'ไม่พบข้อมูลเกษตรกร';
                 toast.error(message, { duration: 2500, position: 'top-right' });
@@ -83,7 +116,9 @@ export default function FarmerDetailPage(props: PageProps) {
             }
         };
 
-        fetchFarmer();
+        if (id) {
+            fetchData();
+        }
     }, [id]);
 
     const totalItems = historyData.length;
@@ -110,77 +145,74 @@ export default function FarmerDetailPage(props: PageProps) {
         setModalState({ type: 'delete', data: item });
     };
 
-    const handleUpdateHistory = (updatedData: Partial<FarmerHistory> & { ageRange?: string }) => {
+    const handleUpdateHistory = async (updatedData: any) => {
         const originalData = modalState.data; 
         if (!originalData) return;
 
-        const cleanVal = (val: string | number | undefined | null) => String(val || '').replace(/กก\.| kg\.|kg/gi, '').trim();
-
-        const isUnchanged = 
-            String(originalData.pondType || '') === String(updatedData.pondType || '') &&
-            String(originalData.pondCount || '') === String(updatedData.pondCount || '') &&
-            String(originalData.fishCount || '') === String(updatedData.fishCount || '') &&
-            String(originalData.age || '') === String(updatedData.ageRange || updatedData.age || '') && 
-            cleanVal(originalData.foodAmount) === cleanVal(updatedData.foodAmount);
-
-        if (isUnchanged) {
-            toast.error("ยังไม่ได้มีการแก้ไขข้อมูล", {
-                duration: 2000,
-                position: "top-right",
+        try {
+            const toastId = toast.loading('กำลังบันทึกข้อมูล...');
+            await recordsAPI.update(originalData.id, {
+                foodAmountKg: updatedData.foodAmountKg, 
+                pondCount: updatedData.pondCount,
+                fishCountText: updatedData.fishCountText,
+                
+                weatherTemperatureC: updatedData.weatherTemperatureC,
+                weatherRainMm: updatedData.weatherRainMm,
+                weatherHumidityPct: updatedData.weatherHumidityPct,
+                
+                pondType: updatedData.pondType,
             });
-            return; 
-        }
 
-        setHistoryData(prev => prev.map(item => 
-            item.id === modalState.data?.id ? { 
-                ...item, 
-                ...updatedData,
-                foodAmount: updatedData.foodAmount, 
-                age: updatedData.ageRange || updatedData.age || item.age 
-            } : item
-        ));
+            setHistoryData(prev => prev.map(item => 
+                item.id === modalState.data?.id ? { 
+                    ...item, 
+                    ...updatedData,
+                    foodAmount: updatedData.foodAmountKg ? `${updatedData.foodAmountKg} กก.` : '-',
+                    temp: updatedData.temp,
+                    rain: updatedData.rain,
+                    humidity: updatedData.humidity,
+                    pondType: updatedData.pondType
+                } : item
+            ));
         
-        toast.success(
-            (t) => (
-                <div className="flex items-center gap-2">
-                    <span>แก้ไขข้อมูลสำเร็จ!</span>
-                </div>
-            ),
-            { duration: 2000, position: "top-right" }
-        );
-        
-        setModalState({ type: null, data: null });
+            toast.dismiss(toastId);
+            toast.success("บันทึกข้อมูลเรียบร้อย!");
+            setModalState({ type: null, data: null });
+
+        } catch (error) {
+            console.error("Update failed:", error);
+            toast.dismiss();
+            toast.error("เกิดข้อผิดพลาด ไม่สามารถบันทึกได้");
+        }
     };
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
         if (!modalState.data) return;
         
-        const dateToDelete = modalState.data.date.split(' - ')[0]; 
-
-        setHistoryData((prev) => prev.filter((i) => i.id !== modalState.data?.id));
-        
-        toast.success(
-            (t) => (
-                <div className="flex items-center justify-center gap-2 w-full font-medium">
-                    <span>{`ลบรายการวันที่ ${dateToDelete} สำเร็จ!`}</span>
-                </div>
-            ),
-            { 
-                duration: 2000, 
-                position: "top-right",
-                style: {
-                    borderRadius: '12px',
-                    background: '#fff',
-                    color: '#333',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                }
-            }
-        );
-
-        setModalState({ type: null, data: null });
+        try {
+            const toastId = toast.loading('กำลังลบข้อมูล...');
+            
+            await recordsAPI.delete(modalState.data.id); 
+            
+            setHistoryData((prev) => prev.filter((i) => i.id !== modalState.data?.id));
+            
+            toast.dismiss(toastId);
+            toast.success("ลบรายการสำเร็จ!");
+            setModalState({ type: null, data: null });
+        } catch (error) {
+            console.error("Delete failed:", error);
+            toast.dismiss();
+            toast.error("ไม่สามารถลบรายการได้");
+        }
     };
 
     const closeModal = () => setModalState({ type: null, data: null });
+
+    const farmTypesList = farmerData 
+        ? ((farmerData as any).farmTypes?.length > 0 
+            ? (farmerData as any).farmTypes 
+            : (farmerData.groupType ? [farmerData.groupType] : []))
+        : [];
 
     return (
         <div className="min-h-screen bg-gray-50 pb-10">
@@ -198,7 +230,12 @@ export default function FarmerDetailPage(props: PageProps) {
 
             <div className="px-6 space-y-6">
                 <FarmerInfoCard data={farmerData} />
-                <FarmerDashboard groupType={farmerData?.groupType} />
+                
+                <FarmerDashboard 
+                    farmTypes={farmTypesList} 
+                    feedChartData={feedChartData} 
+                    growthChartData={growthChartData}
+                />
 
                 <div className="mt-8">
                     <FarmerHistoryTable 
@@ -222,12 +259,10 @@ export default function FarmerDetailPage(props: PageProps) {
                 </div>
             </div>
 
+            {/* Modals */}
             {modalState.type === 'view' && modalState.data && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/50">
-                    <ViewFarmerHistory 
-                        data={modalState.data} 
-                        onClose={closeModal} 
-                    />
+                    <ViewFarmerHistory data={modalState.data} onClose={closeModal} />
                 </div>
             )}
 

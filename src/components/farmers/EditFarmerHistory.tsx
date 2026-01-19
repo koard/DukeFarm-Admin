@@ -28,46 +28,55 @@ const AGE_OPTIONS = [
 const fieldLabels: { [key: string]: string } = {
     pondCount: 'จำนวนบ่อ',
     fishCount: 'จำนวนปลาที่เลี้ยง',
-    foodAmount: 'ปริมาณอาหาร',
+    foodAmountKg: 'ปริมาณอาหาร', 
     pondType: 'ประเภทบ่อ',
 };
 
 const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryProps) => {
     
-    const cleanFoodAmount = (val: string | number) => {
+    const cleanNumber = (val: any) => {
         if (!val) return '';
         const strVal = String(val);
-        return strVal.replace(/กก\.| kg\.|kg/gi, '').trim(); 
+        const cleaned = strVal.replace(/[^0-9.]/g, ''); 
+        return cleaned; 
     };
 
     const [formData, setFormData] = useState({
-        date: '2025-06-25',
-        time: '07:00',
-        ageRange: '31-60',
+        date: '',
+        time: '',
+        ageRange: '',
         pondType: 'บ่อปูน',
         pondCount: '',
         fishCount: '',
-        foodAmount: '', 
-        temp: 32,
-        rain: 30,
-        humidity: 27
+        foodAmountKg: '', 
+        temp: 0,
+        rain: 0,
+        humidity: 0
     });
 
     useEffect(() => {
         if (initialData) {
-            setFormData(prev => ({
-                ...prev,
-                ...initialData,
+            const dateParts = initialData.date ? initialData.date.split(' - ') : [];
+            
+            setFormData({
+                date: dateParts[0] || '',
+                time: dateParts[1] || '',
                 ageRange: initialData.age || '31-60', 
-                foodAmount: cleanFoodAmount(initialData.foodAmount)
-            }));
+                pondType: initialData.pondType || 'บ่อปูน',
+                pondCount: initialData.pondCount || '',
+                fishCount: initialData.fishCount || '',
+                foodAmountKg: cleanNumber(initialData.foodAmountKg),
+                
+                temp: Number(cleanNumber(initialData.temp)) || 0,
+                rain: Number(cleanNumber(initialData.rain)) || 0,
+                humidity: Number(cleanNumber(initialData.humidity)) || 0
+            });
         }
     }, [initialData]);
 
     const validateForm = (data: typeof formData) => {
         const allowedPattern = /^[0-9\s~`!@#$%^&*()_\-+={[}\]|\\:;"'<,>.?/]+$/;
-
-        const fieldsToCheck = ['pondCount', 'fishCount', 'foodAmount'];
+        const fieldsToCheck = ['pondCount', 'fishCount', 'foodAmountKg'];
 
         for (const key of fieldsToCheck) {
             const value = data[key as keyof typeof data];
@@ -75,7 +84,6 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
 
             if (strValue.trim() !== '' && !allowedPattern.test(strValue)) {
                 const labelName = fieldLabels[key] || key;
-                
                 toast.error(
                     <span>
                         <b>{labelName}</b> ระบุไม่ถูกต้อง <br/> 
@@ -100,50 +108,84 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
         }
 
         const finalData = {
+            ...initialData,
             ...formData,
-            foodAmount: formData.foodAmount ? `${formData.foodAmount} กก.` : '' 
+
+            foodAmountKg: formData.foodAmountKg ? parseFloat(String(formData.foodAmountKg)) : null,
+            weatherTemperatureC: parseFloat(String(formData.temp)),
+            weatherRainMm: parseFloat(String(formData.rain)),
+            weatherHumidityPct: parseFloat(String(formData.humidity)),
+            
+            pondCount: Number(formData.pondCount) || 0,
+            fishCountText: String(formData.fishCount),
+            temp: `${formData.temp} °C`,
+            rain: formData.rain,
+            humidity: formData.humidity,
+            age: formData.ageRange, 
         };
+
         onSave(finalData);
     };
 
     return (
         <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative">
-            <h2 className="text-2xl font-bold mb-6">รายละเอียด</h2>
+            <h2 className="text-2xl font-bold mb-6">แก้ไขรายละเอียด</h2>
 
             <div className="flex gap-4 mb-6">
                 <div className="flex-1 bg-[#E4F5E7] rounded-lg px-4 py-3 flex items-center gap-3">
                     <Image src={CalendarIcon} alt="date" width={24} height={24} />
-                    <span className="text-[#093832] text-lg font-medium">25/06/2025</span>
+                    <span className="text-[#093832] text-lg font-medium">{formData.date || '-'}</span>
                 </div>
                 <div className="flex-1 bg-[#E4F5E7] rounded-lg px-4 py-3 flex items-center gap-3">
                     <Image src={TimeIcon} alt="time" width={24} height={24} />
-                    <span className="text-[#093832] text-lg font-medium">7:00 น.</span>
+                    <span className="text-[#093832] text-lg font-medium">{formData.time || '-'}</span>
                 </div>
             </div>
 
             <div className="mb-6">
-                <label className="text-base text-gray-900 mb-2 block font-medium">สภาพอากาศ Auto</label>
+                <label className="text-base text-gray-900 mb-2 block font-medium">สภาพอากาศ (แก้ไขได้)</label>
                 <div className="grid grid-cols-3 gap-px bg-white overflow-hidden rounded-lg border border-gray-100">
-                    <div className="bg-[#D8EFFF] p-3 flex flex-col items-center justify-center gap-1 rounded-l-lg mr-0.5">
+                    <div className="bg-[#D8EFFF] p-3 flex flex-col items-center justify-center gap-1 rounded-l-lg mr-0.5 relative group">
                         <div className="flex items-center gap-1">
                             <Image src={TempIcon} alt="temp" width={16} height={16} />
                             <span className="text-sm text-gray-700">อุณหภูมิ</span>
                         </div>
-                        <span className="text-xl font-bold text-gray-900">{formData.temp} °C</span>
+                        <div className="flex items-center gap-1">
+                            <input 
+                                type="number" 
+                                name="temp"
+                                value={formData.temp}
+                                onChange={handleChange}
+                                className="bg-transparent text-xl font-bold text-gray-900 text-center w-16 focus:outline-none border-b border-transparent focus:border-blue-500"
+                            />
+                            <span className="text-sm font-bold">°C</span>
+                        </div>
                     </div>
                     <div className="bg-[#D8EFFF] p-3 flex flex-col items-center justify-center gap-1 mx-0.5">
                         <div className="flex items-center gap-1">
                             <Image src={RainIcon} alt="rain" width={16} height={16} />
-                            <span className="text-sm text-gray-700">ปริมาณน้ำฝน</span>
+                            <span className="text-sm text-gray-700">ฝน</span>
                         </div>
-                        <span className="text-xl font-bold text-gray-900">{formData.rain}</span>
+                        <input 
+                            type="number" 
+                            name="rain"
+                            value={formData.rain}
+                            onChange={handleChange}
+                            className="bg-transparent text-xl font-bold text-gray-900 text-center w-16 focus:outline-none border-b border-transparent focus:border-blue-500"
+                        />
                     </div>
                     <div className="bg-[#D8EFFF] p-3 flex flex-col items-center justify-center gap-1 rounded-r-lg ml-0.5">
                         <div className="flex items-center gap-1">
                             <Image src={HumidityIcon} alt="humidity" width={16} height={16} />
-                            <span className="text-sm text-gray-700">ความชื้นสัมพัทธ์</span>
+                            <span className="text-sm text-gray-700">ความชื้น</span>
                         </div>
-                        <span className="text-xl font-bold text-gray-900">{formData.humidity}</span>
+                        <input 
+                            type="number" 
+                            name="humidity"
+                            value={formData.humidity}
+                            onChange={handleChange}
+                            className="bg-transparent text-xl font-bold text-gray-900 text-center w-16 focus:outline-none border-b border-transparent focus:border-blue-500"
+                        />
                     </div>
                 </div>
             </div>
@@ -214,13 +256,13 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
                 </div>
 
                 <div>
-                    <label className="text-lg text-gray-900 mb-2 block">ปริมาณอาหาร (กิโลกรัม.)</label>
+                    <label className="text-lg text-gray-900 mb-2 block">ปริมาณอาหาร (กิโลกรัม)</label>
                     <input
                         type="text"
-                        name="foodAmount"
-                        value={formData.foodAmount}
+                        name="foodAmountKg" 
+                        value={formData.foodAmountKg}
                         onChange={handleChange}
-                        placeholder="ระบุข้อจำนวน เช่น 10, 15, 20"
+                        placeholder="ระบุตัวเลข เช่น 10, 15.5"
                         className="w-full border border-gray-300 rounded-lg p-3 text-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#179678] placeholder-gray-300"
                     />
                 </div>

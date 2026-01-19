@@ -5,25 +5,28 @@ const FARM_TYPE_LABELS: Record<string, string> = {
   SMALL: 'ปลาตุ้ม',
   LARGE: 'ปลานิ้ว',
   MARKET: 'ปลาตลาด',
-
-  NURSERY_SMALL: 'กลุ่มอนุบาลขนาดเล็ก',
-  NURSERY_LARGE: 'กลุ่มอนุบาลขนาดใหญ่',
-  GROWOUT: 'กลุ่มผู้เลี้ยงขนาดตลาด',
+  
+  NURSERY_SMALL: 'ปลาตุ้ม',
+  NURSERY_LARGE: 'ปลานิ้ว',
+  GROWOUT: 'ปลาตลาด',
 };
 
 const formatRegisteredDate = (isoString: string | null | undefined) => {
   if (!isoString) return '-';
   const date = new Date(isoString);
   if (Number.isNaN(date.getTime())) return '-';
+  
   const datePart = date.toLocaleDateString('th-TH', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   });
+  
   const timePart = date.toLocaleTimeString('th-TH', {
     hour: '2-digit',
     minute: '2-digit',
   });
+  
   return `${datePart} - ${timePart}`;
 };
 
@@ -42,12 +45,14 @@ export const mapFarmerResponse = (farmer: FarmerApiResponse): FarmerListItem => 
   farmType: farmer.farmType,
   farmTypes: farmer.farmTypes || [], 
   farmAreaRai: farmer.farmAreaRai,
-  groupType: FARM_TYPE_LABELS[farmer.farmType] || farmer.farmType,
+
+  groupType: FARM_TYPE_LABELS[farmer.farmType] || FARM_TYPE_LABELS[farmer.farmType?.toUpperCase()] || farmer.farmType,
 
 
   pondType: 'ไม่ระบุ', 
-  pondCount: typeof farmer.pondCount === 'number' ? farmer.pondCount : null,
+  pondCount: typeof farmer.pondCount === 'number' ? farmer.pondCount : 0,
   location: formatCoordinates(farmer.latitude, farmer.longitude),
+
   registeredDate: formatRegisteredDate(farmer.registeredAt),
   registeredAtISO: farmer.registeredAt,
 });

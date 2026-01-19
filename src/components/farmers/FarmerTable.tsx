@@ -12,7 +12,6 @@ const FARM_TYPE_LABEL: Record<string, string> = {
     SMALL: 'ปลาตุ้ม',
     LARGE: 'ปลานิ้ว',
     MARKET: 'ปลาตลาด',
-
     small: 'ปลาตุ้ม',
     large: 'ปลานิ้ว',
     market: 'ปลาตลาด',
@@ -89,13 +88,20 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
                         const long = (farmer as any).longitude;
                         const displayLocation = farmer.location || (lat && long ? `${lat}, ${long}` : '-');
 
+                        let mapUrl = '';
+                        if (lat && long) {
+                            mapUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${long}`;
+                        } else if (farmer.location && farmer.location !== '-') {
+                            mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(farmer.location)}`;
+                        }
+
                         const regDate = farmer.registeredDate || 
-                                      ((farmer as any).registeredAt ? new Date((farmer as any).registeredAt).toLocaleDateString('th-TH') : '-');
+                                    ((farmer as any).registeredAt ? new Date((farmer as any).registeredAt).toLocaleDateString('th-TH') : '-');
 
                         return (
-                            <tr key={`${farmer.id}-${index}`} className="border-b border-gray-100 last:border-b-0">
+                            <tr key={`${farmer.id}-${index}`} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
                                 <td className="p-4 text-center">{farmer.rowNumber ?? startIndex + index + 1}</td>
-                                <td className="p-4 text-left">{farmer.name || (farmer as any).fullName}</td>
+                                <td className="p-4 text-left font-medium text-gray-900">{farmer.name || (farmer as any).fullName}</td>
                                 <td className="p-4 text-center">{farmer.phone}</td>
                                 
                                 <td className="p-4">
@@ -113,18 +119,30 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
                                                 );
                                             })
                                         ) : (
-                                            <span>-</span>
+                                            <span className="text-gray-400">-</span>
                                         )}
                                     </div>
                                 </td>
-                              
+                                
                                 <td className="p-4 text-center">{displayArea}</td>
                                 <td className="p-4 text-center">{farmer.pondCount ?? '-'}</td>
+                        
                                 <td className="p-4 text-center">
-                                    <button className="text-gray-900 underline truncate max-w-[150px]">
-                                        {displayLocation}
-                                    </button>
+                                    {displayLocation !== '-' && mapUrl ? (
+                                        <a 
+                                            href={mapUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-[#179678] font-medium underline truncate max-w-[150px] inline-block hover:text-[#127a61] transition-colors"
+                                            title="ดูแผนที่บน Google Maps"
+                                        >
+                                            {displayLocation}
+                                        </a>
+                                    ) : (
+                                        <span className="text-gray-400">{displayLocation}</span>
+                                    )}
                                 </td>
+
                                 <td className="p-4 text-center whitespace-nowrap">
                                     {regDate}
                                 </td>
@@ -132,12 +150,12 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
                                     <div className="flex justify-center items-center gap-3">
                                         <Link 
                                             href={`/farmers/${farmer.id}?name=${encodeURIComponent(farmer.name || (farmer as any).fullName || '')}`} 
-                                            className="hover:opacity-75"
+                                            className="hover:opacity-75 transition-opacity"
                                         >
                                             <Image src={ViewIcon} alt="view" width={20} height={20} className="w-5 h-5" />
                                         </Link>
                                         
-                                        <button onClick={() => onDeleteClick(farmer)} className="hover:opacity-75">
+                                        <button onClick={() => onDeleteClick(farmer)} className="hover:opacity-75 transition-opacity">
                                             <Image src={DeleteIcon} alt="delete" width={20} height={20} className="w-5 h-5" />
                                         </button>
                                     </div>

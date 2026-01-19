@@ -6,99 +6,101 @@ import Image from "next/image";
 import GrowthChart from "../farmers/WeightLineChart"; 
 import FeedingChart from "../farmers/FeedBarChart";
 
-import FishPurpleIcon from '../../assets/famicons_fish-p.svg';
-import FishGreenIcon from '../../assets/famicons_fish-g.svg'; 
-import FishYellowIcon from '../../assets/famicons_fish-y.svg';
 import IconFoodGrains from '../../assets/db-food-grains.svg';
 import IconFish from '../../assets/db-fish.svg';
 import IconWeight from '../../assets/db-weight.svg';
 
-const FULL_YEAR_DATA = {
-    growthChart: [
-        { name: "Jan", growth: 0.55 }, { name: "Feb", growth: 0.6 }, { name: "Mar", growth: 0.9 },
-        { name: "Apr", growth: 1.3 }, { name: "May", growth: 1.0 }, { name: "Jun", growth: 1.05 },
-        { name: "Jul", growth: 1.0 }, { name: "Aug", growth: 0.95 }, { name: "Sep", growth: 0.9 },
-        { name: "Oct", growth: 1.0 }, { name: "Nov", growth: 0.8 }, 
-    ],
-    feedingChart: [
-        { name: "Jan", food: 0.8, temp: 28 }, { name: "Feb", food: 0.3, temp: 27 }, { name: "Mar", food: 0.85, temp: 29 },
-        { name: "Apr", food: 0.5, temp: 30 }, { name: "May", food: 1.2, temp: 31 }, { name: "Jun", food: 0.7, temp: 29 },
-        { name: "Jul", food: 0.5, temp: 28 }, { name: "Aug", food: 0.25, temp: 27 }, { name: "Sep", food: 0.7, temp: 28 },
-        { name: "Oct", food: 0.5, temp: 26 }, { name: "Nov", food: 0.25, temp: 25 },
-    ]
-};
-
-interface FarmerDashboardProps {
-    groupType?: string; 
+interface DashboardData {
+    food: number;
+    accFood: number;
+    age: number;
+    weight: number;
+    growthChart: any[]; 
+    feedingChart: any[];
 }
 
-const FarmerDashboard = ({ groupType = "กลุ่มอนุบาลขนาดใหญ่" }: FarmerDashboardProps) => {
-    const [timeRange, setTimeRange] = useState('6M');
+interface FarmerDashboardProps {
+    farmTypes: string[]; 
+    feedChartData?: any[];   
+    growthChartData?: any[]; 
+}
+
+const FarmerDashboard = ({ 
+    farmTypes = [], 
+    feedChartData = [], 
+    growthChartData = [] 
+}: FarmerDashboardProps) => {
     
-    const [chartData, setChartData] = useState(() => {
-        return {
-            growthChart: FULL_YEAR_DATA.growthChart.slice(-6),
-            feedingChart: FULL_YEAR_DATA.feedingChart.slice(-6)
-        };
+    const availableTypes = farmTypes.length > 0 ? farmTypes : ['SMALL'];
+    const [selectedType, setSelectedType] = useState<string>(availableTypes[0]);
+    
+    const [timeRange, setTimeRange] = useState('6M');
+
+    const [dashboardData, setDashboardData] = useState<DashboardData>({
+        food: 0,
+        accFood: 0,
+        age: 0,
+        weight: 0,
+        growthChart: [],
+        feedingChart: []
     });
 
-    const getGroupStyle = (type: string) => {
-        if (type === 'กลุ่มผู้เลี้ยงขนาดตลาด') {
-            return {
-                bgColor: '#9DFFEB',
-                textColor: '#007066',
-                icon: FishGreenIcon
-            };
-        } else if (type === 'กลุ่มอนุบาลขนาดเล็ก') {
-            return {
-                bgColor: '#FFF3CA',
-                textColor: '#917618',
-                icon: FishYellowIcon
-            };
-        }
-        return {
-            bgColor: '#DB9DFF',
-            textColor: '#470070',
-            icon: FishPurpleIcon
-        };
+    const getLabel = (type: string) => {
+        const t = type.toUpperCase();
+        if (t.includes('SMALL')) return 'ปลาตุ้ม';
+        if (t.includes('LARGE')) return 'ปลานิ้ว';
+        if (t.includes('MARKET') || t.includes('GROWOUT')) return 'ปลาตลาด';
+        return type;
     };
 
-    const style = getGroupStyle(groupType);
-
     useEffect(() => {
-        let slicedGrowth: any[] = [];
-        let slicedFeeding: any[] = [];
+        const fetchDashboardData = async () => {
+            try {
+                
+                console.log(`Fetching data for: ${selectedType} range: ${timeRange}`);
+                
+                setDashboardData(prev => ({
+                    ...prev,
+                    food: 0,
+                    accFood: 0,
+                    age: 0,
+                    weight: 0,
+                    growthChart: [], 
+                    feedingChart: []
+                }));
 
-        if (timeRange === '6M') {
-            slicedGrowth = FULL_YEAR_DATA.growthChart.slice(-6);
-            slicedFeeding = FULL_YEAR_DATA.feedingChart.slice(-6);
-        } else if (timeRange === '3M') {
-            slicedGrowth = FULL_YEAR_DATA.growthChart.slice(-3);
-            slicedFeeding = FULL_YEAR_DATA.feedingChart.slice(-3);
-        } else if (timeRange === 'NOW') {
-            slicedGrowth = FULL_YEAR_DATA.growthChart.slice(-1);
-            slicedFeeding = FULL_YEAR_DATA.feedingChart.slice(-1);
-        }
+            } catch (error) {
+                console.error("Failed to fetch dashboard data", error);
+            }
+        };
 
-        setChartData({
-            growthChart: slicedGrowth,
-            feedingChart: slicedFeeding
-        });
-    }, [timeRange]);
+        fetchDashboardData();
+    }, [selectedType, timeRange]);
 
     return (
         <div className="w-full bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                <div 
-                    className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold transition-colors"
-                    style={{ 
-                        backgroundColor: style.bgColor, 
-                        color: style.textColor 
-                    }}
-                >
-                    {style.icon && <Image src={style.icon} alt="fish-icon" width={20} height={20} />}
-                    {groupType}
+                
+                <div className="flex flex-wrap gap-2">
+                    {availableTypes.map((type) => {
+                        const isActive = selectedType === type;
+                        return (
+                            <button
+                                key={type}
+                                onClick={() => setSelectedType(type)}
+                                className={`
+                                    px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 border border-[#034A30]
+                                    ${isActive 
+                                        ? 'bg-[#034A30] text-white shadow-md transform scale-105' 
+                                        : 'bg-white text-[#034A30] hover:bg-green-50'
+                                    }
+                                `}
+                            >
+                                {getLabel(type)}
+                            </button>
+                        );
+                    })}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -120,7 +122,7 @@ const FarmerDashboard = ({ groupType = "กลุ่มอนุบาลขน�
                 </div>
             </div>
 
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 <div className="bg-[#FFEBEC] rounded-xl p-5 flex flex-col justify-between h-[140px] col-span-1">
                     <div>
                         <div className="flex items-center gap-2 text-[#A10000] text-base font-bold mb-2">
@@ -128,7 +130,7 @@ const FarmerDashboard = ({ groupType = "กลุ่มอนุบาลขน�
                             การทานอาหาร (Kg.)
                         </div>
                         <div className="relative flex items-center justify-center mt-2">
-                            <span className="text-4xl font-bold text-[#A10000]">4.8</span>
+                            <span className="text-4xl font-bold text-[#A10000]">{dashboardData.food}</span>
                             <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center text-[#FF1212]">
                                 <span className="text-[10px] mr-1">▼</span>
                                 <span className="text-base font-bold">(-20%)</span>
@@ -137,7 +139,7 @@ const FarmerDashboard = ({ groupType = "กลุ่มอนุบาลขน�
                     </div>
                     <div className="border-t border-[#FFCDD2] pt-2 flex justify-between items-center text-base">
                         <span className="text-gray-800 text-sm">ปริมาณอาหารที่ให้สะสม (Kg.)</span>
-                        <span className="font-bold text-gray-900 text-sm">7.8</span>
+                        <span className="font-bold text-gray-900 text-sm">{dashboardData.accFood}</span>
                     </div>
                 </div>
 
@@ -148,7 +150,7 @@ const FarmerDashboard = ({ groupType = "กลุ่มอนุบาลขน�
                             อายุปลา (วัน)
                         </div>
                         <div className="flex justify-center w-full">
-                            <span className="text-3xl font-bold text-[#0F614E] mt-2">45 วัน</span>
+                            <span className="text-3xl font-bold text-[#0F614E] mt-2">{dashboardData.age} วัน</span>
                         </div>
                     </div>
 
@@ -160,16 +162,15 @@ const FarmerDashboard = ({ groupType = "กลุ่มอนุบาลขน�
                             น้ำหนักเฉลี่ย
                         </div>
                         <div className="flex justify-center w-full">
-                            <span className="text-3xl font-bold text-[#0F614E] mt-2">1.5</span>
+                            <span className="text-3xl font-bold text-[#0F614E] mt-2">{dashboardData.weight}</span>
                         </div>
                     </div>
-
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {chartData.growthChart && <GrowthChart data={chartData.growthChart} />}
-                {chartData.feedingChart && <FeedingChart data={chartData.feedingChart} />}
+                <GrowthChart data={growthChartData} />
+                <FeedingChart data={feedChartData} />
             </div>
         </div>
     );

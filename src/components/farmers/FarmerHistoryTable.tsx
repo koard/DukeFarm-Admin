@@ -9,14 +9,14 @@ import DeleteIcon from '../../assets/fm-delete.svg';
 import SortIcon from '../../assets/fm-arrow.svg';
 
 export interface FarmerHistory {
-    id: number;
+    id: string; 
     date: string;
     age: number | string;
     weight: number;
     pondType: string;
     pondCount: number;
     fishCount: number;
-    foodAmount?: number | string;
+    foodAmountKg?: number | string;
     temp: string;
     rain: number;
     humidity: number;
@@ -44,6 +44,10 @@ const FarmerHistoryTable = ({
     onDelete, 
     startIndex = 0 
 }: FarmerHistoryTableProps) => {
+
+    const formatNumber = (num: number) => {
+        return num !== undefined && num !== null ? num.toLocaleString() : '-';
+    };
 
     if (!data || data.length === 0) {
         return (
@@ -90,13 +94,13 @@ const FarmerHistoryTable = ({
                             {data.map((item, index) => (
                                 <tr key={item.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
                                     <td className="p-4 text-center">{startIndex + index + 1}</td>
-                                    <td className="p-4 text-center">{item.date}</td>
+                                    <td className="p-4 text-center whitespace-nowrap">{item.date}</td>
                                     <td className="p-4 text-center">{item.age}</td>
-                                    <td className="p-4 text-center">{item.weight.toFixed(1)}</td>
+                                    <td className="p-4 text-center">{item.weight ? item.weight.toFixed(2) : '-'}</td>
                                     <td className="p-4 text-center">{item.pondType}</td>
                                     <td className="p-4 text-center">{item.pondCount}</td>
-                                    <td className="p-4 text-center">{item.fishCount.toLocaleString()}</td>
-                                    <td className="p-4 text-center">{item.foodAmount ?? '-'}</td>
+                                    <td className="p-4 text-center">{formatNumber(item.fishCount)}</td>
+                                    <td className="p-4 text-center">{item.foodAmountKg || '-'}</td>
                                     <td className="p-4 text-center">{item.temp}</td>
                                     <td className="p-4 text-center">{item.rain}</td>
                                     <td className="p-4 text-center">{item.humidity}</td>
