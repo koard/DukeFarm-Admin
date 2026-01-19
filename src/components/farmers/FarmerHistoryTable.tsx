@@ -9,18 +9,22 @@ import DeleteIcon from '../../assets/fm-delete.svg';
 import SortIcon from '../../assets/fm-arrow.svg';
 
 export interface FarmerHistory {
-    id: string; 
+    id: string;
     date: string;
     age: number | string;
-    weight: number;
+    weight?: number;
+
     pondType: string;
-    pondCount: number;
-    fishCount: number;
-    foodAmountKg?: number | string;
+    pondCount: number | string;
+    fishCount: number | string;
+
+    foodAmountKg?: number | null;
+
     temp: string;
     rain: number;
     humidity: number;
 }
+
 
 interface FarmerHistoryTableProps {
     data: FarmerHistory[];
@@ -45,9 +49,12 @@ const FarmerHistoryTable = ({
     startIndex = 0 
 }: FarmerHistoryTableProps) => {
 
-    const formatNumber = (num: number) => {
-        return num !== undefined && num !== null ? num.toLocaleString() : '-';
+        const formatNumber = (num: number | string) => {
+        if (num === null || num === undefined || num === '-') return '-';
+        if (typeof num === 'string') return num;
+        return num.toLocaleString();
     };
+
 
     if (!data || data.length === 0) {
         return (
@@ -79,7 +86,9 @@ const FarmerHistoryTable = ({
                                 <th className="p-3 text-center w-[60px]"><TableHeader title="No." /></th>
                                 <th className="p-3 text-center"><TableHeader title="วันที่เก็บข้อมูล" /></th>
                                 <th className="p-3 text-center"><TableHeader title="อายุปลา (วัน)" /></th>
-                                <th className="p-3 text-center"><TableHeader title="น้ำหนักเฉลี่ย (Kg.)" /></th>
+                                
+                                {/* <th className="p-3 text-center"><TableHeader title="น้ำหนักเฉลี่ย (Kg.)" /></th> */}
+                                
                                 <th className="p-3 text-center"><TableHeader title="ประเภทบ่อ" /></th>
                                 <th className="p-3 text-center"><TableHeader title="จำนวนบ่อ" /></th>
                                 <th className="p-3 text-center"><TableHeader title="จำนวนปลาที่เลี้ยง (ตัว)" /></th>
@@ -96,11 +105,17 @@ const FarmerHistoryTable = ({
                                     <td className="p-4 text-center">{startIndex + index + 1}</td>
                                     <td className="p-4 text-center whitespace-nowrap">{item.date}</td>
                                     <td className="p-4 text-center">{item.age}</td>
-                                    <td className="p-4 text-center">{item.weight ? item.weight.toFixed(2) : '-'}</td>
+                                    
+                                    {/* <td className="p-4 text-center">{item.weight ? item.weight.toFixed(2) : '-'}</td> */}
+                                    
                                     <td className="p-4 text-center">{item.pondType}</td>
                                     <td className="p-4 text-center">{item.pondCount}</td>
                                     <td className="p-4 text-center">{formatNumber(item.fishCount)}</td>
-                                    <td className="p-4 text-center">{item.foodAmountKg || '-'}</td>
+                                    
+                                    <td className="p-4 text-center">
+                                        {(item.foodAmountKg !== null && item.foodAmountKg !== undefined) ? item.foodAmountKg : '-'}
+                                    </td>
+                                    
                                     <td className="p-4 text-center">{item.temp}</td>
                                     <td className="p-4 text-center">{item.rain}</td>
                                     <td className="p-4 text-center">{item.humidity}</td>

@@ -231,11 +231,11 @@ export default function FarmerDetailPage(props: PageProps) {
             <div className="px-6 space-y-6">
                 <FarmerInfoCard data={farmerData} />
                 
-                <FarmerDashboard 
+                {/* <FarmerDashboard 
                     farmTypes={farmTypesList} 
                     feedChartData={feedChartData} 
                     growthChartData={growthChartData}
-                />
+                /> */}
 
                 <div className="mt-8">
                     <FarmerHistoryTable 
