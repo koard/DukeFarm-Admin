@@ -176,4 +176,4 @@ const FarmerHistoryTable = ({
     );
 };
 
-export default FarmerHistoryTable;
+export default FarmerHistoryTable; 
