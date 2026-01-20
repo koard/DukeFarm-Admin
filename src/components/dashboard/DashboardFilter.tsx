@@ -28,9 +28,9 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
   const YEAR_DROPDOWN_HOVER = "hover:bg-[#128169]";
 
   const farmOptions = [
-    { id: 'small', label: "กลุ่มอนุบาลขนาดเล็ก" },
-    { id: 'large', label: "กลุ่มอนุบาลขนาดใหญ่" },
-    { id: 'market', label: "กลุ่มผู้เลี้ยงขนาดตลาด" },
+    { id: 'small', label: "ปลาตุ้ม" },
+    { id: 'large', label: "ปลานิ้ว" },
+    { id: 'market', label: "ปลาตลาด" },
   ];
 
   const yearOptions = ["2025", "2024", "2023", "2022"];
@@ -41,12 +41,11 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
         {farmOptions.map((option) => (
           <button
             key={option.id}
-            onClick={() => handleFarmSelect(option.id)} 
+            onClick={() => handleFarmSelect(option.id)}
             className={`px-4 py-2 rounded-full text-sm whitespace-nowrap
-              ${
-                selectedFarm === option.id
-                  ? `${ACTIVE_FARM_BG} ${ACTIVE_FARM_TEXT} shadow-sm`
-                  : `${INACTIVE_FARM_BG} ${INACTIVE_FARM_BORDER} text-gray-700 hover:bg-gray-100`
+              ${selectedFarm === option.id
+                ? `${ACTIVE_FARM_BG} ${ACTIVE_FARM_TEXT} shadow-sm`
+                : `${INACTIVE_FARM_BG} ${INACTIVE_FARM_BORDER} text-gray-700 hover:bg-gray-100`
               }
             `}
           >
@@ -67,9 +66,8 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
               alt="Dropdown Arrow"
               width={16}
               height={16}
-              className={`ml-2 w-4 h-4 transition-transform duration-200 ${
-                isYearDropdownOpen ? "rotate-180" : "rotate-0"
-              }`}
+              className={`ml-2 w-4 h-4 transition-transform duration-200 ${isYearDropdownOpen ? "rotate-180" : "rotate-0"
+                }`}
             />
           )}
         </button>
@@ -83,11 +81,10 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                   handleYearSelect(year);
                   setIsYearDropdownOpen(false);
                 }}
-                className={`block w-full text-left px-4 py-2 text-sm ${
-                  year === selectedYear
+                className={`block w-full text-left px-4 py-2 text-sm ${year === selectedYear
                     ? "bg-gray-200 text-gray-900 font-semibold"
                     : "text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 {year}
               </button>
