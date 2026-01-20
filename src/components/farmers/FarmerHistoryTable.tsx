@@ -72,11 +72,6 @@ const FarmerHistoryTable = ({
 
     return (
         <div className="w-full">
-            
-            <div className="flex items-center gap-2 mb-4 px-1">
-                <Image src={WeatherIcon} alt="list" width={24} height={24} />
-                <h2 className="text-[#093832] text-base font-bold">รายการเก็บข้อมูล</h2>
-            </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">
