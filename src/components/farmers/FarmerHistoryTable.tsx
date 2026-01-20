@@ -11,12 +11,12 @@ import SortIcon from '../../assets/fm-arrow.svg';
 export interface FarmerHistory {
     id: string;
     date: string;
-    
+
     // ✅ ตัวแปรตามเอกสาร
-    farmType?: string | null;    
-    fishAgeDays?: number | null;   
-    
-    age: number | string; 
+    farmType?: string | null;
+    fishAgeDays?: number | null;
+
+    age: number | string;
     weight?: number;
 
     pondType: string;
@@ -62,12 +62,12 @@ const FARM_TYPE_MAP: Record<string, string> = {
     'ALL': 'ทั้งหมด'
 };
 
-const FarmerHistoryTable = ({ 
-    data, 
-    onView, 
-    onEdit, 
-    onDelete, 
-    startIndex = 0 
+const FarmerHistoryTable = ({
+    data,
+    onView,
+    onEdit,
+    onDelete,
+    startIndex = 0
 }: FarmerHistoryTableProps) => {
 
     const formatNumber = (num: number | string) => {
@@ -79,10 +79,6 @@ const FarmerHistoryTable = ({
     if (!data || data.length === 0) {
         return (
             <div className="w-full">
-                <div className="flex items-center gap-2 mb-4 px-1">
-                    <Image src={WeatherIcon} alt="list" width={24} height={24} />
-                    <h2 className="text-[#093832] text-base font-bold">รายการเก็บข้อมูล</h2>
-                </div>
                 <div className="text-center py-10 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-100">
                     ไม่พบรายการเก็บข้อมูล
                 </div>
@@ -100,11 +96,11 @@ const FarmerHistoryTable = ({
                             <tr className="text-sm font-medium text-[#ACACAC] bg-black">
                                 <th className="p-3 text-center w-[60px]"><TableHeader title="No." /></th>
                                 <th className="p-3 text-center"><TableHeader title="วันที่เก็บข้อมูล" /></th>
-                                
+
                                 <th className="p-3 text-center"><TableHeader title="ประเภทฟาร์ม" /></th>
-                                
+
                                 <th className="p-3 text-center"><TableHeader title="อายุปลา (วัน)" /></th>
-                                
+
                                 <th className="p-3 text-center"><TableHeader title="ประเภทบ่อ" /></th>
                                 <th className="p-3 text-center"><TableHeader title="จำนวนบ่อ" /></th>
                                 <th className="p-3 text-center"><TableHeader title="จำนวนปลาที่เลี้ยง (ตัว)" /></th>
@@ -120,7 +116,7 @@ const FarmerHistoryTable = ({
                                 <tr key={item.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
                                     <td className="p-4 text-center">{startIndex + index + 1}</td>
                                     <td className="p-4 text-center whitespace-nowrap">{item.date}</td>
-                                    
+
                                     <td className="p-4 text-center">
                                         {item.farmType ? (FARM_TYPE_MAP[item.farmType] || item.farmType) : '-'}
                                     </td>
@@ -128,32 +124,32 @@ const FarmerHistoryTable = ({
                                     <td className="p-4 text-center">
                                         {item.fishAgeDays !== null && item.fishAgeDays !== undefined ? item.fishAgeDays : '-'}
                                     </td>
-                                    
+
                                     <td className="p-4 text-center">
                                         {POND_TYPE_MAP[item.pondType] || item.pondType}
                                     </td>
 
                                     <td className="p-4 text-center">{item.pondCount}</td>
                                     <td className="p-4 text-center">{formatNumber(item.fishCount)}</td>
-                                    
+
                                     <td className="p-4 text-center">
                                         {(item.foodAmountKg !== null && item.foodAmountKg !== undefined) ? item.foodAmountKg : '-'}
                                     </td>
-                                    
+
                                     <td className="p-4 text-center">{item.temp}</td>
                                     <td className="p-4 text-center">{item.rain}</td>
                                     <td className="p-4 text-center">{item.humidity}</td>
                                     <td className="p-4 text-center">
                                         <div className="flex justify-center items-center gap-3">
-                                            <button 
+                                            <button
                                                 onClick={() => onView && onView(item)}
                                                 className="hover:opacity-75 transition-opacity"
-                                                title="ดูรายละเอียด" 
+                                                title="ดูรายละเอียด"
                                             >
                                                 <Image src={ViewIcon} alt="view" width={20} height={20} className="w-5 h-5" />
                                             </button>
 
-                                            <button 
+                                            <button
                                                 onClick={() => onEdit && onEdit(item)}
                                                 className="hover:opacity-75 transition-opacity"
                                                 title="แก้ไข"
@@ -161,7 +157,7 @@ const FarmerHistoryTable = ({
                                                 <Image src={EditIcon} alt="edit" width={20} height={20} className="w-5 h-5" />
                                             </button>
 
-                                            <button 
+                                            <button
                                                 onClick={() => onDelete && onDelete(item)}
                                                 className="hover:opacity-75 transition-opacity"
                                                 title="ลบ"
