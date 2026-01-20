@@ -9,7 +9,6 @@ interface WaterQualityData {
   farm: string;
   totalPonds: number;
   goodPonds: number;
-  avgPh: number;
   lastUpdate: string;
 }
 
@@ -22,14 +21,13 @@ const TableRow = ({
   farm,
   totalPonds,
   goodPonds,
-  avgPh,
   lastUpdate,
 }: WaterQualityData) => (
   <tr className="text-sm text-gray-800">
     <td className="py-3 pr-4 whitespace-nowrap text-[#0F614E] text-center">
       {rank}
     </td>
-    <td className="py-3 pr-4 whitespace-nowrap text-[#0F614E] font-medium">
+    <td className="py-3 pr-4 whitespace-nowrap text-[#0F614E] font-medium text-center">
       {farm}
     </td>
     <td className="py-3 pr-4 whitespace-nowrap text-[#0F614E] text-center">
@@ -37,9 +35,6 @@ const TableRow = ({
     </td>
     <td className="py-3 pr-4 whitespace-nowrap text-[#0F614E] text-center">
       {goodPonds}
-    </td>
-    <td className="py-3 pr-4 whitespace-nowrap text-[#0F614E] text-center">
-      {avgPh}
     </td>
     <td className="py-3 pr-4 whitespace-nowrap text-[#0F614E] text-center">
       {lastUpdate}
@@ -56,18 +51,7 @@ function WaterQualityTable({ data }: WaterQualityTableProps) {
 
   return (
     <div>
-      <div className="flex items-center mb-4">
-        <Image
-          src={WeatherIcon}
-          alt="Weather Icon"
-          width={24}
-          height={24}
-          className="w-6 h-6 mr-2"
-        />
-        <h2 className="text-lg font-semibold text-[#093832]">
-          5 อันดับฟาร์มคุณภาพน้ำดี
-        </h2>
-      </div>
+      {/* Internal header removed to avoid duplication with parent component */}
 
       <div className="bg-white p-6 rounded-xl shadow-md mb-15">
         <div className="overflow-x-auto">
@@ -77,15 +61,12 @@ function WaterQualityTable({ data }: WaterQualityTableProps) {
                 <th className="pb-3 pr-4 whitespace-nowrap text-center">
                   อันดับ
                 </th>
-                <th className="pb-3 pr-4 whitespace-nowrap">ฟาร์ม</th>
+                <th className="pb-3 pr-4 whitespace-nowrap text-center">ฟาร์ม</th>
                 <th className="pb-3 pr-4 whitespace-nowrap text-center">
-                  จำนวนบ่อทั้งหมด
+                  จำนวนบ่อ
                 </th>
                 <th className="pb-3 pr-4 whitespace-nowrap text-center">
-                  จำนวนบ่อคุณภาพดี
-                </th>
-                <th className="pb-3 pr-4 whitespace-nowrap text-center">
-                  คุณภาพน้ำเฉลี่ย (pH.)
+                  จำนวนการบันทึกข้อมูล
                 </th>
                 <th className="pb-3 pr-4 whitespace-nowrap text-center">
                   วันที่อัปเดตข้อมูลล่าสุด

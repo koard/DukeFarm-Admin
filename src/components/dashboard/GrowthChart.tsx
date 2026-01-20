@@ -19,9 +19,11 @@ interface GrowthData {
 
 interface GrowthChartProps {
     data: GrowthData[];
+    unit?: string;
+    tooltipLabel?: string;
 }
 
-function GrowthChart({ data }: GrowthChartProps) {
+function GrowthChart({ data, unit = "kg.", tooltipLabel = "อัตราการเจริญเติบโต" }: GrowthChartProps) {
     if (!data) return null;
 
     const maxValue = Math.max(...data.map((item) => item.growth || 0), 0);
@@ -31,35 +33,26 @@ function GrowthChart({ data }: GrowthChartProps) {
     const customTicks: number[] = [];
     if (domainMax <= 4) {
         for (let i = 0; i <= domainMax; i += 0.5) customTicks.push(i);
-    } else {
+    } else if (domainMax <= 10) {
         for (let i = 0; i <= domainMax; i += 1) customTicks.push(i);
+    } else {
+        const step = Math.ceil(domainMax / 5);
+        for (let i = 0; i <= domainMax; i += step) customTicks.push(i);
     }
 
     const MIN_POINT_WIDTH = 70;
     const totalRequiredWidth = data.length * MIN_POINT_WIDTH;
-    
+
     const chartWidthStyle = totalRequiredWidth > 600 ? `${totalRequiredWidth}px` : '100%';
 
 
     return (
         <div>
-            <div className="flex items-center mb-4">
-                <Image
-                    src={ChartFishIcon}
-                    alt="Fish Icon"
-                    width={24}
-                    height={24}
-                    className="w-6 h-6 mr-2"
-                />
-                <h2 className="text-lg font-semibold text-[#093832]">
-                    อัตราการเจริญเติบโตโดยรวม
-                </h2>
-            </div>
-
+            {/* Header removed to avoid duplication with parent component */}
             <div className="bg-white p-6 rounded-lg shadow-md">
-                
+
                 <div className="w-full overflow-x-auto pb-2">
-                    
+
                     <div style={{ width: chartWidthStyle, minWidth: '100%' }} className="h-[250px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart
@@ -74,7 +67,7 @@ function GrowthChart({ data }: GrowthChartProps) {
                                     axisLine={{ stroke: '#E0E0E0', strokeWidth: 1 }}
                                     padding={{ left: 20, right: 20 }}
                                     tick={{ fill: "#000", fontSize: 10, fontWeight: 500 }}
-                                    interval={0} 
+                                    interval={0}
                                 />
 
                                 <YAxis
@@ -82,7 +75,7 @@ function GrowthChart({ data }: GrowthChartProps) {
                                     domain={[0, domainMax]}
                                     interval={0}
                                     label={{
-                                        value: "kg.",
+                                        value: unit,
                                         position: "insideTopLeft",
                                         dy: -40,
                                         dx: 35,
@@ -109,7 +102,7 @@ function GrowthChart({ data }: GrowthChartProps) {
                                     }}
                                     labelStyle={{ color: "#4B5563", fontWeight: "bold" }}
                                     itemStyle={{ color: "#000000" }}
-                                    formatter={(value: number) => [`${value} kg.`, "อัตราการเจริญเติบโต"]}
+                                    formatter={(value: number) => [`${value} ${unit}`, tooltipLabel]}
                                 />
 
                                 <Line

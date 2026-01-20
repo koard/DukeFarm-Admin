@@ -23,26 +23,32 @@ const TableRow: React.FC<GrowthTableRowData> = ({
   farm,
   pondCount,
   fishCount,
-  survivalRate,
   deathRate,
-  lastUpdate,
-}) => (
-  <tr className="text-sm text-gray-800">
-    <td className="py-3 pr-4 whitespace-nowrap text-center text-[#0F614E]">
-      {rank}
-    </td>
-    <td className="py-3 pr-4 whitespace-nowrap">{farm}</td>
-    <td className="py-3 pr-4 whitespace-nowrap text-center">{pondCount}</td>
-    <td className="py-3 pr-4 whitespace-nowrap text-center">{fishCount}</td>
-    <td className="py-3 pr-4 whitespace-nowrap text-center text-[#008466]">
-      {survivalRate}
-    </td>
-    <td className="py-3 pr-4 whitespace-nowrap text-center text-[#EB4D4D]">
-      {deathRate}
-    </td>
-    <td className="py-3 pr-4 whitespace-nowrap text-center">{lastUpdate}</td>
-  </tr>
-);
+}) => {
+  // Calculate Initial and Survival % based on backend logic:
+  // fishCount = current
+  // deathRate = initial - current
+  const initialFish = fishCount + deathRate;
+  const currentFish = fishCount;
+  const survivalPercent = initialFish > 0 ? ((currentFish / initialFish) * 100).toFixed(1) : "0";
+
+  return (
+    <tr className="text-sm text-gray-800">
+      <td className="py-3 pr-4 whitespace-nowrap text-center text-[#0F614E]">
+        {rank}
+      </td>
+      <td className="py-3 pr-4 whitespace-nowrap text-center">{farm}</td>
+      <td className="py-3 pr-4 whitespace-nowrap text-center">{pondCount}</td>
+      <td className="py-3 pr-4 whitespace-nowrap text-center">{initialFish.toLocaleString()}</td>
+      <td className="py-3 pr-4 whitespace-nowrap text-center text-[#0F614E]">
+        {currentFish.toLocaleString()}
+      </td>
+      <td className="py-3 pr-4 whitespace-nowrap text-center text-[#179678] font-medium">
+        {survivalPercent}%
+      </td>
+    </tr>
+  );
+};
 
 function GrowthTable({ data }: GrowthTableProps) {
   if (!data) return null;
@@ -53,18 +59,7 @@ function GrowthTable({ data }: GrowthTableProps) {
 
   return (
     <div>
-      <div className="flex items-center mb-4">
-        <Image
-          src={WeatherIcon}
-          alt="Table Icon"
-          width={24}
-          height={24}
-          className="w-6 h-6 mr-2"
-        />
-        <h2 className="text-lg font-semibold text-[#093832]">
-          5 อันดับอัตราการรอดชีวิต
-        </h2>
-      </div>
+      {/* Internal header removed to avoid duplication with parent component */}
 
       <div className="bg-white p-6 rounded-xl shadow-md mb-15">
         <div className="overflow-x-auto">
@@ -74,21 +69,18 @@ function GrowthTable({ data }: GrowthTableProps) {
                 <th className="pb-3 pr-4 whitespace-nowrap text-center">
                   อันดับ
                 </th>
-                <th className="pb-3 pr-4 whitespace-nowrap">ฟาร์ม</th>
+                <th className="pb-3 pr-4 whitespace-nowrap text-center">ฟาร์ม</th>
                 <th className="pb-3 pr-4 whitespace-nowrap text-center">
                   จำนวนบ่อ
                 </th>
                 <th className="pb-3 pr-4 whitespace-nowrap text-center">
-                  จำนวนปลา(ตัว)
+                  จำนวนปลาเริ่มต้น(ตัว)
                 </th>
                 <th className="pb-3 pr-4 whitespace-nowrap text-center">
-                  อัตราการรอดชีวิต (ตัว)
+                  จำนวนปลาคงเหลือ(ตัว)
                 </th>
                 <th className="pb-3 pr-4 whitespace-nowrap text-center">
-                  อัตราเสียชีวิต (ตัว)
-                </th>
-                <th className="pb-3 pr-4 whitespace-nowrap text-center">
-                  วันที่อัปเดตข้อมูลล่าสุด
+                  อัตราการรอดชีวิต(%)
                 </th>
               </tr>
             </thead>

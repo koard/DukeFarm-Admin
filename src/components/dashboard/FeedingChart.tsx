@@ -52,9 +52,11 @@ const RoundedBar = (props: RoundedBarProps) => {
 
 interface FeedingChartProps {
     data: FeedingData[];
+    unit?: string;
+    tooltipLabel?: string;
 }
 
-function FeedingChart({ data }: FeedingChartProps) {
+function FeedingChart({ data, unit = "kg.", tooltipLabel = "ปริมาณอาหาร" }: FeedingChartProps) {
     if (!data) return null;
 
     const currentMonthName = new Date().toLocaleString('en-US', { month: 'short' });
@@ -66,37 +68,28 @@ function FeedingChart({ data }: FeedingChartProps) {
     const customTicks: number[] = [];
     if (domainMax <= 4) {
         for (let i = 0; i <= domainMax; i += 0.5) customTicks.push(i);
-    } else {
+    } else if (domainMax <= 10) {
         for (let i = 0; i <= domainMax; i += 1) customTicks.push(i);
+    } else {
+        const step = Math.ceil(domainMax / 5);
+        for (let i = 0; i <= domainMax; i += step) customTicks.push(i);
     }
 
     const MIN_BAR_WIDTH = 70;
     const totalRequiredWidth = data.length * MIN_BAR_WIDTH;
-    
+
     const chartWidthStyle = totalRequiredWidth > 600 ? `${totalRequiredWidth}px` : '100%';
 
 
     return (
         <div>
-            <div className="flex items-center mb-4">
-                <Image
-                    src={ChartFishIcon}
-                    alt="Fish Icon"
-                    width={24}
-                    height={24}
-                    className="w-6 h-6 mr-2"
-                />
-                <h2 className="text-lg font-semibold text-[#093832]">
-                    ปริมาณอาหารในแต่ละเดือน
-                </h2>
-            </div>
-
+            {/* Header removed to avoid duplication with parent component */}
             <div className="bg-white p-6 rounded-lg shadow-md">
-                
+
                 <div className="w-full overflow-x-auto pb-2">
-                    
-                    <div 
-                        style={{ width: chartWidthStyle }} 
+
+                    <div
+                        style={{ width: chartWidthStyle }}
                         className="h-[250px] lg:w-full min-w-[300px]"
                     >
                         <ResponsiveContainer width="100%" height="100%">
@@ -120,7 +113,7 @@ function FeedingChart({ data }: FeedingChartProps) {
                                     domain={[0, domainMax]}
                                     interval={0}
                                     label={{
-                                        value: "kg.",
+                                        value: unit,
                                         position: "insideTopLeft",
                                         dy: -40,
                                         dx: 35,
@@ -145,7 +138,7 @@ function FeedingChart({ data }: FeedingChartProps) {
                                         borderRadius: "0.5rem",
                                     }}
                                     labelStyle={{ color: "#4B5563", fontWeight: "bold" }}
-                                    formatter={(value: number) => [`${value} kg.`, "ปริมาณอาหาร"]}
+                                    formatter={(value: number) => [`${value} ${unit}`, tooltipLabel]}
                                 />
 
                                 <Bar dataKey="food" shape={<RoundedBar />} barSize={23}>

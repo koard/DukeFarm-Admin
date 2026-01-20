@@ -107,11 +107,11 @@ const Dashboard = () => {
           {/* Ideally we rename GrowthChart to LineChartGeneric */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-bold text-[#093832] mb-4">แนวโน้มอัตราการรอดชีวิต (%)</h3>
-            <GrowthChart data={mappedSurvivalChart} />
+            <GrowthChart data={mappedSurvivalChart} unit="%" tooltipLabel="อัตราการรอดชีวิต" />
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-bold text-[#093832] mb-4">ปริมาณการใช้อาหาร (kg.)</h3>
-            <FeedingChart data={mappedFeedingChart} />
+            <FeedingChart data={mappedFeedingChart} unit="kg." tooltipLabel="ปริมาณอาหาร" />
           </div>
         </div>
 
@@ -129,7 +129,7 @@ const Dashboard = () => {
 
           {/* Survival Ranking */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-[#093832] mb-4">5 อันดับอัตราการรอดชีวิต</h3>
+            <h3 className="text-lg font-bold text-[#093832] mb-4">5 อันดับฟาร์มที่มีอัตราการรอดชีวิตสูง</h3>
             {/* GrowthTable expects: { rank, farm, pondCount, fishCount, survivalRate, deathRate, lastUpdate } 
                  Backend survivalRanking matches this.
              */}
