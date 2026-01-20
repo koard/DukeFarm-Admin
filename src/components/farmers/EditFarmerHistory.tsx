@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import toast from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 
 import CalendarIcon from '../../assets/solar_calendar.svg';
 import TimeIcon from '../../assets/formkit_time.svg';
@@ -28,27 +28,27 @@ const AGE_OPTIONS = [
 const fieldLabels: { [key: string]: string } = {
     pondCount: 'จำนวนบ่อ',
     fishCount: 'จำนวนปลาที่เลี้ยง',
-    foodAmountKg: 'ปริมาณอาหาร', 
+    foodAmountKg: 'ปริมาณอาหาร',
     pondType: 'ประเภทบ่อ',
 };
 
 const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryProps) => {
-    
+
     const cleanNumber = (val: any) => {
         if (!val) return '';
         const strVal = String(val);
-        const cleaned = strVal.replace(/[^0-9.]/g, ''); 
-        return cleaned; 
+        const cleaned = strVal.replace(/[^0-9.]/g, '');
+        return cleaned;
     };
 
     const [formData, setFormData] = useState({
         date: '',
         time: '',
-        ageRange: '',
+        fishAgeDays: '',
         pondType: 'บ่อปูน',
         pondCount: '',
         fishCount: '',
-        foodAmountKg: '', 
+        foodAmountKg: '',
         temp: 0,
         rain: 0,
         humidity: 0
@@ -57,16 +57,16 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
     useEffect(() => {
         if (initialData) {
             const dateParts = initialData.date ? initialData.date.split(' - ') : [];
-            
+
             setFormData({
                 date: dateParts[0] || '',
                 time: dateParts[1] || '',
-                ageRange: initialData.age || '31-60', 
+                fishAgeDays: initialData.fishAgeDays?.toString() || '',
                 pondType: initialData.pondType || 'บ่อปูน',
                 pondCount: initialData.pondCount || '',
                 fishCount: initialData.fishCount || '',
                 foodAmountKg: cleanNumber(initialData.foodAmountKg),
-                
+
                 temp: Number(cleanNumber(initialData.temp)) || 0,
                 rain: Number(cleanNumber(initialData.rain)) || 0,
                 humidity: Number(cleanNumber(initialData.humidity)) || 0
@@ -86,12 +86,12 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
                 const labelName = fieldLabels[key] || key;
                 toast.error(
                     <span>
-                        <b>{labelName}</b> ระบุไม่ถูกต้อง <br/> 
+                        <b>{labelName}</b> ระบุไม่ถูกต้อง <br />
                         (กรอกได้เฉพาะตัวเลข และสัญลักษณ์เท่านั้น ห้ามกรอกตัวอักษร)
                     </span>,
                     { duration: 4000, position: "top-right" }
                 );
-                return false; 
+                return false;
             }
         }
         return true;
@@ -104,7 +104,7 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
 
     const handleSubmit = () => {
         if (!validateForm(formData)) {
-            return; 
+            return;
         }
 
         const finalData = {
@@ -115,13 +115,14 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
             weatherTemperatureC: parseFloat(String(formData.temp)),
             weatherRainMm: parseFloat(String(formData.rain)),
             weatherHumidityPct: parseFloat(String(formData.humidity)),
-            
+
             pondCount: Number(formData.pondCount) || 0,
             fishCountText: String(formData.fishCount),
             temp: `${formData.temp} °C`,
             rain: formData.rain,
             humidity: formData.humidity,
-            age: formData.ageRange, 
+            fishAgeDays: Number(formData.fishAgeDays) || 0,
+            fishAgeLabel: `${formData.fishAgeDays} วัน`,
         };
 
         onSave(finalData);
@@ -151,8 +152,8 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
                             <span className="text-sm text-gray-700">อุณหภูมิ</span>
                         </div>
                         <div className="flex items-center gap-1">
-                            <input 
-                                type="number" 
+                            <input
+                                type="number"
                                 name="temp"
                                 value={formData.temp}
                                 onChange={handleChange}
@@ -166,8 +167,8 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
                             <Image src={RainIcon} alt="rain" width={16} height={16} />
                             <span className="text-sm text-gray-700">ฝน</span>
                         </div>
-                        <input 
-                            type="number" 
+                        <input
+                            type="number"
                             name="rain"
                             value={formData.rain}
                             onChange={handleChange}
@@ -179,8 +180,8 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
                             <Image src={HumidityIcon} alt="humidity" width={16} height={16} />
                             <span className="text-sm text-gray-700">ความชื้น</span>
                         </div>
-                        <input 
-                            type="number" 
+                        <input
+                            type="number"
                             name="humidity"
                             value={formData.humidity}
                             onChange={handleChange}
@@ -192,42 +193,40 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
 
             <div className="space-y-4 mb-8">
                 <div>
-                    <label className="text-lg text-gray-900 mb-2 block">เลือกช่วงอายุปลา</label>
-                    <div className="relative">
-                        <select
-                            name="ageRange"
-                            value={formData.ageRange}
-                            onChange={handleChange}
-                            className="w-full border border-gray-300 rounded-lg p-3 text-lg text-gray-700 appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-[#179678]"
-                        >
-                            {AGE_OPTIONS.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                            <svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="#093832" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 1.5L6 6.5L11 1.5"/></svg>
-                        </div>
-                    </div>
+                    <label className="text-lg text-gray-900 mb-2 block">อายุปลา (วัน)</label>
+                    <input
+                        type="number"
+                        name="fishAgeDays"
+                        value={formData.fishAgeDays}
+                        onChange={handleChange}
+                        placeholder="ระบุอายุปลา เช่น 7, 30, 60"
+                        className="w-full border border-gray-300 rounded-lg p-3 text-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#179678] placeholder-gray-300"
+                    />
                 </div>
 
                 <div>
                     <label className="text-lg text-gray-900 mb-2 block">ประเภทบ่อ</label>
-                    <div className="relative">
-                        <select
-                            name="pondType"
-                            value={formData.pondType}
-                            onChange={handleChange}
-                            className="w-full border border-gray-300 rounded-lg p-3 text-lg text-gray-700 appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-[#179678]"
+                    <div className="flex gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, pondType: 'บ่อดิน' }))}
+                            className={`flex-1 py-3 px-4 rounded-lg border text-lg font-medium transition-colors ${formData.pondType === 'บ่อดิน'
+                                ? 'bg-[#179678] text-white border-[#179678]'
+                                : 'bg-white text-gray-700 border-gray-300 hover:border-[#179678]'
+                                }`}
                         >
-                            <option value="">ระบุข้อมูล เช่น บ่อดิน, บ่อปูน</option>
-                            <option value="บ่อดิน">บ่อดิน</option>
-                            <option value="บ่อปูน">บ่อปูน</option>
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                            <svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="#093832" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 1.5L6 6.5L11 1.5"/></svg>
-                        </div>
+                            บ่อดิน
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, pondType: 'บ่อปูน' }))}
+                            className={`flex-1 py-3 px-4 rounded-lg border text-lg font-medium transition-colors ${formData.pondType === 'บ่อปูน'
+                                ? 'bg-[#179678] text-white border-[#179678]'
+                                : 'bg-white text-gray-700 border-gray-300 hover:border-[#179678]'
+                                }`}
+                        >
+                            บ่อปูน
+                        </button>
                     </div>
                 </div>
 
@@ -259,7 +258,7 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
                     <label className="text-lg text-gray-900 mb-2 block">ปริมาณอาหาร (กิโลกรัม)</label>
                     <input
                         type="text"
-                        name="foodAmountKg" 
+                        name="foodAmountKg"
                         value={formData.foodAmountKg}
                         onChange={handleChange}
                         placeholder="ระบุตัวเลข เช่น 10, 15.5"

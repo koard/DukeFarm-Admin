@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, use, useCallback } from "react";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import dayjs from 'dayjs'; 
-import 'dayjs/locale/th'; 
+import dayjs from 'dayjs';
+import 'dayjs/locale/th';
 
 import FarmerInfoCard from "../../../components/farmers/FarmerInfoCard";
 import FarmerHistoryTable, { FarmerHistory } from "../../../components/farmers/FarmerHistoryTable";
@@ -15,7 +15,7 @@ import Pagination from "../../../components/common/Pagination";
 import DeleteConfirm from "../../../components/common/DeleteConfirm";
 
 import { farmersAPI } from "@/services/api/farmers";
-import { recordsAPI, ListRecordsParams } from "@/services/api/records"; 
+import { recordsAPI, ListRecordsParams } from "@/services/api/records";
 import { APIError } from "@/services/api/types";
 import type { FarmerListItem } from "@/types/farmer";
 import { mapFarmerResponse } from "@/utils/farmerMapper";
@@ -30,7 +30,7 @@ const FISH_TYPE_FILTERS = [
 
 const PERIOD_FILTERS = [
     { label: 'ข้อมูลทั้งหมด', value: 'ALL' },
-    { label: 'ข้อมูล ณ ปัจจุบัน', value: 'CURRENT' }, 
+    { label: 'ข้อมูล ณ ปัจจุบัน', value: 'CURRENT' },
     { label: 'ข้อมูล 3 เดือนล่าสุด', value: '3M' },
     { label: 'ข้อมูล 6 เดือนล่าสุด', value: '6M' },
 ];
@@ -51,7 +51,7 @@ export default function FarmerDetailPage(props: PageProps) {
     const { id } = params;
 
     const router = useRouter();
-    
+
     const [farmerData, setFarmerData] = useState<FarmerListItem | null>(null);
     const [historyData, setHistoryData] = useState<FarmerHistory[]>([]);
     const [allRawEntries, setAllRawEntries] = useState<any[]>([]); // เก็บข้อมูลดิบทั้งหมดไว้ Fallback
@@ -60,12 +60,12 @@ export default function FarmerDetailPage(props: PageProps) {
     const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
 
-    const [feedChartData, setFeedChartData] = useState<any[]>([]); 
-    const [growthChartData, setGrowthChartData] = useState<any[]>([]); 
+    const [feedChartData, setFeedChartData] = useState<any[]>([]);
+    const [growthChartData, setGrowthChartData] = useState<any[]>([]);
 
     const [filterFishType, setFilterFishType] = useState('ALL');
     const [filterPeriod, setFilterPeriod] = useState('ALL');
-    
+
 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -84,15 +84,15 @@ export default function FarmerDetailPage(props: PageProps) {
     }, [modalState.type]);
 
     const processChartData = (entries: any[]) => {
-        const sortedForChart = [...entries].sort((a, b) => 
+        const sortedForChart = [...entries].sort((a, b) =>
             new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime()
         );
         const recentEntries = sortedForChart.slice(-10);
-        
+
         setFeedChartData(recentEntries.map((entry: any) => ({
-            name: dayjs(entry.recordedAt).format('DD/MM'), 
-            food: entry.foodAmountKg ?? 0,                
-            temp: entry.weatherTemperatureC               
+            name: dayjs(entry.recordedAt).format('DD/MM'),
+            food: entry.foodAmountKg ?? 0,
+            temp: entry.weatherTemperatureC
         })));
 
         setGrowthChartData(recentEntries.map((entry: any) => ({
@@ -110,7 +110,7 @@ export default function FarmerDetailPage(props: PageProps) {
 
                 const rawEntries = (farmerRes as any).entries || [];
                 setAllRawEntries(rawEntries);
-                
+
                 if (Array.isArray(rawEntries) && rawEntries.length > 0) {
                     const mappedHistory = rawEntries.map(mapRecordToHistory);
                     mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -138,10 +138,10 @@ export default function FarmerDetailPage(props: PageProps) {
         if (!id || !farmerData) return;
 
         if (filterFishType === 'ALL' && filterPeriod === 'ALL') {
-             const mappedHistory = allRawEntries.map(mapRecordToHistory);
-             mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-             setHistoryData(mappedHistory);
-             return;
+            const mappedHistory = allRawEntries.map(mapRecordToHistory);
+            mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            setHistoryData(mappedHistory);
+            return;
         }
 
         setIsHistoryLoading(true);
@@ -152,8 +152,8 @@ export default function FarmerDetailPage(props: PageProps) {
             };
 
             if (filterPeriod !== 'ALL') {
-                const now = dayjs(); 
-                
+                const now = dayjs();
+
                 if (filterPeriod === 'CURRENT') {
                     params.startDate = now.startOf('day').toISOString();
                     params.endDate = now.endOf('day').toISOString();
@@ -167,7 +167,7 @@ export default function FarmerDetailPage(props: PageProps) {
             }
 
             const res = await recordsAPI.list(params);
-            
+
             const rawEntries = res.data;
             if (Array.isArray(rawEntries)) {
                 const mappedHistory = rawEntries.map(mapRecordToHistory);
@@ -180,7 +180,7 @@ export default function FarmerDetailPage(props: PageProps) {
 
         } catch (error) {
             console.warn("API Filtering failed, falling back to client-side:", error);
-            
+
             let filtered = [...allRawEntries];
 
             if (filterFishType !== 'ALL') {
@@ -191,7 +191,7 @@ export default function FarmerDetailPage(props: PageProps) {
                 const now = dayjs();
                 filtered = filtered.filter(item => {
                     const recordDate = dayjs(item.recordedAt);
-                    
+
                     if (filterPeriod === 'CURRENT') {
                         return recordDate.isSame(now, 'day');
                     } else if (filterPeriod === '3M') {
@@ -207,7 +207,7 @@ export default function FarmerDetailPage(props: PageProps) {
             mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
             setHistoryData(mappedHistory);
             processChartData(filtered);
-            
+
         } finally {
             setIsHistoryLoading(false);
         }
@@ -239,46 +239,59 @@ export default function FarmerDetailPage(props: PageProps) {
     const closeModal = () => setModalState({ type: null, data: null });
 
     const handleUpdateHistory = async (updatedData: any) => {
-        const originalData = modalState.data; 
+        const originalData = modalState.data;
         if (!originalData) return;
 
         try {
             const toastId = toast.loading('กำลังบันทึกข้อมูล...');
+
+            // แปลง pondType กลับเป็น API format
+            const pondTypeMapping: { [key: string]: string } = {
+                'บ่อดิน': 'EARTHEN',
+                'บ่อปูน': 'CONCRETE',
+            };
+            const apiPondType = pondTypeMapping[updatedData.pondType] || updatedData.pondType;
+
             await recordsAPI.update(originalData.id, {
-                foodAmountKg: updatedData.foodAmountKg, 
+                foodAmountKg: updatedData.foodAmountKg,
                 pondCount: updatedData.pondCount,
                 fishCountText: updatedData.fishCountText,
                 weatherTemperatureC: updatedData.weatherTemperatureC,
                 weatherRainMm: updatedData.weatherRainMm,
                 weatherHumidityPct: updatedData.weatherHumidityPct,
-                pondType: updatedData.pondType,
+                pondType: apiPondType,
+                fishAgeLabel: updatedData.fishAgeLabel,
             });
 
-            setHistoryData(prev => prev.map(item => 
-                item.id === modalState.data?.id ? { 
-                    ...item, 
+            setHistoryData(prev => prev.map(item =>
+                item.id === modalState.data?.id ? {
+                    ...item,
                     ...updatedData,
-                    foodAmountKg: updatedData.foodAmountKg, 
+                    foodAmountKg: updatedData.foodAmountKg,
                     temp: updatedData.temp,
                     rain: updatedData.rain,
                     humidity: updatedData.humidity,
-                    pondType: updatedData.pondType
+                    pondType: updatedData.pondType,
+                    fishAgeDays: updatedData.fishAgeDays,
+                    age: updatedData.fishAgeLabel,
                 } : item
             ));
 
-            setAllRawEntries(prev => prev.map(item => 
-                item.id === modalState.data?.id ? { 
-                    ...item, 
+            setAllRawEntries(prev => prev.map(item =>
+                item.id === modalState.data?.id ? {
+                    ...item,
                     foodAmountKg: updatedData.foodAmountKg,
                     pondCount: updatedData.pondCount,
                     fishCountText: updatedData.fishCountText,
                     weatherTemperatureC: updatedData.weatherTemperatureC,
                     weatherRainMm: updatedData.weatherRainMm,
                     weatherHumidityPct: updatedData.weatherHumidityPct,
-                    pondType: updatedData.pondType
+                    pondType: apiPondType,
+                    fishAgeDays: updatedData.fishAgeDays,
+                    fishAgeLabel: updatedData.fishAgeLabel,
                 } : item
             ));
-        
+
             toast.dismiss(toastId);
             toast.success("บันทึกข้อมูลเรียบร้อย!");
             setModalState({ type: null, data: null });
@@ -292,14 +305,14 @@ export default function FarmerDetailPage(props: PageProps) {
 
     const handleConfirmDelete = async () => {
         if (!modalState.data) return;
-        
+
         try {
             const toastId = toast.loading('กำลังลบข้อมูล...');
-            await recordsAPI.delete(modalState.data.id); 
-            
+            await recordsAPI.delete(modalState.data.id);
+
             setHistoryData((prev) => prev.filter((i) => i.id !== modalState.data?.id));
             setAllRawEntries((prev) => prev.filter((i) => i.id !== modalState.data?.id));
-            
+
             toast.dismiss(toastId);
             toast.success("ลบรายการสำเร็จ!");
             setModalState({ type: null, data: null });
@@ -315,7 +328,7 @@ export default function FarmerDetailPage(props: PageProps) {
             <header className="h-16 flex items-center px-5 text-white mb-6 bg-[#034A30] sticky top-0 z-20 shadow-md pl-16 lg:pl-5">
                 <button onClick={() => router.back()} className="flex items-center gap-2 hover:bg-white/10 px-3 py-1.5 rounded-lg transition-colors -ml-12 lg:ml-0">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     <span className="text-xl font-medium">{isFarmerLoading ? "กำลังโหลด..." : farmerData?.name || "ไม่พบข้อมูล"}</span>
                 </button>
@@ -326,22 +339,22 @@ export default function FarmerDetailPage(props: PageProps) {
 
             <div className="px-6 space-y-6">
                 <FarmerInfoCard data={farmerData} />
-                
+
                 <div className="mt-8">
                     {/* --- Filter Section --- */}
                     <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                         <h3 className="text-lg font-bold text-gray-800">
-                            ประวัติการบันทึก 
+                            ประวัติการบันทึก
                             {isHistoryLoading && <span className="text-sm font-normal text-gray-500 ml-2">(กำลังโหลด...)</span>}
                         </h3>
-                        
+
                         <div className="flex flex-wrap gap-3">
                             {/* Filter 1: ประเภทปลา (Fish Type) */}
-                            <select 
+                            <select
                                 value={filterFishType}
                                 onChange={(e) => {
                                     setFilterFishType(e.target.value);
-                                    setCurrentPage(1); 
+                                    setCurrentPage(1);
                                 }}
                                 className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#034A30] focus:border-transparent shadow-sm"
                             >
@@ -351,7 +364,7 @@ export default function FarmerDetailPage(props: PageProps) {
                             </select>
 
                             {/* Filter 2: ช่วงเวลา (Period) */}
-                            <select 
+                            <select
                                 value={filterPeriod}
                                 onChange={(e) => {
                                     setFilterPeriod(e.target.value);
@@ -366,7 +379,7 @@ export default function FarmerDetailPage(props: PageProps) {
                         </div>
                     </div>
 
-                    <FarmerHistoryTable 
+                    <FarmerHistoryTable
                         data={paginatedHistory}
                         startIndex={(currentPage - 1) * itemsPerPage}
                         onView={handleViewClick}
@@ -378,11 +391,11 @@ export default function FarmerDetailPage(props: PageProps) {
                 <div className="mt-4">
                     <Pagination
                         currentPage={currentPage}
-                        totalPages={totalPages} 
-                        totalItems={totalItems} 
+                        totalPages={totalPages}
+                        totalItems={totalItems}
                         itemsPerPage={itemsPerPage}
                         onItemsPerPageChange={handleItemsPerPageChange}
-                        onPageChange={(page) => setCurrentPage(page)} 
+                        onPageChange={(page) => setCurrentPage(page)}
                     />
                 </div>
             </div>
@@ -396,15 +409,15 @@ export default function FarmerDetailPage(props: PageProps) {
 
             {modalState.type === 'edit' && modalState.data && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/50">
-                    <EditFarmerHistory 
-                        initialData={modalState.data} 
-                        onClose={closeModal} 
-                        onSave={handleUpdateHistory} 
+                    <EditFarmerHistory
+                        initialData={modalState.data}
+                        onClose={closeModal}
+                        onSave={handleUpdateHistory}
                     />
                 </div>
             )}
 
-            <DeleteConfirm 
+            <DeleteConfirm
                 isOpen={modalState.type === 'delete'}
                 onClose={closeModal}
                 onConfirm={handleConfirmDelete}

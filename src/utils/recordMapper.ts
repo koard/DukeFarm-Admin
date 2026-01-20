@@ -1,5 +1,5 @@
-import { FarmerHistory } from "@/components/farmers/FarmerHistoryTable"; 
-import { FarmerEntry } from "@/services/api/farmers"; 
+import { FarmerHistory } from "@/components/farmers/FarmerHistoryTable";
+import { FarmerEntry } from "@/services/api/farmers";
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
 
@@ -16,21 +16,21 @@ export const mapRecordToHistory = (record: FarmerEntry): FarmerHistory => {
     id: r.id,
     date: dayjs(r.recordedAt).locale('th').format('DD/MM/YYYY - HH:mm'),
 
-    farmType: r.farmType,       
-    fishAgeDays: r.fishAgeDays, 
+    farmType: r.farmType,
+    fishAgeDays: r.fishAgeDays,
 
-    age: r.fishAgeLabel || `${r.fishAgeDays} วัน`, 
+    age: r.fishAgeLabel || `${r.fishAgeDays} วัน`,
     weight: weightValue,
 
-    pondType: r.pondType,
+    pondType: r.pondType === 'EARTHEN' ? 'บ่อดิน' : r.pondType === 'CONCRETE' ? 'บ่อปูน' : r.pondType,
 
     pondCount: r.pondCount ?? '-',
     fishCount: r.fishCountText || r.fishCount?.toString() || '-',
 
     foodAmountKg: r.foodAmountKg,
 
-    temp: (r.weatherTemperatureC !== null && r.weatherTemperatureC !== undefined) 
-      ? `${r.weatherTemperatureC} °C` 
+    temp: (r.weatherTemperatureC !== null && r.weatherTemperatureC !== undefined)
+      ? `${r.weatherTemperatureC} °C`
       : '-',
     rain: r.weatherRainMm ?? 0,
     humidity: r.weatherHumidityPct ?? 0,
