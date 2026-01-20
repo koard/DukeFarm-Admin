@@ -29,10 +29,10 @@ const FISH_TYPE_FILTERS = [
 ];
 
 const PERIOD_FILTERS = [
+    { label: 'ข้อมูลย้อนหลัง 1 เดือน', value: '1M' },
+    { label: 'ข้อมูลย้อนหลัง 3 เดือน', value: '3M' },
+    { label: 'ข้อมูลย้อนหลัง 6 เดือน', value: '6M' },
     { label: 'ข้อมูลทั้งหมด', value: 'ALL' },
-    { label: 'ข้อมูล ณ ปัจจุบัน', value: 'CURRENT' },
-    { label: 'ข้อมูล 3 เดือนล่าสุด', value: '3M' },
-    { label: 'ข้อมูล 6 เดือนล่าสุด', value: '6M' },
 ];
 
 interface ModalState {
@@ -64,7 +64,7 @@ export default function FarmerDetailPage(props: PageProps) {
     const [growthChartData, setGrowthChartData] = useState<any[]>([]);
 
     const [filterFishType, setFilterFishType] = useState('ALL');
-    const [filterPeriod, setFilterPeriod] = useState('ALL');
+    const [filterPeriod, setFilterPeriod] = useState('1M');
 
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -154,9 +154,9 @@ export default function FarmerDetailPage(props: PageProps) {
             if (filterPeriod !== 'ALL') {
                 const now = dayjs();
 
-                if (filterPeriod === 'CURRENT') {
-                    params.startDate = now.startOf('day').toISOString();
-                    params.endDate = now.endOf('day').toISOString();
+                if (filterPeriod === '1M') {
+                    params.startDate = now.subtract(1, 'month').toISOString();
+                    params.endDate = now.toISOString();
                 } else if (filterPeriod === '3M') {
                     params.startDate = now.subtract(3, 'month').toISOString();
                     params.endDate = now.toISOString();
@@ -192,8 +192,8 @@ export default function FarmerDetailPage(props: PageProps) {
                 filtered = filtered.filter(item => {
                     const recordDate = dayjs(item.recordedAt);
 
-                    if (filterPeriod === 'CURRENT') {
-                        return recordDate.isSame(now, 'day');
+                    if (filterPeriod === '1M') {
+                        return recordDate.isAfter(now.subtract(1, 'month'));
                     } else if (filterPeriod === '3M') {
                         return recordDate.isAfter(now.subtract(3, 'month'));
                     } else if (filterPeriod === '6M') {
@@ -352,19 +352,24 @@ export default function FarmerDetailPage(props: PageProps) {
                         </h3>
 
                         <div className="flex flex-wrap gap-3">
-                            {/* Filter 1: ประเภทปลา (Fish Type) */}
-                            <select
-                                value={filterFishType}
-                                onChange={(e) => {
-                                    setFilterFishType(e.target.value);
-                                    setCurrentPage(1);
-                                }}
-                                className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#034A30] focus:border-transparent shadow-sm"
-                            >
+                            {/* Filter 1: ประเภทปลา (Fish Type) - Chips */}
+                            <div className="flex flex-wrap gap-2">
                                 {FISH_TYPE_FILTERS.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => {
+                                            setFilterFishType(opt.value);
+                                            setCurrentPage(1);
+                                        }}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${filterFishType === opt.value
+                                            ? 'bg-[#034A30] text-white shadow-md'
+                                            : 'bg-white text-gray-700 border border-gray-300 hover:border-[#034A30] hover:text-[#034A30]'
+                                            }`}
+                                    >
+                                        {opt.label}
+                                    </button>
                                 ))}
-                            </select>
+                            </div>
 
                             {/* Filter 2: ช่วงเวลา (Period) */}
                             <select
