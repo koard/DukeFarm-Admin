@@ -41,6 +41,26 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
         return cleaned;
     };
 
+    // แปลง DD/MM/YYYY เป็น YYYY-MM-DD สำหรับ input date
+    const parseDisplayDate = (displayDate: string): string => {
+        if (!displayDate) return '';
+        const parts = displayDate.split('/');
+        if (parts.length === 3) {
+            return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        }
+        return displayDate;
+    };
+
+    // แปลง YYYY-MM-DD เป็น DD/MM/YYYY สำหรับแสดงผล
+    const formatDisplayDate = (isoDate: string): string => {
+        if (!isoDate) return '';
+        const parts = isoDate.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return isoDate;
+    };
+
     const [formData, setFormData] = useState({
         date: '',
         time: '',
@@ -54,12 +74,22 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
         humidity: 0
     });
 
+    // เก็บข้อมูลเดิมสำหรับคำนวณอายุปลา
+    const [originalData, setOriginalData] = useState<{
+        recordedAt: Date | null;
+        fishAgeDays: number;
+    }>({ recordedAt: null, fishAgeDays: 0 });
+
     useEffect(() => {
         if (initialData) {
             const dateParts = initialData.date ? initialData.date.split(' - ') : [];
+            const displayDate = dateParts[0] || '';
+
+            // แปลงวันที่จาก DD/MM/YYYY เป็น YYYY-MM-DD
+            const isoDate = parseDisplayDate(displayDate);
 
             setFormData({
-                date: dateParts[0] || '',
+                date: isoDate,
                 time: dateParts[1] || '',
                 fishAgeDays: initialData.fishAgeDays?.toString() || '',
                 pondType: initialData.pondType || 'บ่อปูน',
@@ -70,6 +100,12 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
                 temp: Number(cleanNumber(initialData.temp)) || 0,
                 rain: Number(cleanNumber(initialData.rain)) || 0,
                 humidity: Number(cleanNumber(initialData.humidity)) || 0
+            });
+
+            // เก็บข้อมูลเดิมสำหรับคำนวณอายุปลา
+            setOriginalData({
+                recordedAt: isoDate ? new Date(isoDate) : null,
+                fishAgeDays: initialData.fishAgeDays || 0
             });
         }
     }, [initialData]);
@@ -102,15 +138,41 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    // คำนวณอายุปลาใหม่เมื่อเปลี่ยนวันที่
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newDate = e.target.value;
+        setFormData(prev => {
+            // คำนวณอายุปลาใหม่ถ้ามีข้อมูลเดิม
+            if (originalData.recordedAt && newDate) {
+                const newRecordedAt = new Date(newDate);
+                const daysDiff = Math.floor(
+                    (newRecordedAt.getTime() - originalData.recordedAt.getTime()) / (1000 * 60 * 60 * 24)
+                );
+                const newFishAge = originalData.fishAgeDays + daysDiff;
+                return { ...prev, date: newDate, fishAgeDays: Math.max(0, newFishAge).toString() };
+            }
+            return { ...prev, date: newDate };
+        });
+    };
+
     const handleSubmit = () => {
         if (!validateForm(formData)) {
             return;
         }
 
+        // สร้าง recordedAt จาก date และ time
+        const recordedAt = formData.date && formData.time
+            ? new Date(`${formData.date}T${formData.time}:00`).toISOString()
+            : formData.date
+                ? new Date(`${formData.date}T00:00:00`).toISOString()
+                : null;
+
         const finalData = {
             ...initialData,
             ...formData,
 
+            // ส่งไป API
+            recordedAt,
             foodAmountKg: formData.foodAmountKg ? parseFloat(String(formData.foodAmountKg)) : null,
             weatherTemperatureC: parseFloat(String(formData.temp)),
             weatherRainMm: parseFloat(String(formData.rain)),
@@ -123,6 +185,9 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
             humidity: formData.humidity,
             fishAgeDays: Number(formData.fishAgeDays) || 0,
             fishAgeLabel: `${formData.fishAgeDays} วัน`,
+
+            // formatted date สำหรับแสดงในตาราง
+            displayDate: `${formatDisplayDate(formData.date)} - ${formData.time}`,
         };
 
         onSave(finalData);
@@ -135,11 +200,23 @@ const EditFarmerHistory = ({ initialData, onClose, onSave }: EditFarmerHistoryPr
             <div className="flex gap-4 mb-6">
                 <div className="flex-1 bg-[#E4F5E7] rounded-lg px-4 py-3 flex items-center gap-3">
                     <Image src={CalendarIcon} alt="date" width={24} height={24} />
-                    <span className="text-[#093832] text-lg font-medium">{formData.date || '-'}</span>
+                    <input
+                        type="date"
+                        name="date"
+                        value={formData.date}
+                        onChange={handleDateChange}
+                        className="bg-transparent text-[#093832] text-lg font-medium focus:outline-none w-full"
+                    />
                 </div>
                 <div className="flex-1 bg-[#E4F5E7] rounded-lg px-4 py-3 flex items-center gap-3">
                     <Image src={TimeIcon} alt="time" width={24} height={24} />
-                    <span className="text-[#093832] text-lg font-medium">{formData.time || '-'}</span>
+                    <input
+                        type="time"
+                        name="time"
+                        value={formData.time}
+                        onChange={handleChange}
+                        className="bg-transparent text-[#093832] text-lg font-medium focus:outline-none w-full"
+                    />
                 </div>
             </div>
 

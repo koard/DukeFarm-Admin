@@ -17,14 +17,14 @@ export interface FormStateResponse {
 }
 
 export interface CreateRecordRequest {
-  farmType?: string; 
+  farmType?: string;
   recordedAt?: string;
   fishAgeLabel?: string;
-  
+
   pondType?: string;
   pondCount?: number;
-  
-  fishCountText?: string; 
+
+  fishCountText?: string;
   foodAmountKg?: number | null;
 
   weather?: {
@@ -49,26 +49,26 @@ export interface RecordResponse {
   id: string;
   userId: string;
   farmType: string;
-  cultivationTypeId?: string; 
+  cultivationTypeId?: string;
   recordedAt: string;
-  
+
   fishAgeLabel: string;
   fishAgeDays: number;
   fishAgeStageId?: string;
-  
+
   pondType: string;
   pondCount: number;
-  
-  fishCount: number;      
-  fishCountText: string;  
 
-  fishAverageWeight?: number | null; 
-  foodAmountKg?: number | null; 
+  fishCount: number;
+  fishCountText: string;
+
+  fishAverageWeight?: number | null;
+  foodAmountKg?: number | null;
 
   weatherTemperatureC: number;
   weatherRainMm: number;
   weatherHumidityPct: number;
-  
+
   notes?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -96,7 +96,7 @@ export class RecordsAPI {
     const response = await httpClient.get<{ data: FormStateResponse }>(
       `${this.basePath}/form-state?${queryParams.toString()}`
     );
-    return response.data; 
+    return response.data;
   }
 
   /**
@@ -104,20 +104,20 @@ export class RecordsAPI {
    */
   async list(params?: ListRecordsParams): Promise<{ data: RecordResponse[], total: number }> {
     const queryParams = new URLSearchParams();
-    
+
     if (params) {
-        if (params.userId) queryParams.append('userId', params.userId);
-        if (params.farmType && params.farmType !== 'ALL') queryParams.append('farmType', params.farmType);
-        if (params.page) queryParams.append('page', params.page.toString());
-        if (params.limit) queryParams.append('limit', params.limit.toString());
-        if (params.startDate) queryParams.append('startDate', params.startDate);
-        if (params.endDate) queryParams.append('endDate', params.endDate);
+      if (params.userId) queryParams.append('userId', params.userId);
+      if (params.farmType && params.farmType !== 'ALL') queryParams.append('farmType', params.farmType);
+      if (params.page) queryParams.append('page', params.page.toString());
+      if (params.limit) queryParams.append('limit', params.limit.toString());
+      if (params.startDate) queryParams.append('startDate', params.startDate);
+      if (params.endDate) queryParams.append('endDate', params.endDate);
     }
 
     const response = await httpClient.get<{ data: RecordResponse[], total: number }>(
       `${this.basePath}?${queryParams.toString()}`
     );
-    return response; 
+    return response;
   }
 
   /**

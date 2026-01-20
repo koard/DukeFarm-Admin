@@ -253,6 +253,7 @@ export default function FarmerDetailPage(props: PageProps) {
             const apiPondType = pondTypeMapping[updatedData.pondType] || updatedData.pondType;
 
             await recordsAPI.update(originalData.id, {
+                recordedAt: updatedData.recordedAt,
                 foodAmountKg: updatedData.foodAmountKg,
                 pondCount: updatedData.pondCount,
                 fishCountText: updatedData.fishCountText,
@@ -267,6 +268,7 @@ export default function FarmerDetailPage(props: PageProps) {
                 item.id === modalState.data?.id ? {
                     ...item,
                     ...updatedData,
+                    date: updatedData.displayDate,
                     foodAmountKg: updatedData.foodAmountKg,
                     temp: updatedData.temp,
                     rain: updatedData.rain,
@@ -280,6 +282,7 @@ export default function FarmerDetailPage(props: PageProps) {
             setAllRawEntries(prev => prev.map(item =>
                 item.id === modalState.data?.id ? {
                     ...item,
+                    recordedAt: updatedData.recordedAt,
                     foodAmountKg: updatedData.foodAmountKg,
                     pondCount: updatedData.pondCount,
                     fishCountText: updatedData.fishCountText,
