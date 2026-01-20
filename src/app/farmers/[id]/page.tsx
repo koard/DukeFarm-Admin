@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect, use, useCallback } from "react";
 import { useRouter } from "next/navigation"; 
 import toast from "react-hot-toast";
 import dayjs from 'dayjs'; 
 import 'dayjs/locale/th'; 
 
 import FarmerInfoCard from "../../../components/farmers/FarmerInfoCard";
-import FarmerDashboard from "../../../components/farmers/FarmerDashboard"; 
 import FarmerHistoryTable, { FarmerHistory } from "../../../components/farmers/FarmerHistoryTable";
 import ViewFarmerHistory from "../../../components/farmers/ViewFarmerHistory";
 import EditFarmerHistory from "../../../components/farmers/EditFarmerHistory";
@@ -16,11 +15,25 @@ import Pagination from "../../../components/common/Pagination";
 import DeleteConfirm from "../../../components/common/DeleteConfirm";
 
 import { farmersAPI } from "@/services/api/farmers";
-import { recordsAPI } from "@/services/api/records"; 
+import { recordsAPI, ListRecordsParams } from "@/services/api/records"; 
 import { APIError } from "@/services/api/types";
 import type { FarmerListItem } from "@/types/farmer";
 import { mapFarmerResponse } from "@/utils/farmerMapper";
 import { mapRecordToHistory } from "@/utils/recordMapper";
+
+const FISH_TYPE_FILTERS = [
+    { label: 'ทั้งหมด', value: 'ALL' },
+    { label: 'ปลาตุ้ม', value: 'SMALL' },
+    { label: 'ปลานิ้ว', value: 'LARGE' },
+    { label: 'ปลาตลาด', value: 'MARKET' },
+];
+
+const PERIOD_FILTERS = [
+    { label: 'ข้อมูลทั้งหมด', value: 'ALL' },
+    { label: 'ข้อมูล ณ ปัจจุบัน', value: 'CURRENT' }, 
+    { label: 'ข้อมูล 3 เดือนล่าสุด', value: '3M' },
+    { label: 'ข้อมูล 6 เดือนล่าสุด', value: '6M' },
+];
 
 interface ModalState {
     type: 'view' | 'edit' | 'delete' | null;
@@ -38,14 +51,22 @@ export default function FarmerDetailPage(props: PageProps) {
     const { id } = params;
 
     const router = useRouter();
+    
     const [farmerData, setFarmerData] = useState<FarmerListItem | null>(null);
-    const [isFarmerLoading, setIsFarmerLoading] = useState(true);
-    
     const [historyData, setHistoryData] = useState<FarmerHistory[]>([]);
-    
+    const [allRawEntries, setAllRawEntries] = useState<any[]>([]); // เก็บข้อมูลดิบทั้งหมดไว้ Fallback
+
+    const [isFarmerLoading, setIsFarmerLoading] = useState(true);
+    const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+
+
     const [feedChartData, setFeedChartData] = useState<any[]>([]); 
     const [growthChartData, setGrowthChartData] = useState<any[]>([]); 
+
+    const [filterFishType, setFilterFishType] = useState('ALL');
+    const [filterPeriod, setFilterPeriod] = useState('ALL');
     
+
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -66,45 +87,37 @@ export default function FarmerDetailPage(props: PageProps) {
         const sortedForChart = [...entries].sort((a, b) => 
             new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime()
         );
-
         const recentEntries = sortedForChart.slice(-10);
-
-        const feedData = recentEntries.map((entry: any) => ({
+        
+        setFeedChartData(recentEntries.map((entry: any) => ({
             name: dayjs(entry.recordedAt).format('DD/MM'), 
             food: entry.foodAmountKg ?? 0,                
             temp: entry.weatherTemperatureC               
-        }));
-        setFeedChartData(feedData);
+        })));
 
-        const growthData = recentEntries.map((entry: any) => ({
+        setGrowthChartData(recentEntries.map((entry: any) => ({
             name: dayjs(entry.recordedAt).format('DD/MM'),
             weight: (entry.fishAverageWeight ?? entry.averageFishWeightGr ?? 0)
-        }));
-        setGrowthChartData(growthData);
+        })));
     };
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchFarmerProfile = async () => {
             setIsFarmerLoading(true);
             try {
                 const farmerRes = await farmersAPI.getById(id);
                 setFarmerData(mapFarmerResponse(farmerRes));
 
-                const rawEntries = (farmerRes as any).entries; 
-
-                if (rawEntries && Array.isArray(rawEntries) && rawEntries.length > 0) {
-                    console.log("Found entries:", rawEntries);
-                    
+                const rawEntries = (farmerRes as any).entries || [];
+                setAllRawEntries(rawEntries);
+                
+                if (Array.isArray(rawEntries) && rawEntries.length > 0) {
                     const mappedHistory = rawEntries.map(mapRecordToHistory);
                     mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                     setHistoryData(mappedHistory);
-
                     processChartData(rawEntries);
-
                 } else {
                     setHistoryData([]);
-                    setFeedChartData([]);
-                    setGrowthChartData([]);
                 }
 
             } catch (error) {
@@ -117,10 +130,96 @@ export default function FarmerDetailPage(props: PageProps) {
         };
 
         if (id) {
-            fetchData();
+            fetchFarmerProfile();
         }
     }, [id]);
 
+    const fetchRecords = useCallback(async () => {
+        if (!id || !farmerData) return;
+
+        if (filterFishType === 'ALL' && filterPeriod === 'ALL') {
+             const mappedHistory = allRawEntries.map(mapRecordToHistory);
+             mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+             setHistoryData(mappedHistory);
+             return;
+        }
+
+        setIsHistoryLoading(true);
+        try {
+            const params: ListRecordsParams & { startDate?: string, endDate?: string } = {
+                userId: farmerData.id,
+                farmType: filterFishType !== 'ALL' ? filterFishType : undefined,
+            };
+
+            if (filterPeriod !== 'ALL') {
+                const now = dayjs(); 
+                
+                if (filterPeriod === 'CURRENT') {
+                    params.startDate = now.startOf('day').toISOString();
+                    params.endDate = now.endOf('day').toISOString();
+                } else if (filterPeriod === '3M') {
+                    params.startDate = now.subtract(3, 'month').toISOString();
+                    params.endDate = now.toISOString();
+                } else if (filterPeriod === '6M') {
+                    params.startDate = now.subtract(6, 'month').toISOString();
+                    params.endDate = now.toISOString();
+                }
+            }
+
+            const res = await recordsAPI.list(params);
+            
+            const rawEntries = res.data;
+            if (Array.isArray(rawEntries)) {
+                const mappedHistory = rawEntries.map(mapRecordToHistory);
+                mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                setHistoryData(mappedHistory);
+                processChartData(rawEntries);
+            } else {
+                setHistoryData([]);
+            }
+
+        } catch (error) {
+            console.warn("API Filtering failed, falling back to client-side:", error);
+            
+            let filtered = [...allRawEntries];
+
+            if (filterFishType !== 'ALL') {
+                filtered = filtered.filter(item => item.farmType === filterFishType);
+            }
+
+            if (filterPeriod !== 'ALL') {
+                const now = dayjs();
+                filtered = filtered.filter(item => {
+                    const recordDate = dayjs(item.recordedAt);
+                    
+                    if (filterPeriod === 'CURRENT') {
+                        return recordDate.isSame(now, 'day');
+                    } else if (filterPeriod === '3M') {
+                        return recordDate.isAfter(now.subtract(3, 'month'));
+                    } else if (filterPeriod === '6M') {
+                        return recordDate.isAfter(now.subtract(6, 'month'));
+                    }
+                    return true;
+                });
+            }
+
+            const mappedHistory = filtered.map(mapRecordToHistory);
+            mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            setHistoryData(mappedHistory);
+            processChartData(filtered);
+            
+        } finally {
+            setIsHistoryLoading(false);
+        }
+    }, [id, farmerData, filterFishType, filterPeriod, allRawEntries]);
+
+    useEffect(() => {
+        if (farmerData) {
+            fetchRecords();
+        }
+    }, [fetchRecords, farmerData]);
+
+    // --- Pagination Logic ---
     const totalItems = historyData.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage) || 1);
     const paginatedHistory = historyData.slice(
@@ -133,17 +232,11 @@ export default function FarmerDetailPage(props: PageProps) {
         setCurrentPage(1);
     };
 
-    const handleViewClick = (item: FarmerHistory) => {
-        setModalState({ type: 'view', data: item });
-    };
-
-    const handleEditClick = (item: FarmerHistory) => {
-        setModalState({ type: 'edit', data: item });
-    };
-
-    const handleDeleteClick = (item: FarmerHistory) => {
-        setModalState({ type: 'delete', data: item });
-    };
+    // --- Handlers ---
+    const handleViewClick = (item: FarmerHistory) => setModalState({ type: 'view', data: item });
+    const handleEditClick = (item: FarmerHistory) => setModalState({ type: 'edit', data: item });
+    const handleDeleteClick = (item: FarmerHistory) => setModalState({ type: 'delete', data: item });
+    const closeModal = () => setModalState({ type: null, data: null });
 
     const handleUpdateHistory = async (updatedData: any) => {
         const originalData = modalState.data; 
@@ -155,11 +248,9 @@ export default function FarmerDetailPage(props: PageProps) {
                 foodAmountKg: updatedData.foodAmountKg, 
                 pondCount: updatedData.pondCount,
                 fishCountText: updatedData.fishCountText,
-                
                 weatherTemperatureC: updatedData.weatherTemperatureC,
                 weatherRainMm: updatedData.weatherRainMm,
                 weatherHumidityPct: updatedData.weatherHumidityPct,
-                
                 pondType: updatedData.pondType,
             });
 
@@ -167,10 +258,23 @@ export default function FarmerDetailPage(props: PageProps) {
                 item.id === modalState.data?.id ? { 
                     ...item, 
                     ...updatedData,
-                    foodAmount: updatedData.foodAmountKg ? `${updatedData.foodAmountKg} กก.` : '-',
+                    foodAmountKg: updatedData.foodAmountKg, 
                     temp: updatedData.temp,
                     rain: updatedData.rain,
                     humidity: updatedData.humidity,
+                    pondType: updatedData.pondType
+                } : item
+            ));
+
+            setAllRawEntries(prev => prev.map(item => 
+                item.id === modalState.data?.id ? { 
+                    ...item, 
+                    foodAmountKg: updatedData.foodAmountKg,
+                    pondCount: updatedData.pondCount,
+                    fishCountText: updatedData.fishCountText,
+                    weatherTemperatureC: updatedData.weatherTemperatureC,
+                    weatherRainMm: updatedData.weatherRainMm,
+                    weatherHumidityPct: updatedData.weatherHumidityPct,
                     pondType: updatedData.pondType
                 } : item
             ));
@@ -191,10 +295,10 @@ export default function FarmerDetailPage(props: PageProps) {
         
         try {
             const toastId = toast.loading('กำลังลบข้อมูล...');
-            
             await recordsAPI.delete(modalState.data.id); 
             
             setHistoryData((prev) => prev.filter((i) => i.id !== modalState.data?.id));
+            setAllRawEntries((prev) => prev.filter((i) => i.id !== modalState.data?.id));
             
             toast.dismiss(toastId);
             toast.success("ลบรายการสำเร็จ!");
@@ -205,14 +309,6 @@ export default function FarmerDetailPage(props: PageProps) {
             toast.error("ไม่สามารถลบรายการได้");
         }
     };
-
-    const closeModal = () => setModalState({ type: null, data: null });
-
-    const farmTypesList = farmerData 
-        ? ((farmerData as any).farmTypes?.length > 0 
-            ? (farmerData as any).farmTypes 
-            : (farmerData.groupType ? [farmerData.groupType] : []))
-        : [];
 
     return (
         <div className="min-h-screen bg-gray-50 pb-10">
@@ -231,13 +327,45 @@ export default function FarmerDetailPage(props: PageProps) {
             <div className="px-6 space-y-6">
                 <FarmerInfoCard data={farmerData} />
                 
-                {/* <FarmerDashboard 
-                    farmTypes={farmTypesList} 
-                    feedChartData={feedChartData} 
-                    growthChartData={growthChartData}
-                /> */}
-
                 <div className="mt-8">
+                    {/* --- Filter Section --- */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                        <h3 className="text-lg font-bold text-gray-800">
+                            ประวัติการบันทึก 
+                            {isHistoryLoading && <span className="text-sm font-normal text-gray-500 ml-2">(กำลังโหลด...)</span>}
+                        </h3>
+                        
+                        <div className="flex flex-wrap gap-3">
+                            {/* Filter 1: ประเภทปลา (Fish Type) */}
+                            <select 
+                                value={filterFishType}
+                                onChange={(e) => {
+                                    setFilterFishType(e.target.value);
+                                    setCurrentPage(1); 
+                                }}
+                                className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#034A30] focus:border-transparent shadow-sm"
+                            >
+                                {FISH_TYPE_FILTERS.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+
+                            {/* Filter 2: ช่วงเวลา (Period) */}
+                            <select 
+                                value={filterPeriod}
+                                onChange={(e) => {
+                                    setFilterPeriod(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#034A30] focus:border-transparent shadow-sm"
+                            >
+                                {PERIOD_FILTERS.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
                     <FarmerHistoryTable 
                         data={paginatedHistory}
                         startIndex={(currentPage - 1) * itemsPerPage}

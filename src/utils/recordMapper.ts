@@ -15,19 +15,23 @@ export const mapRecordToHistory = (record: FarmerEntry): FarmerHistory => {
   return {
     id: r.id,
     date: dayjs(r.recordedAt).locale('th').format('DD/MM/YYYY - HH:mm'),
-    age: r.fishAgeLabel || `${r.fishAgeDays} วัน`,
+
+    farmType: r.farmType,       
+    fishAgeDays: r.fishAgeDays, 
+
+    age: r.fishAgeLabel || `${r.fishAgeDays} วัน`, 
     weight: weightValue,
 
-    pondType: r.pondType === 'EARTH' ? 'บ่อดิน'
-             : r.pondType === 'CONCRETE' ? 'บ่อปูน'
-             : r.pondType,
+    pondType: r.pondType,
 
     pondCount: r.pondCount ?? '-',
     fishCount: r.fishCountText || r.fishCount?.toString() || '-',
 
     foodAmountKg: r.foodAmountKg,
 
-    temp: r.weatherTemperatureC !== null ? `${r.weatherTemperatureC} °C` : '-',
+    temp: (r.weatherTemperatureC !== null && r.weatherTemperatureC !== undefined) 
+      ? `${r.weatherTemperatureC} °C` 
+      : '-',
     rain: r.weatherRainMm ?? 0,
     humidity: r.weatherHumidityPct ?? 0,
   };
