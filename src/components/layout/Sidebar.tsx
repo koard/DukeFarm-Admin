@@ -38,8 +38,8 @@ interface MenuItemProps {
 
 const MenuItem = ({ name, icon, to, onClick, isButton = false }: MenuItemProps) => {
   const pathname = usePathname();
-  const isActive = to && (pathname === to || (name === "Dashboard" && pathname === "/"));
-  
+  const isActive = to && (pathname === to || pathname?.startsWith(`${to}/`) || (name === "Dashboard" && pathname === "/"));
+
   const activeClass = isActive
     ? "bg-[#8FCAB5] text-gray-800 font-semibold"
     : "text-gray-600 hover:bg-gray-100";
@@ -132,7 +132,7 @@ function Sidebar() {
                 priority
               />
             </Link>
-            
+
             <button
               className="lg:hidden absolute right-0 top-1/2 -translate-y-1/2"
               onClick={() => setIsOpen(false)}
@@ -202,11 +202,11 @@ function Sidebar() {
               </div>
               <h3 className="text-xl font-bold text-gray-800">ออกจากระบบ</h3>
             </div>
-            
+
             <p className="text-gray-600 mb-6">
               คุณต้องการออกจากระบบใช่หรือไม่?
             </p>
-            
+
             <div className="flex gap-3 justify-end">
               <button
                 onClick={handleCancelLogout}
