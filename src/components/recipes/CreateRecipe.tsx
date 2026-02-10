@@ -16,7 +16,8 @@ const FOOD_TYPE_OPTIONS = [
 ];
 
 const UNIT_OPTIONS = [
-    { value: 'cm', label: 'ซม.' },
+    { value: 'GRAM', label: 'กรัม' },
+    { value: 'KG', label: 'กิโลกรัม' },
 ];
 
 interface FormInputProps {

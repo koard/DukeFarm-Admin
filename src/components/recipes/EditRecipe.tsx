@@ -17,7 +17,8 @@ const FOOD_TYPE_OPTIONS = [
 ];
 
 const UNIT_OPTIONS = [
-    { value: 'cm', label: 'ซม.' },
+    { value: 'GRAM', label: 'กรัม' },
+    { value: 'KG', label: 'กิโลกรัม' },
 ];
 
 const normalizeFarmType = (value: string): string => {
@@ -147,15 +148,21 @@ const EditRecipe = ({ onClose, onUpdate, initialData }: EditRecipeProps) => {
         if (initialData) {
             const initialRawFarmType = (initialData as any).farmType || (initialData as any).primaryFarmType || '';
             
-            let initialSize = initialData.targetStage || initialData.ageRange || '';
-            initialSize = initialSize.replace(/ซม\.|cm|ซม/gi, '').trim();
+            const rawStage = initialData.targetStage || initialData.ageRange || '';
+            
+            const initialSize = rawStage.replace(/กิโลกรัม|กก\.|kg|KG|กรัม|gram|g|GRAM|ซม\.|cm|ซม/gi, '').trim();
 
             setName(initialData.name || '');
             setFarmType(normalizeFarmType(initialRawFarmType));
             setFoodType(initialData.foodType || '');
             
-            if (initialData.targetStage || initialData.ageRange) {
-                 setSelectedUnit('cm');
+            if (rawStage.match(/กิโล|kg|KG/i)) {
+                setSelectedUnit('KG');
+            } else if (rawStage.match(/กรัม|gram|g|GRAM/i)) {
+                setSelectedUnit('GRAM');
+            } else {
+ 
+                setSelectedUnit(''); 
             }
 
             setTargetSize(initialSize);

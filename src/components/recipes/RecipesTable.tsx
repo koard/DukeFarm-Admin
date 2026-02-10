@@ -7,15 +7,18 @@ import EditIcon from '../../assets/rc-edit.svg';
 import type { Recipe } from '@/app/recipes/page';
 
 const FARM_TYPE_LABEL: Record<string, string> = {
-    SMALL: 'ปลาตุ้ม',
-    LARGE: 'ปลานิ้ว',
-    MARKET: 'ปลาตลาด',
+    'SMALL': 'ปลาตุ้ม',
+    'LARGE': 'ปลานิ้ว',
+    'MARKET': 'ปลาตลาด',
+    'NURSERY_SMALL': 'ปลาตุ้ม',
+    'NURSERY_LARGE': 'ปลานิ้ว',
+    'GROWOUT': 'ปลาตลาด'
 };
 
 const FOOD_TYPE_LABEL: Record<string, string> = {
-    FRESH: 'อาหารสด',
-    PELLET: 'อาหารเม็ด',
-    SUPPLEMENT: 'อาหารเสริม',
+    'FRESH': 'อาหารสด',
+    'PELLET': 'อาหารเม็ด',
+    'SUPPLEMENT': 'อาหารเสริม',
 };
 
 interface TableHeaderProps {
@@ -69,13 +72,18 @@ const RecipesTable = ({ data = [], onView, onEdit, onDelete, startIndex = 0 }: R
 
                 <tbody className="text-sm text-gray-900 font-normal bg-white">
                     {data.map((item, index) => {
-                        const farmTypeKey = (item.farmType || '').toUpperCase();
-                        const displayFarmType = FARM_TYPE_LABEL[farmTypeKey] || item.farmType || '-';
+                        const rawFarmType = item.farmType || (item as any).primaryFarmType || '';
+                        const farmTypeKey = rawFarmType.toUpperCase();
+                        const displayFarmType = FARM_TYPE_LABEL[farmTypeKey] || rawFarmType || '-';
 
                         const foodTypeKey = (item.foodType || '').toUpperCase();
                         const displayFoodType = FOOD_TYPE_LABEL[foodTypeKey] || item.foodType || '-';
 
-                        const displayStage = item.targetStage || item.ageRange || '-';
+                        let displayStage = item.targetStage || item.ageRange || '-';
+                        displayStage = displayStage
+                            .replace(/KG|kg|Kg/g, 'กิโลกรัม')
+                            .replace(/GRAM|gram|Gram/g, 'กรัม')
+                            .replace(/cm|CM/g, 'ซม.');
 
                         return (
                             <tr key={item.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">

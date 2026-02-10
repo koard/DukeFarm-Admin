@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import RecipesToolbar from "../../components/recipes/RecipesToolbar";
 import RecipesTable from "../../components/recipes/RecipesTable"; 
 import CreateRecipe, { NewRecipeFormData } from '../../components/recipes/CreateRecipe'; 
-import EditRecipe from '../../components/recipes/EditRecipe';
+import EditRecipe, { UpdateRecipeData } from '../../components/recipes/EditRecipe';
 import ViewRecipe from '../../components/recipes/ViewRecipe';
 
 import Pagination from "../../components/common/Pagination";
@@ -114,8 +114,14 @@ function RecipesPage() {
     const filteredData = data.filter((item: Recipe) => { 
         const lowerSearchTerm = searchTerm.toLowerCase();
         
+        let displayStage = item.targetStage || item.ageRange || '';
+        displayStage = displayStage
+            .replace(/KG|kg|Kg/g, 'กิโลกรัม')
+            .replace(/GRAM|gram|Gram/g, 'กรัม')
+            .replace(/cm|CM/g, 'ซม.');
+
         const nameMatch = item.name && item.name.toLowerCase().includes(lowerSearchTerm);
-        const stageMatch = item.targetStage && item.targetStage.toLowerCase().includes(lowerSearchTerm);
+        const stageMatch = displayStage && displayStage.toLowerCase().includes(lowerSearchTerm);
         const authorMatch = item.author && item.author.toLowerCase().includes(lowerSearchTerm);
         
         const isSearchMatch = !searchTerm || nameMatch || stageMatch || authorMatch;
@@ -241,7 +247,7 @@ function RecipesPage() {
         setModalState({ type: 'create', data: null });
     };
 
-    const handleUpdateRecipe = async (updatedData: any) => { 
+    const handleUpdateRecipe = async (updatedData: UpdateRecipeData) => { 
         const originalItem = data.find(item => item.id === updatedData.id);
         if (!originalItem) return;
 

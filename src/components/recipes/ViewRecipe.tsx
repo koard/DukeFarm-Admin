@@ -5,7 +5,10 @@ import { Recipe } from "../../app/recipes/page";
 const FARM_TYPE_LABEL: Record<string, string> = {
     'SMALL': 'ปลาตุ้ม',
     'LARGE': 'ปลานิ้ว',
-    'MARKET': 'ปลาตลาด'
+    'MARKET': 'ปลาตลาด',
+    'NURSERY_SMALL': 'ปลาตุ้ม',
+    'NURSERY_LARGE': 'ปลานิ้ว',
+    'GROWOUT': 'ปลาตลาด'
 };
 
 const FOOD_TYPE_LABEL: Record<string, string> = {
@@ -41,7 +44,11 @@ const ViewRecipe = ({ onClose, initialData }: ViewRecipeProps) => {
     const rawFoodType = initialData.foodType || '';
     const displayFoodType = FOOD_TYPE_LABEL[rawFoodType?.toUpperCase()] || rawFoodType || '-';
 
-    const rawStage = initialData.targetStage || initialData.ageRange || '-';
+    let rawStage = initialData.targetStage || initialData.ageRange || '-';
+    rawStage = rawStage
+        .replace(/KG|kg|Kg/g, 'กิโลกรัม')
+        .replace(/GRAM|gram|Gram/g, 'กรัม')
+        .replace(/cm|CM/g, 'ซม.');
     
     const displayData = {
         name: initialData?.name || '-',
@@ -115,4 +122,4 @@ const ViewRecipe = ({ onClose, initialData }: ViewRecipeProps) => {
     );
 };
 
-export default ViewRecipe; 
+export default ViewRecipe;
