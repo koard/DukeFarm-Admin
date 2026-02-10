@@ -12,4 +12,6 @@ export type {
   CreateFeedFormulaRequest,
   UpdateFeedFormulaRequest,
   ListFeedFormulasParams,
+  FoodType,
+  FarmType,
 } from './feedFormulas';

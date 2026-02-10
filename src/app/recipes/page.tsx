@@ -12,19 +12,18 @@ import ViewRecipe from '../../components/recipes/ViewRecipe';
 import Pagination from "../../components/common/Pagination";
 import DeleteConfirm from "../../components/common/DeleteConfirm";
 
-import { feedFormulasAPI, APIError, type FeedFormula } from '../../services/api'; 
+import { feedFormulasAPI, APIError, type FeedFormula, type FoodType, type FarmType } from '../../services/api'; 
 
 export interface Recipe {
     id: string; 
     name: string;
+    foodType?: string; 
     farmType?: string; 
-    primaryFarmType?: string; 
     ageRange: string; 
     ageUnit?: string; 
     targetStage: string;
     ingredients: string; 
-    instruction: string;
-    description?: string;  
+    instruction: string; 
     recommendations: string;
     author: string; 
     createdAt: string;
@@ -36,67 +35,26 @@ interface ModalState {
     data: Recipe | null;
 }
 
-const normalizeFarmType = (value: any): string | undefined => {
-    if (!value) return undefined;
-    const upper = String(value).toUpperCase();
-    if (upper === 'NURSERY_SMALL') return 'SMALL';
-    if (upper === 'NURSERY_LARGE') return 'LARGE';
-    if (upper === 'GROWOUT') return 'MARKET';
-    return upper;
-};
-
 const mapFeedFormulaToRecipe = (formula: FeedFormula): Recipe => {
-    const rawFarmType = (formula as any).primaryFarmType || (formula as any).farmType;
-    const farmType = normalizeFarmType(rawFarmType);
-    
+    const farmType = formula.farmType;
     const targetStageStr = formula.targetStage || ''; 
-
-    const pickNumericRange = (value?: string | null) => {
-        if (!value) return '';
-        const match = value.match(/(\d+)\s*[-–]\s*(\d+)/);
-        if (match) return `${match[1]}-${match[2]}`;
-        const single = value.match(/(\d+)/g);
-        if (single && single.length === 2) return `${single[0]}-${single[1]}`;
-        if (single && single.length === 1) return `${single[0]}-${single[0]}`;
-        return value;
-    };
-
-    const ageRange = pickNumericRange(targetStageStr);
-
-    let detectedUnit = '';
-    if (targetStageStr.includes('วัน') || targetStageStr.toLowerCase().includes('day')) {
-        detectedUnit = 'DAY';
-    } else if (targetStageStr.includes('เดือน') || targetStageStr.toLowerCase().includes('month')) {
-        detectedUnit = 'MONTH';
-    } 
-
-    if (!detectedUnit) {
-        if (farmType === 'SMALL') {
-            detectedUnit = 'DAY';
-        } else if (farmType === 'LARGE' || farmType === 'MARKET') {
-            detectedUnit = 'MONTH';
-        }
-    }
 
     return {
         id: formula.id,
         name: formula.name,
+        foodType: formula.foodType, 
         farmType,
-        primaryFarmType: (formula as any).primaryFarmType,
-        ageRange,
-        ageUnit: detectedUnit, 
+        ageRange: targetStageStr, 
+        ageUnit: '', 
         targetStage: targetStageStr, 
-        ingredients: formula.ingredients || '',
-        instruction: formula.instruction || '',
-        description: (formula as any).description,
-        
-        recommendations: formula.recommendations,
+        ingredients: formula.nutrients || '', 
+        instruction: formula.usage || '',     
+        recommendations: formula.recommendations || '',
         author: 'Admin', 
         createdAt: new Date(formula.createdAt).toLocaleString('th-TH'),
         updatedAt: new Date(formula.updatedAt).toLocaleString('th-TH'),
     };
 }; 
-
 
 function RecipesPage() { 
     const [data, setData] = useState<Recipe[]>([]); 
@@ -104,7 +62,9 @@ function RecipesPage() {
     const [currentPage, setCurrentPage] = useState<number>(1); 
     
     const [searchTerm, setSearchTerm] = useState<string>(''); 
-    const [filterType, setFilterType] = useState<string>(''); 
+    
+    const [filterFarmType, setFilterFarmType] = useState<string>(''); 
+    const [filterFoodType, setFilterFoodType] = useState<string>(''); 
 
     const [itemsPerPage, setItemsPerPage] = useState<number>(10); 
     
@@ -123,7 +83,6 @@ function RecipesPage() {
             document.body.style.overflow = 'auto';
         };
     }, [modalState.type]);
-
 
     const fetchFeedFormulas = async () => {
         try {
@@ -154,15 +113,20 @@ function RecipesPage() {
 
     const filteredData = data.filter((item: Recipe) => { 
         const lowerSearchTerm = searchTerm.toLowerCase();
+        
         const nameMatch = item.name && item.name.toLowerCase().includes(lowerSearchTerm);
-        const ageRangeMatch = item.ageRange && item.ageRange.toLowerCase().includes(lowerSearchTerm);
+        const stageMatch = item.targetStage && item.targetStage.toLowerCase().includes(lowerSearchTerm);
         const authorMatch = item.author && item.author.toLowerCase().includes(lowerSearchTerm);
-        const isSearchMatch = !searchTerm || nameMatch || ageRangeMatch || authorMatch;
+        
+        const isSearchMatch = !searchTerm || nameMatch || stageMatch || authorMatch;
 
-        const itemType = item.farmType || ''; 
-        const isTypeMatch = !filterType || itemType === filterType;
+        const itemFarmType = item.farmType || ''; 
+        const isFarmTypeMatch = !filterFarmType || itemFarmType === filterFarmType;
 
-        return isSearchMatch && isTypeMatch;
+        const itemFoodType = item.foodType || '';
+        const isFoodTypeMatch = !filterFoodType || itemFoodType === filterFoodType;
+
+        return isSearchMatch && isFarmTypeMatch && isFoodTypeMatch;
     });
 
     const displayTotalItems = filteredData.length;
@@ -211,8 +175,13 @@ function RecipesPage() {
         setCurrentPage(1); 
     };
 
-    const handleFilterChange = (type: string) => {
-        setFilterType(type);
+    const handleFarmFilterChange = (type: string) => {
+        setFilterFarmType(type);
+        setCurrentPage(1);
+    };
+
+    const handleFoodFilterChange = (type: string) => {
+        setFilterFoodType(type);
         setCurrentPage(1);
     };
 
@@ -220,15 +189,12 @@ function RecipesPage() {
         const isCommonDataValid =
             formData.recipeName?.trim() &&
             formData.farmType &&
+            formData.targetSize?.trim() && 
             formData.ingredients?.trim() && 
             formData.instruction?.trim() && 
             formData.recommendations?.trim();
 
-        const hasAgeFrom = formData.ageFrom !== undefined && formData.ageFrom !== '';
-        const hasAgeTo = formData.ageTo !== undefined && formData.ageTo !== '';
-        const isAgeDataValid = hasAgeFrom && hasAgeTo;
-
-        if (!isCommonDataValid || !isAgeDataValid) {
+        if (!isCommonDataValid) {
             toast.error("กรุณากรอกข้อมูลให้ครบถ้วน", { 
                 duration: 2000, 
                 position: "top-right" 
@@ -236,18 +202,19 @@ function RecipesPage() {
             return;
         }
 
-        const unitLabel = formData.ageUnit === 'month' ? 'เดือน' : 'วัน'; 
-        
-        const targetStage = `${formData.ageFrom}-${formData.ageTo} ${unitLabel}`;
+        const unitLabel = formData.ageUnit || ''; 
+        const targetStage = unitLabel ? `${formData.targetSize} ${unitLabel}` : formData.targetSize;
 
-        const apiFarmType = formData.farmType;
+        const apiFoodType = (formData as any).foodType as FoodType || 'FRESH'; 
+        const apiFarmType = formData.farmType as FarmType;
 
         try {
             await feedFormulasAPI.create({
                 name: formData.recipeName,
+                foodType: apiFoodType,
                 targetStage: targetStage, 
-                ingredients: formData.ingredients,
-                instruction: formData.instruction,
+                nutrients: formData.ingredients,
+                usage: formData.instruction,
                 recommendations: formData.recommendations,
                 farmType: apiFarmType,
             }); 
@@ -281,15 +248,12 @@ function RecipesPage() {
         const isCommonDataValid =
             updatedData.recipeName?.trim() &&
             updatedData.farmType &&
+            updatedData.targetSize?.trim() && 
             updatedData.ingredients?.trim() &&
             updatedData.instruction?.trim() && 
             updatedData.recommendations?.trim();
 
-        const hasAgeFrom = updatedData.ageFrom !== undefined && updatedData.ageFrom !== '';
-        const hasAgeTo = updatedData.ageTo !== undefined && updatedData.ageTo !== '';
-        const isAgeDataValid = hasAgeFrom && hasAgeTo;
-
-        if (!isCommonDataValid || !isAgeDataValid) {
+        if (!isCommonDataValid) {
             toast.error("กรุณากรอกข้อมูลให้ครบถ้วน", { 
                 duration: 2000, 
                 position: "top-right" 
@@ -297,15 +261,16 @@ function RecipesPage() {
             return;
         }
 
-        const unitLabel = updatedData.ageUnit === 'month' ? 'เดือน' : 'วัน';
-        const targetStage = `${updatedData.ageFrom}-${updatedData.ageTo} ${unitLabel}`;
+        const unitLabel = updatedData.ageUnit || '';
+        const targetStage = unitLabel ? `${updatedData.targetSize} ${unitLabel}` : updatedData.targetSize;
 
-        const apiFarmType = updatedData.farmType;
-        const currentMappedFarmType = normalizeFarmType(originalItem.primaryFarmType || originalItem.farmType);
+        const apiFarmType = updatedData.farmType as FarmType;
+        const apiFoodType = (updatedData.foodType as FoodType) || originalItem.foodType || 'FRESH';
 
         const isUnchanged = 
             originalItem.name === updatedData.recipeName &&
-            (currentMappedFarmType === updatedData.farmType || originalItem.farmType === updatedData.farmType) &&
+            (originalItem.farmType === updatedData.farmType) &&
+            (originalItem.foodType === apiFoodType) &&
             originalItem.ingredients === updatedData.ingredients && 
             originalItem.instruction === updatedData.instruction &&
             originalItem.recommendations === updatedData.recommendations &&
@@ -322,9 +287,10 @@ function RecipesPage() {
         try {
             await feedFormulasAPI.update(updatedData.id, {
                 name: updatedData.recipeName,
+                foodType: apiFoodType,
                 targetStage: targetStage, 
-                ingredients: updatedData.ingredients,
-                instruction: updatedData.instruction,
+                nutrients: updatedData.ingredients,
+                usage: updatedData.instruction,
                 recommendations: updatedData.recommendations,
                 farmType: apiFarmType,
             });
@@ -434,7 +400,8 @@ function RecipesPage() {
                 <RecipesToolbar 
                     totalItems={displayTotalItems} 
                     onSearch={handleSearch}
-                    onFilterChange={handleFilterChange}
+                    onFarmFilterChange={handleFarmFilterChange} 
+                    onFoodFilterChange={handleFoodFilterChange} 
                     onAddClick={handleAddClick}
                 />
                 

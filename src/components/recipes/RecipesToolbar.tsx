@@ -12,17 +12,25 @@ const FARM_TYPE_OPTIONS = [
     { value: 'MARKET', label: 'ปลาตลาด' },
 ];
 
+const FOOD_TYPE_OPTIONS = [
+    { value: 'FRESH', label: 'อาหารสด' },
+    { value: 'PELLET', label: 'อาหารเม็ด' },
+    { value: 'SUPPLEMENT', label: 'อาหารเสริม' },
+];
+
 interface RecipesToolbarProps {
     totalItems?: number; 
     onSearch: (searchTerm: string) => void; 
-    onFilterChange: (filterValue: string) => void; 
+    onFarmFilterChange: (filterValue: string) => void; 
+    onFoodFilterChange: (filterValue: string) => void;
     onAddClick: () => void; 
 }
 
 const RecipesToolbar = ({
     totalItems = 0, 
     onSearch,     
-    onFilterChange, 
+    onFarmFilterChange, 
+    onFoodFilterChange,
     onAddClick,    
 }: RecipesToolbarProps) => {
 
@@ -30,26 +38,22 @@ const RecipesToolbar = ({
         onSearch(e.target.value);
     };
 
-    const handleFilterChange = (e: ChangeEvent<HTMLSelectElement>) => {
-        onFilterChange(e.target.value);
-    };
-
     return (
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 w-full">
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 w-full">
             <div>
                 <h2 className="text-xl font-semibold">ทั้งหมด ({totalItems})</h2>
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto flex-wrap">
                 
-
                 <div 
-                    className="relative w-full sm:w-60 h-10
+                    className="relative w-full sm:w-80 h-10
                              focus-within:border-[#034A30] focus-within:ring-1 focus-within:ring-[#034A30]
                              border border-gray-300 rounded-md bg-white" 
                 >
                     <input 
                         type="text" 
-                        placeholder="ค้นหา ชื่อ, ช่วงอายุ หรือผู้สร้าง"
+                        placeholder="ค้นหา ชื่อสูตรอาหาร, ขนาดที่แนะนำ, หรือผู้สร้าง"
                         className="w-full h-full pl-10 pr-4 text-sm rounded-md focus:outline-none bg-transparent" 
                         onChange={handleSearchChange}
                     />
@@ -63,10 +67,32 @@ const RecipesToolbar = ({
                 >
                     <select
                         className="w-full h-full pl-4 pr-10 text-sm rounded-md focus:outline-none appearance-none bg-transparent text-gray-700"
-                        onChange={handleFilterChange}
+                        onChange={(e) => onFoodFilterChange(e.target.value)}
                         defaultValue=""
                     >
-                        <option value="">ทั้งหมด (ทุกกลุ่ม)</option>
+                        <option value="">ทุกประเภทอาหาร</option>
+                        {FOOD_TYPE_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                    </select>
+                    <img 
+                        src={DownArrowIcon.src || DownArrowIcon} 
+                        alt="arrow" 
+                        className="absolute w-4 h-4 text-gray-400 right-3 top-1/2 -translate-y-1/2 pointer-events-none" 
+                    />
+                </div>
+
+                <div 
+                    className="relative w-full sm:w-48 h-10
+                             focus-within:border-[#034A30] focus-within:ring-1 focus-within:ring-[#034A30]
+                             border border-gray-300 rounded-md bg-white"
+                >
+                    <select
+                        className="w-full h-full pl-4 pr-10 text-sm rounded-md focus:outline-none appearance-none bg-transparent text-gray-700"
+                        onChange={(e) => onFarmFilterChange(e.target.value)}
+                        defaultValue=""
+                    >
+                        <option value="">ทุกกลุ่มการเลี้ยง</option>
                         {FARM_TYPE_OPTIONS.map((opt) => (
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                         ))}

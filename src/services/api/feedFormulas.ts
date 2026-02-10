@@ -1,37 +1,41 @@
 import { httpClient } from './client';
 import { PaginatedResponse } from './types';
+
+export type FoodType = 'FRESH' | 'PELLET' | 'SUPPLEMENT';
+export type FarmType = 'SMALL' | 'LARGE' | 'MARKET';
+
 export interface FeedFormula {
   id: string;
   name: string;
-  targetStage: string;
-  ingredients: string;    
-  instruction: string;   
-  recommendations: string;
-  farmType?: string;        
+  foodType: FoodType;      
+  targetStage?: string;     
+  nutrients?: string;      
+  usage?: string;          
+  recommendations?: string;
+  farmType?: FarmType;      
   createdBy: string;
   createdAt: string;
   updatedAt: string;
 }
 
-
 export interface CreateFeedFormulaRequest {
   name: string;
-  targetStage: string;
-  ingredients: string;
-  instruction: string;
-  recommendations: string;
-  farmType?: string;
+  foodType: FoodType;       
+  targetStage?: string;
+  nutrients?: string;       
+  usage?: string;          
+  recommendations?: string;
+  farmType?: FarmType;
 }
 
 export interface UpdateFeedFormulaRequest {
   name?: string;
+  foodType?: FoodType;     
   targetStage?: string;
-  
-  ingredients?: string;
-  instruction?: string;
-  
+  nutrients?: string;       
+  usage?: string;           
   recommendations?: string;
-  farmType?: string;
+  farmType?: FarmType;
 }
 
 export interface ListFeedFormulasParams {
