@@ -2,32 +2,32 @@
 
 import Image from 'next/image';
 
-import WeatherIcon from '../../assets/fluent_weather.svg';
 import ViewIcon from '../../assets/fm-search-table.svg';
 import EditIcon from '../../assets/rc-edit.svg';
 import DeleteIcon from '../../assets/fm-delete.svg';
-import SortIcon from '../../assets/fm-arrow.svg';
 
 export interface FarmerHistory {
     id: string;
     date: string;
 
-    // ✅ ตัวแปรตามเอกสาร
     farmType?: string | null;
+    
+    initialFishCount?: number | string; 
+    remainingFishCount?: number | string; 
+    foodType?: string; 
+    foodAmountKg?: number | null; 
+    medicineGiven?: string; 
+
+
     fishAgeDays?: number | null;
-
-    age: number | string;
+    age?: number | string;
     weight?: number;
-
-    pondType: string;
-    pondCount: number | string;
-    fishCount: number | string;
-
-    foodAmountKg?: number | null;
-
-    temp: string;
-    rain: number;
-    humidity: number;
+    pondType?: string;
+    pondCount?: number | string;
+    fishCount?: number | string; 
+    temp?: string;
+    rain?: number;
+    humidity?: number;
 }
 
 interface FarmerHistoryTableProps {
@@ -41,16 +41,8 @@ interface FarmerHistoryTableProps {
 const TableHeader = ({ title }: { title: string }) => (
     <div className="flex items-center justify-center gap-2">
         <span>{title}</span>
-        {/* <Image src={SortIcon} alt="sort" width={16} height={16} className="w-4 h-4 opacity-60" /> */}
     </div>
 );
-
-const POND_TYPE_MAP: Record<string, string> = {
-    'EARTHEN': 'บ่อดิน',
-    'CONCRETE': 'บ่อปูน',
-    'earthen': 'บ่อดิน',
-    'concrete': 'บ่อปูน'
-};
 
 const FARM_TYPE_MAP: Record<string, string> = {
     'SMALL': 'ปลาตุ้ม',
@@ -70,7 +62,7 @@ const FarmerHistoryTable = ({
     startIndex = 0
 }: FarmerHistoryTableProps) => {
 
-    const formatNumber = (num: number | string) => {
+    const formatNumber = (num?: number | string | null) => {
         if (num === null || num === undefined || num === '-') return '-';
         if (typeof num === 'string') return num;
         return num.toLocaleString();
@@ -89,25 +81,26 @@ const FarmerHistoryTable = ({
     return (
         <div className="w-full">
 
+            <div className="flex items-center justify-between gap-4 mb-4">
+                <h3 className="text-lg font-bold text-gray-800">
+                    ประวัติการบันทึก
+                </h3>
+            </div>
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full min-w-[1200px] table-auto">
+                    <table className="w-full min-w-[1000px] table-auto">
                         <thead>
                             <tr className="text-sm font-medium text-[#ACACAC] bg-black">
                                 <th className="p-3 text-center w-[60px]"><TableHeader title="No." /></th>
                                 <th className="p-3 text-center"><TableHeader title="วันที่เก็บข้อมูล" /></th>
-
-                                <th className="p-3 text-center"><TableHeader title="ประเภทฟาร์ม" /></th>
-
-                                <th className="p-3 text-center"><TableHeader title="อายุปลา (วัน)" /></th>
-
-                                <th className="p-3 text-center"><TableHeader title="ประเภทบ่อ" /></th>
-                                <th className="p-3 text-center"><TableHeader title="จำนวนบ่อ" /></th>
-                                <th className="p-3 text-center"><TableHeader title="จำนวนปลาที่เลี้ยง (ตัว)" /></th>
-                                <th className="p-3 text-center"><TableHeader title="ปริมาณอาหาร (Kg.)" /></th>
-                                <th className="p-3 text-center"><TableHeader title="อุณหภูมิ" /></th>
-                                <th className="p-3 text-center"><TableHeader title="ปริมาณน้ำฝน" /></th>
-                                <th className="p-3 text-center"><TableHeader title="ความชื้นสัมพัทธ์" /></th>
+                                <th className="p-3 text-center"><TableHeader title="ประเภทฟาร์ม" /></th>                              
+                                <th className="p-3 text-center"><TableHeader title="จำนวนปลาที่ปล่อย (ตัว)" /></th>
+                                <th className="p-3 text-center"><TableHeader title="จำนวนปลาที่เหลือ (ตัว)" /></th>
+                                <th className="p-3 text-center"><TableHeader title="ประเภทอาหาร" /></th>
+                                <th className="p-3 text-center"><TableHeader title="ปริมาณอาหาร (กก.)" /></th>
+                                <th className="p-3 text-center"><TableHeader title="การให้ยา" /></th>
+                                
                                 <th className="p-3 text-center w-[120px]">Action</th>
                             </tr>
                         </thead>
@@ -122,23 +115,25 @@ const FarmerHistoryTable = ({
                                     </td>
 
                                     <td className="p-4 text-center">
-                                        {item.fishAgeDays !== null && item.fishAgeDays !== undefined ? item.fishAgeDays : '-'}
+                                        {formatNumber(item.initialFishCount || item.fishCount)} 
+                                    </td>
+                                    
+                                    <td className="p-4 text-center">
+                                        {formatNumber(item.remainingFishCount)}
                                     </td>
 
                                     <td className="p-4 text-center">
-                                        {POND_TYPE_MAP[item.pondType] || item.pondType}
+                                        {item.foodType || '-'}
                                     </td>
-
-                                    <td className="p-4 text-center">{item.pondCount}</td>
-                                    <td className="p-4 text-center">{formatNumber(item.fishCount)}</td>
 
                                     <td className="p-4 text-center">
                                         {(item.foodAmountKg !== null && item.foodAmountKg !== undefined) ? item.foodAmountKg : '-'}
                                     </td>
 
-                                    <td className="p-4 text-center">{item.temp}</td>
-                                    <td className="p-4 text-center">{item.rain}</td>
-                                    <td className="p-4 text-center">{item.humidity}</td>
+                                    <td className="p-4 text-center">
+                                        {item.medicineGiven || '-'}
+                                    </td>
+
                                     <td className="p-4 text-center">
                                         <div className="flex justify-center items-center gap-3">
                                             <button
@@ -176,4 +171,4 @@ const FarmerHistoryTable = ({
     );
 };
 
-export default FarmerHistoryTable; 
+export default FarmerHistoryTable;

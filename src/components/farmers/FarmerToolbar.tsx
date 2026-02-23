@@ -1,119 +1,89 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import Image from 'next/image';
 
-import CalendarIcon from '../../assets/fm-calendar.svg';
-import DownArrowIcon from '../../assets/fm-down.svg';
-import SearchIcon from '../../assets/fm-search.svg';
+const PERIOD_FILTERS = [
+    { label: 'ข้อมูลย้อนหลัง 1 เดือน', value: '1M' },
+    { label: 'ข้อมูลย้อนหลัง 3 เดือน', value: '3M' },
+    { label: 'ข้อมูลย้อนหลัง 6 เดือน', value: '6M' },
+    { label: 'ข้อมูลทั้งหมด', value: 'ALL' },
+];
+
+const MOCK_PONDS = [
+    { id: 'pond_1', label: 'บ่อที่ 1' },
+    { id: 'pond_2', label: 'บ่อที่ 2' },
+];
 
 interface FarmerToolbarProps {
-    count?: number;
-    onSearchChange: (value: string) => void;
-    onDateChange: (value: string) => void;
-    onGroupTypeChange: (value: string) => void;
+    isHistoryLoading: boolean;
+    activePond: string;
+    setActivePond: (val: string) => void;
+    filterPeriod: string;
+    setFilterPeriod: (val: string) => void;
+    setCurrentPage: (val: number) => void;
 }
 
 const FarmerToolbar = ({
-    count = 50,
-    onSearchChange,
-    onDateChange,
-    onGroupTypeChange,
+    isHistoryLoading,
+    activePond,
+    setActivePond,
+    filterPeriod,
+    setFilterPeriod,
+    setCurrentPage,
 }: FarmerToolbarProps) => {
-    const [selectedDate, setSelectedDate] = useState('');
-    const dateInputRef = useRef<HTMLInputElement>(null); 
-    
-    const [selectedGroupType, setSelectedGroupType] = useState('');
-
-    const handleDateSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSelectedDate(e.target.value);
-        if (onDateChange) {
-            onDateChange(e.target.value);
-        }
-    };
-
-    const handleCalendarIconClick = () => {
-        if (dateInputRef.current) {
-            try {
-                dateInputRef.current.showPicker();
-            } catch (error) {
-                console.error("Browser doesn't support showPicker():", error);
-            }
-        }
-    };
-
-
-    const handleGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedGroupType(e.target.value);
-        if (onGroupTypeChange) onGroupTypeChange(e.target.value);
-    }
-
     return (
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 w-full">
-            <div>
-                <h2 className="text-xl font-semibold">ทั้งหมด ({count})</h2>
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+            
+            {/* ซ้าย: ส่วนปุ่มเลือกบ่อ */}
+            <div className="flex flex-wrap items-center gap-2">
+                {MOCK_PONDS.map((pond) => {
+                    const isActive = activePond === pond.id;
+                    return (
+                        <button
+                            key={pond.id}
+                            onClick={() => {
+                                setActivePond(pond.id);
+                                setCurrentPage(1);
+                            }}
+                            className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-bold transition-all duration-200 border ${
+                                isActive
+                                    ? 'bg-[#179678] text-white border-[#179678] shadow-sm' 
+                                    : 'bg-white text-gray-800 border-gray-400 hover:bg-gray-50'
+                            }`}
+                        >
+                            <Image
+                                src={isActive ? "/icon_farmers/famicons_fish_w.svg" : "/icon_farmers/famicons_fish_b.svg"}
+                                alt="fish-icon"
+                                width={18}
+                                height={18}
+                                className="object-contain"
+                            />
+                            {pond.label}
+                        </button>
+                    );
+                })}
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-                
-                <div className="relative w-full sm:w-auto h-10 focus-within:border-[#034A30] focus-within:ring-1 focus-within:ring-[#034A30] border border-gray-300 rounded-md">
-                    <div className="flex items-center justify-between w-full h-full pl-4 pr-10"> 
-                        <span className={`text-sm ${selectedDate ? 'text-gray-900' : 'text-gray-600' } pointer-events-none`}>
-                            {selectedDate ? new Date(selectedDate).toLocaleDateString('th-TH') : 'วันที่ลงทะเบียน'}
-                        </span>
-                        <Image 
-                            src={CalendarIcon} 
-                            alt="Calendar" 
-                            width={16} 
-                            height={16} 
-                            className="w-4 h-4 cursor-pointer text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" 
-                            onClick={handleCalendarIconClick} 
-                        />
-                    </div>
-                    <input
-                        ref={dateInputRef} 
-                        type="date"
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0" 
-                        onChange={handleDateSelect}
-                    />
-                </div>
-
-                <div className="relative w-full sm:w-auto h-10 focus-within:border-[#034A30] focus-within:ring-1 focus-within:ring-[#034A30] border border-gray-300 rounded-md">
-                    <select
-                        className={`w-full h-full pl-4 pr-10 text-sm bg-transparent rounded-md appearance-none focus:outline-none ${selectedGroupType === "" ? 'text-gray-600' : 'text-gray-600'}`}
-                        value={selectedGroupType}
-                        onChange={handleGroupChange}
-                    >
-                        <option value="">ประเภทกลุ่ม ทั้งหมด</option>
-                        <option value="SMALL">ปลาตุ้ม</option>
-                        <option value="LARGE">ปลานิ้ว</option>
-                        <option value="MARKET">ปลาตลาด</option>
-                    </select>
-                    <Image 
-                        src={DownArrowIcon} 
-                        alt="arrow" 
-                        width={16} 
-                        height={16} 
-                        className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" 
-                    />
-                </div>
-
-                <div className="relative w-full sm:w-50 h-10 focus-within:border-[#034A30] focus-within:ring-1 focus-within:ring-[#034A30] border border-gray-300 rounded-md">
-                    <input 
-                        type="text" 
-                        placeholder="ค้นหา ชื่อ หรือ เบอร์โทร"
-                        className="w-full h-full pl-10 pr-4 text-sm rounded-md focus:outline-none" 
-                        onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
-                    />
-                    <Image 
-                        src={SearchIcon} 
-                        alt="search" 
-                        width={24} 
-                        height={24} 
-                        className="absolute w-6 h-4 text-gray-400 left-3 top-1/2 -translate-y-1/2" 
-                    /> 
-                </div>
+            {/* ขวา: ส่วนกรองเดือน */}
+            <div className="flex items-center gap-2">
+                {isHistoryLoading && <span className="text-sm font-normal text-gray-500 mr-2">(กำลังโหลด...)</span>}
+                <select
+                    value={filterPeriod}
+                    onChange={(e) => {
+                        setFilterPeriod(e.target.value);
+                        setCurrentPage(1);
+                    }}
+                    className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#034A30] focus:border-transparent shadow-sm cursor-pointer"
+                >
+                    {PERIOD_FILTERS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                        </option>
+                    ))}
+                </select>
             </div>
+            
         </div>
     );
 };

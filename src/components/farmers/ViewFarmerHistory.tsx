@@ -14,12 +14,28 @@ interface ViewFarmerHistoryProps {
     onClose: () => void;
 }
 
+const FARM_TYPE_MAP: Record<string, string> = {
+    'SMALL': 'ปลาตุ้ม',
+    'LARGE': 'ปลานิ้ว',
+    'MARKET': 'ปลาตลาด',
+    'small': 'ปลาตุ้ม',
+    'large': 'ปลานิ้ว',
+    'market': 'ปลาตลาด',
+    'ALL': 'ทั้งหมด'
+};
+
 const ViewFarmerHistory = ({ data, onClose }: ViewFarmerHistoryProps) => {
     const dateStr = data?.date?.split(' - ')[0] || '-';
     const timeStr = data?.date?.split(' - ')[1] || '-';
 
+    const formatNumber = (num?: number | string | null) => {
+        if (num === null || num === undefined || num === '-') return '-';
+        if (typeof num === 'string') return num;
+        return num.toLocaleString();
+    };
+
     return (
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative">
+        <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
             
             <h2 className="text-2xl font-bold mb-6 text-gray-900">รายละเอียด</h2>
 
@@ -62,40 +78,50 @@ const ViewFarmerHistory = ({ data, onClose }: ViewFarmerHistoryProps) => {
             </div>
 
             <div className="space-y-4 mb-8">
+                
                 <div>
-                    <label className="text-lg text-gray-900 mb-2 block">เลือกช่วงอายุปลา</label>
+                    <label className="text-lg text-gray-900 mb-2 block">ประเภทฟาร์ม</label>
                     <div className="w-full border border-gray-300 rounded-lg p-3 text-lg text-gray-700 bg-gray-50">
-                        {data?.age ? `${data.age} วัน` : '-'}
+                        {data?.farmType ? (FARM_TYPE_MAP[data.farmType] || data.farmType) : '-'}
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-lg text-gray-900 mb-2 block">จำนวนปลาที่ปล่อย (ตัว)</label>
+                        <div className="w-full border border-gray-300 rounded-lg p-3 text-lg text-gray-700 bg-gray-50">
+                            {formatNumber(data?.initialFishCount || data?.fishCount)}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-lg text-gray-900 mb-2 block">จำนวนปลาที่เหลือ (ตัว)</label>
+                        <div className="w-full border border-gray-300 rounded-lg p-3 text-lg text-gray-700 bg-gray-50">
+                            {formatNumber(data?.remainingFishCount)}
+                        </div>
                     </div>
                 </div>
 
                 <div>
-                    <label className="text-lg text-gray-900 mb-2 block">ประเภทบ่อ</label>
+                    <label className="text-lg text-gray-900 mb-2 block">ประเภทอาหาร</label>
                     <div className="w-full border border-gray-300 rounded-lg p-3 text-lg text-gray-700 bg-gray-50">
-                        {data?.pondType || '-'}
+                        {data?.foodType || '-'}
                     </div>
                 </div>
 
                 <div>
-                    <label className="text-lg text-gray-900 mb-2 block">จำนวนบ่อ</label>
+                    <label className="text-lg text-gray-900 mb-2 block">ปริมาณอาหาร (กก.)</label>
                     <div className="w-full border border-gray-300 rounded-lg p-3 text-lg text-gray-700 bg-gray-50">
-                        {data?.pondCount || '-'}
+                        {(data?.foodAmountKg !== null && data?.foodAmountKg !== undefined) ? data.foodAmountKg : '-'}
                     </div>
                 </div>
 
                 <div>
-                    <label className="text-lg text-gray-900 mb-2 block">จำนวนปลาที่เลี้ยง (ตัว)</label>
+                    <label className="text-lg text-gray-900 mb-2 block">การให้ยา</label>
                     <div className="w-full border border-gray-300 rounded-lg p-3 text-lg text-gray-700 bg-gray-50">
-                        {data?.fishCount?.toLocaleString() || '-'}
+                        {data?.medicineGiven || '-'}
                     </div>
                 </div>
 
-                <div>
-                    <label className="text-lg text-gray-900 mb-2 block">ปริมาณอาหาร (กิโลกรัม.)</label>
-                    <div className="w-full border border-gray-300 rounded-lg p-3 text-lg text-gray-700 bg-gray-50">
-                        {data?.foodAmountKg || '-'}
-                    </div>
-                </div>
             </div>
 
             <div>

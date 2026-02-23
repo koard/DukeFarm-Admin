@@ -58,20 +58,20 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
 
     return (
         <div className="overflow-x-auto rounded-xl">
-            <table className="w-full min-w-[1100px] table-auto">
+            <table className="w-full min-w-[1200px] table-auto">
                 <thead>
                     <tr className="text-sm font-medium text-[#ACACAC] bg-black ">
                         <th className="p-4 text-center"><TableHeader title="No." /></th>
                         <th className="p-4 text-left">
                             <div className="flex items-center gap-2">
                                 <span>ชื่อ-นามสกุล</span>
-                                {/* <Image src={SortIcon} alt="sort" width={16} height={16} className="w-4 h-4 opacity-60" /> */}
                             </div>
                         </th>
                         <th className="p-4 text-center"><TableHeader title="เบอร์โทร" /></th>
                         <th className="p-4 text-center"><TableHeader title="ประเภทกลุ่มการเลี้ยง" /></th>
-                        <th className="p-4 text-center"><TableHeader title="พื้นที่ฟาร์มทั้งหมด" /></th>
-                        <th className="p-4 text-center"><TableHeader title="จำนวนบ่อ" /></th>
+                        <th className="p-4 text-center"><TableHeader title="จำนวนไร่      ทั้งหมด" /></th>
+                        <th className="p-4 text-center"><TableHeader title="จำนวนบ่อทั้งหมด" /></th>
+                        <th className="p-4 text-center"><TableHeader title="จำนวนบ่อที่ลงทะเบียน" /></th> 
                         <th className="p-4 text-center"><TableHeader title="ตำแหน่งฟาร์ม" /></th>
                         <th className="p-4 text-center"><TableHeader title="วันที่ลงทะเบียน" /></th>
                         <th className="p-4 text-center">Action</th>
@@ -90,13 +90,17 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
 
                         let mapUrl = '';
                         if (lat && long) {
-                            mapUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${long}`;
+                            mapUrl = `https://www.google.com/maps/search/?api=1&query=$${lat},${long}`; // แก้บั๊ก template literal
                         } else if (farmer.location && farmer.location !== '-') {
-                            mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(farmer.location)}`;
+                            mapUrl = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(farmer.location)}`; // แก้บั๊ก template literal
                         }
 
                         const regDate = farmer.registeredDate || 
                                       ((farmer as any).registeredAt ? new Date((farmer as any).registeredAt).toLocaleDateString('th-TH') : '-');
+
+                        const registeredPondCount = (farmer as any).ponds && Array.isArray((farmer as any).ponds) 
+                                                    ? (farmer as any).ponds.length 
+                                                    : '-';
 
                         return (
                             <tr key={`${farmer.id}-${index}`} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
@@ -125,7 +129,8 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
                                 </td>
                                 
                                 <td className="p-4 text-center">{displayArea}</td>
-                                <td className="p-4 text-center">{farmer.pondCount ?? '-'}</td>
+                                <td className="p-4 text-center">{farmer.pondCount ?? '-'}</td>                   
+                                <td className="p-4 text-center">{registeredPondCount}</td>
                         
                                 <td className="p-4 text-center">
                                     {displayLocation !== '-' && mapUrl ? (

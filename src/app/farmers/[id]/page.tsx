@@ -7,9 +7,11 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/th';
 
 import FarmerInfoCard from "../../../components/farmers/FarmerInfoCard";
+import FarmerDashboard from "../../../components/farmers/FarmerDashboard"; 
 import FarmerHistoryTable, { FarmerHistory } from "../../../components/farmers/FarmerHistoryTable";
 import ViewFarmerHistory from "../../../components/farmers/ViewFarmerHistory";
 import EditFarmerHistory from "../../../components/farmers/EditFarmerHistory";
+import FarmerToolbar from "../../../components/farmers/FarmerToolbar";
 
 import Pagination from "../../../components/common/Pagination";
 import DeleteConfirm from "../../../components/common/DeleteConfirm";
@@ -20,20 +22,6 @@ import { APIError } from "@/services/api/types";
 import type { FarmerListItem } from "@/types/farmer";
 import { mapFarmerResponse } from "@/utils/farmerMapper";
 import { mapRecordToHistory } from "@/utils/recordMapper";
-
-const FISH_TYPE_FILTERS = [
-    { label: 'ทั้งหมด', value: 'ALL' },
-    { label: 'ปลาตุ้ม', value: 'SMALL' },
-    { label: 'ปลานิ้ว', value: 'LARGE' },
-    { label: 'ปลาตลาด', value: 'MARKET' },
-];
-
-const PERIOD_FILTERS = [
-    { label: 'ข้อมูลย้อนหลัง 1 เดือน', value: '1M' },
-    { label: 'ข้อมูลย้อนหลัง 3 เดือน', value: '3M' },
-    { label: 'ข้อมูลย้อนหลัง 6 เดือน', value: '6M' },
-    { label: 'ข้อมูลทั้งหมด', value: 'ALL' },
-];
 
 interface ModalState {
     type: 'view' | 'edit' | 'delete' | null;
@@ -54,18 +42,13 @@ export default function FarmerDetailPage(props: PageProps) {
 
     const [farmerData, setFarmerData] = useState<FarmerListItem | null>(null);
     const [historyData, setHistoryData] = useState<FarmerHistory[]>([]);
-    const [allRawEntries, setAllRawEntries] = useState<any[]>([]); // เก็บข้อมูลดิบทั้งหมดไว้ Fallback
+    const [allRawEntries, setAllRawEntries] = useState<any[]>([]); 
 
     const [isFarmerLoading, setIsFarmerLoading] = useState(true);
     const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
-
-    const [feedChartData, setFeedChartData] = useState<any[]>([]);
-    const [growthChartData, setGrowthChartData] = useState<any[]>([]);
-
-    const [filterFishType, setFilterFishType] = useState('ALL');
+    const [activePond, setActivePond] = useState('pond_1'); 
     const [filterPeriod, setFilterPeriod] = useState('1M');
-
 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -83,24 +66,6 @@ export default function FarmerDetailPage(props: PageProps) {
         };
     }, [modalState.type]);
 
-    const processChartData = (entries: any[]) => {
-        const sortedForChart = [...entries].sort((a, b) =>
-            new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime()
-        );
-        const recentEntries = sortedForChart.slice(-10);
-
-        setFeedChartData(recentEntries.map((entry: any) => ({
-            name: dayjs(entry.recordedAt).format('DD/MM'),
-            food: entry.foodAmountKg ?? 0,
-            temp: entry.weatherTemperatureC
-        })));
-
-        setGrowthChartData(recentEntries.map((entry: any) => ({
-            name: dayjs(entry.recordedAt).format('DD/MM'),
-            weight: (entry.fishAverageWeight ?? entry.averageFishWeightGr ?? 0)
-        })));
-    };
-
     useEffect(() => {
         const fetchFarmerProfile = async () => {
             setIsFarmerLoading(true);
@@ -115,7 +80,6 @@ export default function FarmerDetailPage(props: PageProps) {
                     const mappedHistory = rawEntries.map(mapRecordToHistory);
                     mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                     setHistoryData(mappedHistory);
-                    processChartData(rawEntries);
                 } else {
                     setHistoryData([]);
                 }
@@ -137,7 +101,7 @@ export default function FarmerDetailPage(props: PageProps) {
     const fetchRecords = useCallback(async () => {
         if (!id || !farmerData) return;
 
-        if (filterFishType === 'ALL' && filterPeriod === 'ALL') {
+        if (activePond === 'ALL' && filterPeriod === 'ALL') { 
             const mappedHistory = allRawEntries.map(mapRecordToHistory);
             mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
             setHistoryData(mappedHistory);
@@ -146,9 +110,9 @@ export default function FarmerDetailPage(props: PageProps) {
 
         setIsHistoryLoading(true);
         try {
-            const params: ListRecordsParams & { startDate?: string, endDate?: string } = {
+            const params: ListRecordsParams & { startDate?: string, endDate?: string, pondId?: string } = {
                 userId: farmerData.id,
-                farmType: filterFishType !== 'ALL' ? filterFishType : undefined,
+                pondId: activePond !== 'ALL' ? activePond : undefined, 
             };
 
             if (filterPeriod !== 'ALL') {
@@ -173,7 +137,6 @@ export default function FarmerDetailPage(props: PageProps) {
                 const mappedHistory = rawEntries.map(mapRecordToHistory);
                 mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                 setHistoryData(mappedHistory);
-                processChartData(rawEntries);
             } else {
                 setHistoryData([]);
             }
@@ -183,8 +146,8 @@ export default function FarmerDetailPage(props: PageProps) {
 
             let filtered = [...allRawEntries];
 
-            if (filterFishType !== 'ALL') {
-                filtered = filtered.filter(item => item.farmType === filterFishType);
+            if (activePond !== 'ALL') {
+                filtered = filtered.filter(item => item.pondId === activePond || item.pondName === activePond); 
             }
 
             if (filterPeriod !== 'ALL') {
@@ -206,12 +169,11 @@ export default function FarmerDetailPage(props: PageProps) {
             const mappedHistory = filtered.map(mapRecordToHistory);
             mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
             setHistoryData(mappedHistory);
-            processChartData(filtered);
 
         } finally {
             setIsHistoryLoading(false);
         }
-    }, [id, farmerData, filterFishType, filterPeriod, allRawEntries]);
+    }, [id, farmerData, activePond, filterPeriod, allRawEntries]);
 
     useEffect(() => {
         if (farmerData) {
@@ -245,7 +207,6 @@ export default function FarmerDetailPage(props: PageProps) {
         try {
             const toastId = toast.loading('กำลังบันทึกข้อมูล...');
 
-            // แปลง pondType กลับเป็น API format
             const pondTypeMapping: { [key: string]: string } = {
                 'บ่อดิน': 'EARTHEN',
                 'บ่อปูน': 'CONCRETE',
@@ -344,47 +305,18 @@ export default function FarmerDetailPage(props: PageProps) {
                 <FarmerInfoCard data={farmerData} />
 
                 <div className="mt-8">
-                    {/* --- Filter Section --- */}
-                    <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                        <h3 className="text-lg font-bold text-gray-800">
-                            ประวัติการบันทึก
-                            {isHistoryLoading && <span className="text-sm font-normal text-gray-500 ml-2">(กำลังโหลด...)</span>}
-                        </h3>
+                    
+                    <FarmerToolbar 
+                        isHistoryLoading={isHistoryLoading}
+                        activePond={activePond}
+                        setActivePond={setActivePond}
+                        filterPeriod={filterPeriod}
+                        setFilterPeriod={setFilterPeriod}
+                        setCurrentPage={setCurrentPage}
+                    />
 
-                        <div className="flex flex-wrap gap-3">
-                            {/* Filter 1: ประเภทปลา (Fish Type) - Chips */}
-                            <div className="flex flex-wrap gap-2">
-                                {FISH_TYPE_FILTERS.map(opt => (
-                                    <button
-                                        key={opt.value}
-                                        onClick={() => {
-                                            setFilterFishType(opt.value);
-                                            setCurrentPage(1);
-                                        }}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${filterFishType === opt.value
-                                            ? 'bg-[#034A30] text-white shadow-md'
-                                            : 'bg-white text-gray-700 border border-gray-300 hover:border-[#034A30] hover:text-[#034A30]'
-                                            }`}
-                                    >
-                                        {opt.label}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Filter 2: ช่วงเวลา (Period) */}
-                            <select
-                                value={filterPeriod}
-                                onChange={(e) => {
-                                    setFilterPeriod(e.target.value);
-                                    setCurrentPage(1);
-                                }}
-                                className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#034A30] focus:border-transparent shadow-sm"
-                            >
-                                {PERIOD_FILTERS.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                ))}
-                            </select>
-                        </div>
+                    <div className="mb-6">
+                        <FarmerDashboard loading={isHistoryLoading} />
                     </div>
 
                     <FarmerHistoryTable

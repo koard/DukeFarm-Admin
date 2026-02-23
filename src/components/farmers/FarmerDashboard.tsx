@@ -1,176 +1,177 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import React from 'react';
+import Image from 'next/image';
 
-import GrowthChart from "../farmers/WeightLineChart"; 
-import FeedingChart from "../farmers/FeedBarChart";
-
-import IconFoodGrains from '../../assets/db-food-grains.svg';
-import IconFish from '../../assets/db-fish.svg';
-import IconWeight from '../../assets/db-weight.svg';
-
-interface DashboardData {
-    food: number;
-    accFood: number;
-    age: number;
-    weight: number;
-    growthChart: any[]; 
-    feedingChart: any[];
+export interface FarmerDashboardProps {
+    loading?: boolean;
+    fishType?: string;
+    avgWeight?: string | number;
+    releaseCount?: string | number;
+    remainingCount?: string | number;
+    survivalRate?: number | null;
+    marketSize?: string;
 }
 
-interface FarmerDashboardProps {
-    farmTypes: string[]; 
-    feedChartData?: any[];   
-    growthChartData?: any[]; 
-}
-
-const FarmerDashboard = ({ 
-    farmTypes = [], 
-    feedChartData = [], 
-    growthChartData = [] 
-}: FarmerDashboardProps) => {
-    
-    const availableTypes = farmTypes.length > 0 ? farmTypes : ['SMALL'];
-    const [selectedType, setSelectedType] = useState<string>(availableTypes[0]);
-    
-    const [timeRange, setTimeRange] = useState('6M');
-
-    const [dashboardData, setDashboardData] = useState<DashboardData>({
-        food: 0,
-        accFood: 0,
-        age: 0,
-        weight: 0,
-        growthChart: [],
-        feedingChart: []
-    });
-
-    const getLabel = (type: string) => {
-        const t = type.toUpperCase();
-        if (t.includes('SMALL')) return 'ปลาตุ้ม';
-        if (t.includes('LARGE')) return 'ปลานิ้ว';
-        if (t.includes('MARKET') || t.includes('GROWOUT')) return 'ปลาตลาด';
-        return type;
-    };
-
-    useEffect(() => {
-        const fetchDashboardData = async () => {
-            try {
-                
-                console.log(`Fetching data for: ${selectedType} range: ${timeRange}`);
-                
-                setDashboardData(prev => ({
-                    ...prev,
-                    food: 0,
-                    accFood: 0,
-                    age: 0,
-                    weight: 0,
-                    growthChart: [], 
-                    feedingChart: []
-                }));
-
-            } catch (error) {
-                console.error("Failed to fetch dashboard data", error);
-            }
+const getSurvivalStatusStyles = (percentage: number | null) => {
+    if (percentage === null) {
+        return {
+            bg: "bg-gray-50",
+            text: "text-gray-400",
+            label: "-"
         };
+    }
+    if (percentage >= 90) {
+        return {
+            bg: "bg-[#E6FFFA]",
+            text: "text-[#047857]",
+            label: "▲ (สูง)"
+        };
+    } else if (percentage >= 75) {
+        return {
+            bg: "bg-[#FFF9C4]",
+            text: "text-[#854D0E]",
+            label: "● (ปกติ)"
+        };
+    } else if (percentage >= 50) {
+        return {
+            bg: "bg-[#FFCCBC]",
+            text: "text-[#BF360C]",
+            label: "▼ (ค่อนข้างต่ำ)"
+        };
+    } else {
+        return {
+            bg: "bg-[#FFCDD2]",
+            text: "text-[#B91C1C]",
+            label: "▼ (ต่ำมาก)"
+        };
+    }
+};
 
-        fetchDashboardData();
-    }, [selectedType, timeRange]);
+const FarmerDashboard = ({
+    loading = false,
+    fishType = "-",
+    avgWeight = "-",
+    releaseCount = "-",
+    remainingCount = "-",
+    survivalRate = null,
+    marketSize = "-"
+}: FarmerDashboardProps) => {
+
+    const status = getSurvivalStatusStyles(survivalRate);
 
     return (
-        <div className="w-full bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                
-                <div className="flex flex-wrap gap-2">
-                    {availableTypes.map((type) => {
-                        const isActive = selectedType === type;
-                        return (
-                            <button
-                                key={type}
-                                onClick={() => setSelectedType(type)}
-                                className={`
-                                    px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 border border-[#034A30]
-                                    ${isActive 
-                                        ? 'bg-[#034A30] text-white shadow-md transform scale-105' 
-                                        : 'bg-white text-[#034A30] hover:bg-green-50'
-                                    }
-                                `}
-                            >
-                                {getLabel(type)}
-                            </button>
-                        );
-                    })}
-                </div>
+        <div className="w-full overflow-x-auto pb-4 scrollbar-hide">
+            <div className="flex items-stretch gap-3 min-w-[1100px]">
 
-                <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-gray-900">ข้อมูล ณ วันที่</span>
-                    <div className="relative">
-                        <select 
-                            className="appearance-none bg-[#F3F4F6] text-gray-700 text-sm font-medium rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-[#093832] cursor-pointer"
-                            value={timeRange}
-                            onChange={(e) => setTimeRange(e.target.value)}
-                        >
-                            <option value="6M">ข้อมูล 6 เดือนล่าสุด</option>
-                            <option value="3M">ข้อมูล 3 เดือนล่าสุด</option>
-                            <option value="NOW">ข้อมูล ณ ปัจจุบัน</option>
-                        </select>
-                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
-                            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor"><path d="M1 1L5 5L9 1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                {/* -------------------------------------------------------------------------
+                    1. ประเภทปลา & น้ำหนักปลาเฉลี่ย 
+                ------------------------------------------------------------------------- */}
+                <div className="bg-gradient-to-r from-[#FFF6E2] via-[#FFF6E2] to-[#E6DAFF] rounded-2xl shadow-sm flex overflow-hidden border border-orange-50/20 flex-[1.5] h-[96px]">
+                    
+                    {/* ฝั่งซ้าย: ประเภทปลา */}
+                    <div className="flex-1 flex flex-col p-4 relative">
+                        <div className="flex items-center gap-1.5 mb-1">
+                            <Image src="/icon_farmers/ion_fish.svg" alt="type" width={18} height={18} />
+                            <span className="text-sm font-bold text-gray-900">ประเภทปลา</span>
+                        </div>
+                        <div className="flex-1 flex items-center justify-center">
+                            <p className="text-2xl font-black text-black">
+                                {loading ? "..." : fishType}
+                            </p>
+                        </div>
+                        {/* เส้นคั่นสีขาวแบบยาว */}
+                        <div className="absolute right-0 top-3 bottom-3 w-px bg-white shadow-sm opacity-80"></div>
+                    </div>
+
+                    {/* ฝั่งขวา: น้ำหนักปลาเฉลี่ย */}
+                    <div className="flex-1 flex flex-col p-4">
+                        <div className="flex items-center gap-1.5 mb-1">
+                            <Image src="/icon_farmers/line.svg" alt="avg" width={18} height={18} />
+                            <span className="text-sm font-bold text-gray-900">น้ำหนักปลาเฉลี่ย</span>
+                        </div>
+                        <div className="flex-1 flex items-center justify-center">
+                            <p className="text-2xl font-black text-black">
+                                {loading ? "..." : avgWeight} <span className="text-sm font-bold text-gray-900 ml-1">กรัม</span>
+                            </p>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <div className="bg-[#FFEBEC] rounded-xl p-5 flex flex-col justify-between h-[140px] col-span-1">
-                    <div>
-                        <div className="flex items-center gap-2 text-[#A10000] text-base font-bold mb-2">
-                            <Image src={IconFoodGrains} alt="food" width={18} height={18} />
-                            การทานอาหาร (Kg.)
-                        </div>
-                        <div className="relative flex items-center justify-center mt-2">
-                            <span className="text-4xl font-bold text-[#A10000]">{dashboardData.food}</span>
-                            <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center text-[#FF1212]">
-                                <span className="text-[10px] mr-1">▼</span>
-                                <span className="text-base font-bold">(-20%)</span>
-                            </div>
-                        </div>
+                {/* -------------------------------------------------------------------------
+                    2. จำนวนที่ปล่อย 
+                ------------------------------------------------------------------------- */}
+                <div className="bg-[#4A59FF] rounded-2xl p-4 relative overflow-hidden text-white shadow-md flex-1 flex flex-col h-[96px]">
+                    <span className="text-base font-medium opacity-90">จำนวนที่ปล่อย</span>
+                    <div className="flex-1 flex items-center justify-center">
+                        <p className="text-3xl font-black leading-none relative z-10">
+                            {loading ? "..." : releaseCount}
+                        </p>
                     </div>
-                    <div className="border-t border-[#FFCDD2] pt-2 flex justify-between items-center text-base">
-                        <span className="text-gray-800 text-sm">ปริมาณอาหารที่ให้สะสม (Kg.)</span>
-                        <span className="font-bold text-gray-900 text-sm">{dashboardData.accFood}</span>
+                    <Image
+                        src="/icon_farmers/ix_water-fish.svg"
+                        alt="fish"
+                        width={60}
+                        height={50}
+                        className="absolute bottom-0 right-0 opacity-90 translate-x-1 translate-y-1"
+                    />
+                </div>
+
+                {/* -------------------------------------------------------------------------
+                    3. คงเหลือ 
+                ------------------------------------------------------------------------- */}
+                <div className="bg-[#E0A84D] rounded-2xl p-4 relative overflow-hidden text-white shadow-md flex-1 flex flex-col h-[96px]">
+                    <span className="text-base font-medium opacity-90">คงเหลือ</span>
+                    <div className="flex-1 flex items-center justify-center">
+                        <p className="text-3xl font-black leading-none relative z-10">
+                            {loading ? "..." : remainingCount}
+                        </p>
+                    </div>
+                    <Image
+                        src="/icon_farmers/Group 1000003034.svg"
+                        alt="group"
+                        width={60}
+                        height={50}
+                        className="absolute bottom-0 right-0 opacity-90 translate-x-1 translate-y-1"
+                    />
+                </div>
+
+                {/* -------------------------------------------------------------------------
+                    4. อัตราการรอด 
+                ------------------------------------------------------------------------- */}
+                <div className={`${status.bg} rounded-2xl p-4 flex flex-col shadow-sm border border-white/40 transition-colors duration-300 flex-1 h-[96px]`}>
+                    <div className="flex items-center gap-2 mb-2">
+                        <Image src="/icon_farmers/famicons_fish-bb.svg" alt="survival" width={22} height={22} />
+                        <span className="text-base font-bold text-gray-700">อัตราการรอด</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center flex-1">
+                        <div className="flex items-baseline gap-1">
+                            <span className={`text-3xl font-black ${status.text}`}>
+                                {loading ? "..." : (survivalRate !== null ? `${survivalRate}%` : "-")}
+                            </span>
+                            <span className={`text-xs font-bold ${status.text}`}>
+                                {status.label}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div className="bg-[#F4FFFC] rounded-xl flex items-center h-[140px] col-span-1 lg:col-span-2 relative">
-                    <div className="flex-1 flex flex-col justify-center h-full px-8">
-                        <div className="flex items-center justify-start gap-2 text-[#0F614E] text-base font-bold mb-1 w-full">
-                            <Image src={IconFish} alt="fish" width={20} height={20} />
-                            อายุปลา (วัน)
-                        </div>
-                        <div className="flex justify-center w-full">
-                            <span className="text-3xl font-bold text-[#0F614E] mt-2">{dashboardData.age} วัน</span>
-                        </div>
+                {/* -------------------------------------------------------------------------
+                    5. ขนาดที่เหมาะสำหรับการขาย 
+                ------------------------------------------------------------------------- */}
+                <div className="bg-[#F1DFFF] rounded-2xl p-4 flex flex-col shadow-sm border border-purple-100/30 flex-[1.2] h-[96px]">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Image src="/icon_farmers/weight.svg" alt="weight" width={20} height={20} />
+                        <span className="text-base font-bold text-gray-700">ขนาดที่เหมาะสำหรับการขาย</span>
                     </div>
-
-                    <div className="w-[1px] bg-[#D0EBE5] h-[60%] absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2"></div>
-
-                    <div className="flex-1 flex flex-col justify-center h-full px-8">
-                        <div className="flex items-center justify-start gap-2 text-[#0F614E] text-base font-bold mb-1 w-full">
-                            <Image src={IconWeight} alt="weight" width={20} height={20} />
-                            น้ำหนักเฉลี่ย
-                        </div>
-                        <div className="flex justify-center w-full">
-                            <span className="text-3xl font-bold text-[#0F614E] mt-2">{dashboardData.weight}</span>
-                        </div>
+                    <div className="flex justify-center items-baseline gap-1 flex-1">
+                        <p className="text-2xl font-black text-black">
+                            {loading ? "..." : marketSize}
+                        </p>
+                        <span className="text-lg font-bold text-black">กรัม</span>
                     </div>
                 </div>
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <GrowthChart data={growthChartData} />
-                <FeedingChart data={feedChartData} />
             </div>
         </div>
     );
