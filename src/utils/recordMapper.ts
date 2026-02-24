@@ -31,7 +31,7 @@ export const mapRecordToHistory = (record: RecordInput): FarmerHistory => {
     foodType: ((r.feedFormulaName as string) || '-'),
     medicineGiven: ((r.medicineName as string) || '-'),
 
-    pondType: record.pondType === 'EARTHEN' ? 'บ่อดิน' : record.pondType === 'CONCRETE' ? 'บ่อปูน' : record.pondType,
+    pondType: record.pondType === 'EARTHEN' ? 'บ่อดิน' : record.pondType === 'CONCRETE' ? 'บ่อปูน' : record.pondType ?? undefined,
 
     pondCount: record.pondCount ?? '-',
     fishCount: ((r.fishCountText as string) || (r.fishCount as number)?.toString() || '-'),
