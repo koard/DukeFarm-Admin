@@ -46,7 +46,8 @@ export interface Farmer {
   latitude: number | null;
   longitude: number | null;
   registeredAt: string;
-  totalProductionCycles?: number;
+  totalRecords?: number;
+  lastRecordDate?: string | null;
   stats?: FarmerStats;
   entries?: FarmerEntry[];
 }

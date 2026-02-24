@@ -55,5 +55,6 @@ export const mapFarmerResponse = (farmer: FarmerApiResponse): FarmerListItem => 
 
   registeredDate: formatRegisteredDate(farmer.registeredAt),
   registeredAtISO: farmer.registeredAt,
-  totalProductionCycles: farmer.totalProductionCycles ?? 0,
+  totalRecords: farmer.totalRecords ?? 0,
+  lastRecordDate: farmer.lastRecordDate ?? null,
 });

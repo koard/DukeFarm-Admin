@@ -15,5 +15,6 @@ export interface FarmerListItem {
   registeredDate: string;
   registeredAtISO?: string;
   farmTypeCode?: FarmTypeCode;
-  totalProductionCycles?: number;
+  totalRecords?: number;
+  lastRecordDate?: string | null;
 }

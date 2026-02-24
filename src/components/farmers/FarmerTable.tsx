@@ -56,7 +56,7 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
 
     return (
         <div className="overflow-x-auto rounded-xl">
-            <table className="w-full min-w-[900px] table-auto">
+            <table className="w-full min-w-[1000px] table-auto">
                 <thead>
                     <tr className="text-sm font-medium text-[#ACACAC] bg-black ">
                         <th className="p-4 text-center w-16"><TableHeader title="No." /></th>
@@ -68,7 +68,8 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
                         <th className="p-4 text-center"><TableHeader title="เบอร์โทร" /></th>
                         <th className="p-4 text-center"><TableHeader title="ประเภทกลุ่มการเลี้ยง" /></th>
                         <th className="p-4 text-center"><TableHeader title="จำนวนบ่อ" /></th>
-                        <th className="p-4 text-center"><TableHeader title="รอบการเลี้ยง" /></th>
+                        <th className="p-4 text-center"><TableHeader title="จำนวนบันทึก" /></th>
+                        <th className="p-4 text-center"><TableHeader title="บันทึกล่าสุด" /></th>
                         <th className="p-4 text-center"><TableHeader title="วันที่ลงทะเบียน" /></th>
                         <th className="p-4 text-center w-24">Action</th>
                     </tr>
@@ -80,7 +81,11 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
                         const regDate = farmer.registeredDate ||
                             ((farmer as any).registeredAt ? new Date((farmer as any).registeredAt).toLocaleDateString('th-TH') : '-');
 
-                        const totalCycles = (farmer as any).totalProductionCycles ?? 0;
+                        const totalRecords = (farmer as any).totalRecords ?? 0;
+                        const lastRecordRaw = (farmer as any).lastRecordDate;
+                        const lastRecordDisplay = lastRecordRaw
+                            ? new Date(lastRecordRaw).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                            : '-';
 
                         return (
                             <tr key={`${farmer.id}-${index}`} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
@@ -110,9 +115,16 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
 
                                 <td className="p-4 text-center">{farmer.pondCount ?? '-'}</td>
                                 <td className="p-4 text-center">
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">
-                                        {totalCycles} รอบ
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                        {totalRecords} รายการ
                                     </span>
+                                </td>
+                                <td className="p-4 text-center whitespace-nowrap">
+                                    {lastRecordDisplay !== '-' ? (
+                                        <span className="text-gray-700">{lastRecordDisplay}</span>
+                                    ) : (
+                                        <span className="text-gray-400">-</span>
+                                    )}
                                 </td>
 
                                 <td className="p-4 text-center whitespace-nowrap">
