@@ -18,6 +18,14 @@ interface ProductionCycleItem {
     endDate?: string | null;
 }
 
+interface SummaryData {
+    fishType?: string;
+    avgWeight?: string | number;
+    releaseCount?: string | number;
+    remainingCount?: string | number;
+    survivalRate?: number | null;
+}
+
 interface FarmerToolbarProps {
     isHistoryLoading?: boolean;
     activePond?: string;
@@ -27,6 +35,7 @@ interface FarmerToolbarProps {
     productionCycles?: ProductionCycleItem[];
     activeProductionCycle?: string;
     setActiveProductionCycle?: (val: string) => void;
+    summary?: SummaryData;
 }
 
 const getStatusBadge = (status: string, isActive: boolean) => {
@@ -46,6 +55,39 @@ const getDurationDays = (startDate?: string, endDate?: string | null, isActive?:
     return Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
 };
 
+const getSurvivalColor = (p: number | null | undefined) => {
+    if (p === null || p === undefined) return { ring: 'stroke-gray-200', text: 'text-gray-400', badge: 'bg-gray-100 text-gray-400', label: '-' };
+    if (p >= 90) return { ring: 'stroke-emerald-500', text: 'text-emerald-600', badge: 'bg-emerald-50 text-emerald-700', label: 'สูง' };
+    if (p >= 75) return { ring: 'stroke-amber-500', text: 'text-amber-600', badge: 'bg-amber-50 text-amber-700', label: 'ปกติ' };
+    if (p >= 50) return { ring: 'stroke-orange-500', text: 'text-orange-600', badge: 'bg-orange-50 text-orange-700', label: 'ค่อนข้างต่ำ' };
+    return { ring: 'stroke-red-500', text: 'text-red-600', badge: 'bg-red-50 text-red-700', label: 'ต่ำมาก' };
+};
+
+const SurvivalRing = ({ percentage }: { percentage: number | null | undefined }) => {
+    const color = getSurvivalColor(percentage);
+    const r = 28;
+    const circumference = 2 * Math.PI * r;
+    const offset = (percentage !== null && percentage !== undefined) ? circumference - (percentage / 100) * circumference : circumference;
+    return (
+        <div className="relative w-16 h-16">
+            <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r={r} fill="none" strokeWidth="5" className="stroke-gray-100" />
+                <circle cx="32" cy="32" r={r} fill="none" strokeWidth="5"
+                    strokeLinecap="round"
+                    className={`${color.ring} transition-all duration-1000 ease-out`}
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
+                />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+                <span className={`text-xs font-black ${color.text}`}>
+                    {(percentage !== null && percentage !== undefined) ? `${percentage}%` : '-'}
+                </span>
+            </div>
+        </div>
+    );
+};
+
 const FarmerToolbar = ({
     isHistoryLoading = false,
     activePond = 'ALL',
@@ -55,6 +97,7 @@ const FarmerToolbar = ({
     productionCycles = [],
     activeProductionCycle,
     setActiveProductionCycle,
+    summary,
 }: FarmerToolbarProps) => {
     const viewingCycle = productionCycles.find(c => c.id === activeProductionCycle);
 
@@ -184,6 +227,61 @@ const FarmerToolbar = ({
                     </div>
                 ) : (
                     <p className="text-sm text-gray-400">{productionCycles.length === 0 ? 'ไม่มีข้อมูลรอบการเลี้ยง' : 'กำลังเตรียมรอบการเลี้ยง...'}</p>
+                )}
+
+                {/* Summary Section */}
+                {summary && (
+                    <div className="mt-4 pt-4 border-t border-gray-200/60">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-1 h-5 bg-[#034A30] rounded-full" />
+                            <span className="text-sm font-bold text-gray-800">ข้อมูลสรุป</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            {/* Row 1: ประเภทปลา, น้ำหนักเฉลี่ย, อัตราการรอด */}
+                            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3.5 border border-amber-100/60">
+                                <div className="flex items-center gap-1.5 mb-1.5">
+                                    <img src={`${ICON_BASE}/icon_farmers/ion_fish.svg`} alt="" width={14} height={14} />
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">ประเภทปลา</span>
+                                </div>
+                                <p className="text-lg font-black text-gray-900">{isHistoryLoading ? '...' : (summary.fishType || '-')}</p>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-3.5 border border-violet-100/60">
+                                <div className="flex items-center gap-1.5 mb-1.5">
+                                    <img src={`${ICON_BASE}/icon_farmers/line.svg`} alt="" width={14} height={14} />
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">น้ำหนักเฉลี่ย</span>
+                                </div>
+                                <p className="text-lg font-black text-gray-900">{isHistoryLoading ? '...' : (summary.avgWeight ?? '-')} <span className="text-xs font-semibold text-gray-400">กรัม</span></p>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3.5 border border-emerald-100/60 flex items-center gap-3">
+                                <SurvivalRing percentage={isHistoryLoading ? null : (summary.survivalRate ?? null)} />
+                                <div>
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">อัตราการรอด</span>
+                                    <span className={`text-xs font-bold mt-1 block ${getSurvivalColor(summary.survivalRate).badge} px-2 py-0.5 rounded-full text-center`}>
+                                        {getSurvivalColor(summary.survivalRate).label}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Row 2: จำนวนที่ปล่อย, คงเหลือ */}
+                            <div className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl p-3.5 border border-sky-100/60">
+                                <div className="flex items-center gap-1.5 mb-1.5">
+                                    <img src={`${ICON_BASE}/icon_farmers/ix_water-fish.svg`} alt="" width={14} height={14} />
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">จำนวนที่ปล่อย</span>
+                                </div>
+                                <p className="text-lg font-black text-gray-900">{isHistoryLoading ? '...' : (summary.releaseCount ?? '-')} <span className="text-xs font-semibold text-gray-400">ตัว</span></p>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-3.5 border border-orange-100/60">
+                                <div className="flex items-center gap-1.5 mb-1.5">
+                                    <img src={`${ICON_BASE}/icon_farmers/Group 1000003034.svg`} alt="" width={14} height={14} />
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">คงเหลือ</span>
+                                </div>
+                                <p className="text-lg font-black text-gray-900">{isHistoryLoading ? '...' : (summary.remainingCount ?? '-')} <span className="text-xs font-semibold text-gray-400">ตัว</span></p>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>

@@ -7,7 +7,6 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/th';
 
 import FarmerInfoCard from "../../../components/farmers/FarmerInfoCard";
-import FarmerDashboard from "../../../components/farmers/FarmerDashboard";
 import FarmerHistoryTable, { FarmerHistory } from "../../../components/farmers/FarmerHistoryTable";
 import ViewFarmerHistory from "../../../components/farmers/ViewFarmerHistory";
 import EditFarmerHistory from "../../../components/farmers/EditFarmerHistory";
@@ -16,7 +15,7 @@ import FarmerToolbar from "../../../components/farmers/FarmerToolbar";
 import Pagination from "../../../components/common/Pagination";
 import DeleteConfirm from "../../../components/common/DeleteConfirm";
 
-import { farmersAPI, FarmerDetailEntry, DashboardSummary } from "@/services/api/farmers";
+import { farmersAPI, FarmerDetailEntry } from "@/services/api/farmers";
 import { recordsAPI, ListRecordsParams } from "@/services/api/records";
 import { pondsAPI, ProductionCycle } from "@/services/api/ponds";
 import { APIError } from "@/services/api/types";
@@ -51,7 +50,6 @@ export default function FarmerDetailPage(props: PageProps) {
     const [activePond, setActivePond] = useState('');
     const [filterPeriod] = useState('ALL');
     const [pondItems, setPondItems] = useState<{ id: string; label: string; productionCycleCount: number }[]>([]);
-    const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
 
     const [productionCycles, setProductionCycles] = useState<ProductionCycle[]>([]);
     const [activeProductionCycle, setActiveProductionCycle] = useState<string>('');
@@ -90,10 +88,6 @@ export default function FarmerDetailPage(props: PageProps) {
                 if (mappedPonds.length > 0) {
                     setActivePond(mappedPonds[0].id);
                 }
-
-                // Extract dashboardSummary from response
-                const summary = farmerRes.dashboardSummary || null;
-                setDashboardSummary(summary);
 
                 const rawEntries = farmerRes.entries || [];
                 setAllRawEntries(rawEntries);
@@ -410,16 +404,28 @@ export default function FarmerDetailPage(props: PageProps) {
                     }))}
                     activeProductionCycle={activeProductionCycle}
                     setActiveProductionCycle={setActiveProductionCycle}
-                />
-
-                <FarmerDashboard
-                    loading={isHistoryLoading}
-                    fishType={dashboardSummary?.fishType}
-                    avgWeight={dashboardSummary?.avgWeight ?? '-'}
-                    releaseCount={dashboardSummary?.releaseCount ?? '-'}
-                    remainingCount={dashboardSummary?.remainingCount ?? '-'}
-                    survivalRate={dashboardSummary?.survivalRate ?? null}
-                    productionCycleCount={productionCycles.length}
+                    summary={(() => {
+                        if (historyData.length === 0 && !isHistoryLoading) return { fishType: '-', avgWeight: '-', releaseCount: '-', remainingCount: '-', survivalRate: null };
+                        // Determine fish type from farmType of first record
+                        const FARM_TYPE_LABELS: Record<string, string> = { 'SMALL': 'ปลาตุ้ม', 'LARGE': 'ปลานิ้ว', 'MARKET': 'ปลาตลาด' };
+                        const firstWithType = historyData.find(h => h.farmType);
+                        const fishType = firstWithType?.farmType ? (FARM_TYPE_LABELS[firstWithType.farmType] || firstWithType.farmType) : '-';
+                        // Latest record's weight
+                        const latestWithWeight = historyData.find(h => h.weight && h.weight > 0);
+                        const avgWeight = latestWithWeight?.weight ?? '-';
+                        // Release = first entry with initialFishCount, remaining = latest entry
+                        const sortedAsc = [...historyData].reverse();
+                        const firstRelease = sortedAsc.find(h => typeof h.initialFishCount === 'number' && h.initialFishCount > 0);
+                        const releaseCount = typeof firstRelease?.initialFishCount === 'number' ? firstRelease.initialFishCount : '-';
+                        const latestRemaining = historyData[0];
+                        const remainingCount = typeof latestRemaining?.remainingFishCount === 'number' ? latestRemaining.remainingFishCount : '-';
+                        // Survival rate
+                        let survivalRate: number | null = null;
+                        if (typeof releaseCount === 'number' && releaseCount > 0 && typeof remainingCount === 'number') {
+                            survivalRate = Math.round((remainingCount / releaseCount) * 100);
+                        }
+                        return { fishType, avgWeight, releaseCount, remainingCount, survivalRate };
+                    })()}
                 />
 
                 <FarmerHistoryTable

@@ -28,7 +28,7 @@ const FarmerInfoCard = ({ data, registeredPondCount = '-' }: FarmerInfoCardProps
                             <img
                                 src={data.pictureUrl}
                                 alt={data.name || 'profile'}
-                                className="flex-shrink-0 w-20 h-20 rounded-2xl object-cover shadow-lg border-2 border-[#179678]/20"
+                                className="flex-shrink-0 w-28 h-28 rounded-2xl object-cover shadow-lg border-2 border-[#179678]/20"
                                 onError={(e) => {
                                     const target = e.currentTarget;
                                     target.style.display = 'none';
