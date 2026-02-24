@@ -14,8 +14,8 @@ export interface FarmerEntry {
   pondCount: number;
   fishCount: number;
   fishCountText: string;
-  foodAmountKg?: number | null;     
-  fishAverageWeight?: number | null; 
+  foodAmountKg?: number | null;
+  fishAverageWeight?: number | null;
   weatherTemperatureC?: number;
   weatherRainMm?: number;
   weatherHumidityPct?: number;
@@ -37,15 +37,16 @@ export interface Farmer {
   fullName: string;
   phone: string;
   farmType: string;
-  farmTypes: string[];         
-  availableFarmTypes?: string[]; 
+  farmTypes: string[];
+  availableFarmTypes?: string[];
 
   registrationStatus: 'PENDING' | 'COMPLETED';
   pondCount: number | null;
-  farmAreaRai: number | null; 
+  farmAreaRai: number | null;
   latitude: number | null;
   longitude: number | null;
   registeredAt: string;
+  totalProductionCycles?: number;
   stats?: FarmerStats;
   entries?: FarmerEntry[];
 }
@@ -53,6 +54,8 @@ export interface Farmer {
 export interface FarmersListParams {
   page?: number;
   limit?: number;
+  search?: string;
+  farmType?: string;
 }
 
 /**
@@ -66,13 +69,15 @@ export const farmersAPI = {
    */
   async list(params?: FarmersListParams): Promise<PaginatedResponse<Farmer>> {
     const searchParams = new URLSearchParams();
-    
+
     if (params?.page) searchParams.append('page', params.page.toString());
     if (params?.limit) searchParams.append('limit', params.limit.toString());
-    
+    if (params?.search) searchParams.append('search', params.search);
+    if (params?.farmType) searchParams.append('farmType', params.farmType);
+
     const query = searchParams.toString();
     const endpoint = query ? `/farmers?${query}` : '/farmers';
-    
+
     return httpClient.get<PaginatedResponse<Farmer>>(endpoint);
   },
 

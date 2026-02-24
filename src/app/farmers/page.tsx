@@ -3,11 +3,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 
-import FarmerToolbar from "../../components/farmers/FarmerToolbar";
-import FarmerTable from "../../components/farmers/FarmerTable"; 
+import FarmerListToolbar from "../../components/farmers/FarmerListToolbar";
+import FarmerTable from "../../components/farmers/FarmerTable";
 
 import Pagination from "../../components/common/Pagination";
-import DeleteConfirm from "../../components/common/DeleteConfirm"; 
+import DeleteConfirm from "../../components/common/DeleteConfirm";
 import { farmersAPI } from "@/services/api/farmers";
 import { APIError, type PaginationMeta } from "@/services/api/types";
 import type { FarmerListItem } from "@/types/farmer";
@@ -16,13 +16,12 @@ import { mapFarmerResponse } from "@/utils/farmerMapper";
 export type Farmer = FarmerListItem;
 
 const Farmers = () => {
-    const [farmers, setFarmers] = useState<Farmer[]>([]); 
+    const [farmers, setFarmers] = useState<Farmer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedDate, setSelectedDate] = useState(''); 
-    const [selectedGroupType, setSelectedGroupType] = useState('');
+    const [selectedFarmType, setSelectedFarmType] = useState('');
 
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
@@ -33,13 +32,18 @@ const Farmers = () => {
     });
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [farmerToDelete, setFarmerToDelete] = useState<Farmer | null>(null); 
+    const [farmerToDelete, setFarmerToDelete] = useState<Farmer | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchFarmers = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await farmersAPI.list({ page: currentPage, limit: itemsPerPage });
+            const response = await farmersAPI.list({
+                page: currentPage,
+                limit: itemsPerPage,
+                search: searchTerm || undefined,
+                farmType: selectedFarmType || undefined,
+            });
 
             if (
                 response.pagination.totalPages > 0 &&
@@ -70,7 +74,7 @@ const Farmers = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [currentPage, itemsPerPage]);
+    }, [currentPage, itemsPerPage, searchTerm, selectedFarmType]);
 
     useEffect(() => {
         fetchFarmers();
@@ -85,57 +89,7 @@ const Farmers = () => {
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [isDeleteModalOpen]); 
-
-    const filtersActive = Boolean(
-        searchTerm.trim() || selectedDate || selectedGroupType
-    );
-
-    const normalizedSearch = searchTerm.trim().toLowerCase();
-
-    const filteredFarmers = farmers.filter(farmer => { 
-        const nameMatch = normalizedSearch ? farmer.name?.toLowerCase().includes(normalizedSearch) : true;
-        const phoneMatch = normalizedSearch ? farmer.phone?.includes(searchTerm.trim()) : true;
-        
-        const dateMatch = selectedDate ? (() => {
-            if (!farmer.registeredAtISO) return false;
-            const d = new Date(farmer.registeredAtISO);
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const localDateStr = `${year}-${month}-${day}`;
-            return localDateStr === selectedDate;
-        })() : true;
-        
-        let groupMatch = true;
-        if (selectedGroupType) {
-            if (Array.isArray((farmer as any).farmTypes)) {
-                groupMatch = (farmer as any).farmTypes.includes(selectedGroupType);
-            } 
-            else if (farmer.groupType) {
-                groupMatch = farmer.groupType === selectedGroupType;
-            } else if ((farmer as any).farmType) {
-                groupMatch = (farmer as any).farmType === selectedGroupType;
-            } else {
-                groupMatch = false; 
-            }
-        }
-
-        return (nameMatch || phoneMatch) && dateMatch && groupMatch; 
-    });
-
-    const clientTotalItems = filteredFarmers.length;
-    const clientTotalPages = Math.max(1, Math.ceil(clientTotalItems / itemsPerPage) || 1);
-
-    const paginatedFarmers = filtersActive
-        ? filteredFarmers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-        : farmers;
-
-    const totalItems = filtersActive ? clientTotalItems : paginationMeta.totalItems;
-    const totalPages = filtersActive ? clientTotalPages : (paginationMeta.totalPages || 1);
-    const tableStartIndex = filtersActive
-        ? (currentPage - 1) * itemsPerPage
-        : (paginationMeta.itemsPerPage || itemsPerPage) * ((paginationMeta.currentPage || 1) - 1);
+    }, [isDeleteModalOpen]);
 
     const handleConfirmDelete = async () => {
         if (!farmerToDelete) return;
@@ -145,8 +99,8 @@ const Farmers = () => {
             await farmersAPI.delete(farmerToDelete.id);
 
             toast.success(
-                () => ( 
-                    <div className="flex items-center justify-center gap-2 w-full"> 
+                () => (
+                    <div className="flex items-center justify-center gap-2 w-full">
                         <span>{`ลบข้อมูล "${farmerToDelete.name}" สำเร็จ!`}</span>
                     </div>
                 ),
@@ -175,10 +129,11 @@ const Farmers = () => {
         setIsDeleting(false);
     };
 
-    const handleSearchChange = (term: string) => { setSearchTerm(term); setCurrentPage(1); };
-    const handleDateChange = (date: string) => { setSelectedDate(date); setCurrentPage(1); };
-    const handleGroupTypeChange = (group: string) => { setSelectedGroupType(group); setCurrentPage(1); };
+    const handleSearchChange = useCallback((term: string) => { setSearchTerm(term); setCurrentPage(1); }, []);
+    const handleFarmTypeChange = useCallback((ft: string) => { setSelectedFarmType(ft); setCurrentPage(1); }, []);
     const handleItemsPerPageChange = (newSize: number) => { setItemsPerPage(newSize); setCurrentPage(1); };
+
+    const tableStartIndex = (paginationMeta.itemsPerPage || itemsPerPage) * ((paginationMeta.currentPage || 1) - 1);
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -188,40 +143,40 @@ const Farmers = () => {
                     <span className="text-xl me-2">Admin</span>
                 </div>
             </header>
-            
+
             <div className="p-6">
-                <FarmerToolbar 
-                    count={totalItems} 
-                    onSearchChange={handleSearchChange} 
-                    onDateChange={handleDateChange} 
-                    onGroupTypeChange={handleGroupTypeChange}
+                <FarmerListToolbar
+                    totalCount={paginationMeta.totalItems}
+                    onSearchChange={handleSearchChange}
+                    onFarmTypeChange={handleFarmTypeChange}
+                    selectedFarmType={selectedFarmType}
                 />
-                
+
                 <div className="mt-6 bg-white rounded-lg shadow-md">
                     {isLoading ? (
                         <div className="p-6 text-center">Loading...</div>
                     ) : (
                         <FarmerTable
-                            farmersData={paginatedFarmers} 
+                            farmersData={farmers}
                             onDeleteClick={handleDeleteClick}
                             startIndex={tableStartIndex}
                         />
                     )}
                 </div>
-                
+
                 <div className="mt-4">
                     <Pagination
                         currentPage={currentPage}
-                        totalPages={totalPages} 
-                        totalItems={totalItems} 
+                        totalPages={paginationMeta.totalPages || 1}
+                        totalItems={paginationMeta.totalItems}
                         itemsPerPage={itemsPerPage}
                         onItemsPerPageChange={handleItemsPerPageChange}
-                        onPageChange={(page) => setCurrentPage(page)} 
+                        onPageChange={(page) => setCurrentPage(page)}
                     />
                 </div>
             </div>
 
-            <DeleteConfirm 
+            <DeleteConfirm
                 isOpen={isDeleteModalOpen}
                 onClose={handleCloseDeleteModal}
                 onConfirm={handleConfirmDelete}

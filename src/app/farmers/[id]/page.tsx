@@ -49,7 +49,7 @@ export default function FarmerDetailPage(props: PageProps) {
 
     const [activePond, setActivePond] = useState('ALL');
     const [filterPeriod, setFilterPeriod] = useState('1M');
-    const [pondItems, setPondItems] = useState<{ id: string; label: string }[]>([]);
+    const [pondItems, setPondItems] = useState<{ id: string; label: string; productionCycleCount: number }[]>([]);
     const [dashboardSummary, setDashboardSummary] = useState<any>(null);
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -77,9 +77,15 @@ export default function FarmerDetailPage(props: PageProps) {
 
                 // Extract ponds from response
                 const rawPonds = (farmerRes as any).ponds || [];
+                const FARM_TYPE_LABELS: Record<string, string> = {
+                    SMALL: 'ปลาตุ้ม',
+                    LARGE: 'ปลานิ้ว',
+                    MARKET: 'ปลาตลาด',
+                };
                 const mappedPonds = rawPonds.map((p: any, idx: number) => ({
                     id: p.id,
-                    label: `บ่อที่ ${idx + 1}`,
+                    label: `บ่อที่ ${idx + 1} (${FARM_TYPE_LABELS[p.farmType] || p.farmType})`,
+                    productionCycleCount: p.productionCycleCount ?? 0,
                 }));
                 setPondItems(mappedPonds);
                 if (mappedPonds.length > 0) {
@@ -341,6 +347,9 @@ export default function FarmerDetailPage(props: PageProps) {
                             releaseCount={dashboardSummary?.releaseCount ?? '-'}
                             remainingCount={dashboardSummary?.remainingCount ?? '-'}
                             survivalRate={dashboardSummary?.survivalRate ?? null}
+                            productionCycleCount={
+                                pondItems.find(p => p.id === activePond)?.productionCycleCount ?? 0
+                            }
                         />
                     </div>
 

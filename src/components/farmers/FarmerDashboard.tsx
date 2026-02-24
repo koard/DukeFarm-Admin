@@ -11,6 +11,7 @@ export interface FarmerDashboardProps {
     remainingCount?: string | number;
     survivalRate?: number | null;
     marketSize?: string;
+    productionCycleCount?: number;
 }
 
 const getSurvivalStatusStyles = (percentage: number | null) => {
@@ -55,7 +56,8 @@ const FarmerDashboard = ({
     releaseCount = "-",
     remainingCount = "-",
     survivalRate = null,
-    marketSize = "-"
+    marketSize = "-",
+    productionCycleCount = 0,
 }: FarmerDashboardProps) => {
 
     const status = getSurvivalStatusStyles(survivalRate);
@@ -68,7 +70,7 @@ const FarmerDashboard = ({
                     1. ประเภทปลา & น้ำหนักปลาเฉลี่ย 
                 ------------------------------------------------------------------------- */}
                 <div className="bg-gradient-to-r from-[#FFF6E2] via-[#FFF6E2] to-[#E6DAFF] rounded-2xl shadow-sm flex overflow-hidden border border-orange-50/20 flex-[1.5] h-[96px]">
-                    
+
                     {/* ฝั่งซ้าย: ประเภทปลา */}
                     <div className="flex-1 flex flex-col p-4 relative">
                         <div className="flex items-center gap-1.5 mb-1">
@@ -169,6 +171,25 @@ const FarmerDashboard = ({
                             {loading ? "..." : marketSize}
                         </p>
                         <span className="text-lg font-bold text-black">กรัม</span>
+                    </div>
+                </div>
+
+                {/* -------------------------------------------------------------------------
+                    6. จำนวนรอบการเลี้ยง 
+                ------------------------------------------------------------------------- */}
+                <div className="bg-[#E0F2F1] rounded-2xl p-4 flex flex-col shadow-sm border border-teal-100/30 flex-1 h-[96px]">
+                    <div className="flex items-center gap-2 mb-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8V12L15 15" stroke="#0D7377" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="12" cy="12" r="9" stroke="#0D7377" strokeWidth="2" />
+                        </svg>
+                        <span className="text-base font-bold text-gray-700">รอบการเลี้ยง</span>
+                    </div>
+                    <div className="flex justify-center items-baseline gap-1 flex-1">
+                        <p className="text-2xl font-black text-[#0D7377]">
+                            {loading ? "..." : productionCycleCount}
+                        </p>
+                        <span className="text-lg font-bold text-[#0D7377]">รอบ</span>
                     </div>
                 </div>
 
