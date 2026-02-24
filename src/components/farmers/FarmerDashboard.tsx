@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
+
+const ICON_BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 export interface FarmerDashboardProps {
     loading?: boolean;
@@ -74,7 +75,7 @@ const FarmerDashboard = ({
                     {/* ฝั่งซ้าย: ประเภทปลา */}
                     <div className="flex-1 flex flex-col p-4 relative">
                         <div className="flex items-center gap-1.5 mb-1">
-                            <Image src="/icon_farmers/ion_fish.svg" alt="type" width={18} height={18} />
+                            <img src={`${ICON_BASE}/icon_farmers/ion_fish.svg`} alt="type" width={18} height={18} />
                             <span className="text-sm font-bold text-gray-900">ประเภทปลา</span>
                         </div>
                         <div className="flex-1 flex items-center justify-center">
@@ -89,7 +90,7 @@ const FarmerDashboard = ({
                     {/* ฝั่งขวา: น้ำหนักปลาเฉลี่ย */}
                     <div className="flex-1 flex flex-col p-4">
                         <div className="flex items-center gap-1.5 mb-1">
-                            <Image src="/icon_farmers/line.svg" alt="avg" width={18} height={18} />
+                            <img src={`${ICON_BASE}/icon_farmers/line.svg`} alt="avg" width={18} height={18} />
                             <span className="text-sm font-bold text-gray-900">น้ำหนักปลาเฉลี่ย</span>
                         </div>
                         <div className="flex-1 flex items-center justify-center">
@@ -110,8 +111,8 @@ const FarmerDashboard = ({
                             {loading ? "..." : releaseCount}
                         </p>
                     </div>
-                    <Image
-                        src="/icon_farmers/ix_water-fish.svg"
+                    <img
+                        src={`${ICON_BASE}/icon_farmers/ix_water-fish.svg`}
                         alt="fish"
                         width={60}
                         height={50}
@@ -129,8 +130,8 @@ const FarmerDashboard = ({
                             {loading ? "..." : remainingCount}
                         </p>
                     </div>
-                    <Image
-                        src="/icon_farmers/Group 1000003034.svg"
+                    <img
+                        src={`${ICON_BASE}/icon_farmers/Group 1000003034.svg`}
                         alt="group"
                         width={60}
                         height={50}
@@ -143,7 +144,7 @@ const FarmerDashboard = ({
                 ------------------------------------------------------------------------- */}
                 <div className={`${status.bg} rounded-2xl p-4 flex flex-col shadow-sm border border-white/40 transition-colors duration-300 flex-1 h-[96px]`}>
                     <div className="flex items-center gap-2 mb-2">
-                        <Image src="/icon_farmers/famicons_fish-bb.svg" alt="survival" width={22} height={22} />
+                        <img src={`${ICON_BASE}/icon_farmers/famicons_fish-bb.svg`} alt="survival" width={22} height={22} />
                         <span className="text-base font-bold text-gray-700">อัตราการรอด</span>
                     </div>
                     <div className="flex flex-col items-center justify-center flex-1">
@@ -163,7 +164,7 @@ const FarmerDashboard = ({
                 ------------------------------------------------------------------------- */}
                 <div className="bg-[#F1DFFF] rounded-2xl p-4 flex flex-col shadow-sm border border-purple-100/30 flex-[1.2] h-[96px]">
                     <div className="flex items-center gap-2 mb-2">
-                        <Image src="/icon_farmers/weight.svg" alt="weight" width={20} height={20} />
+                        <img src={`${ICON_BASE}/icon_farmers/weight.svg`} alt="weight" width={20} height={20} />
                         <span className="text-base font-bold text-gray-700">ขนาดที่เหมาะสำหรับการขาย</span>
                     </div>
                     <div className="flex justify-center items-baseline gap-1 flex-1">

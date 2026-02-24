@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
+
+const ICON_BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 const PERIOD_FILTERS = [
     { label: 'ข้อมูลย้อนหลัง 1 เดือน', value: '1M' },
@@ -59,8 +60,8 @@ const FarmerToolbar = ({
                                 : 'bg-white text-gray-800 border-gray-400 hover:bg-gray-50'
                                 }`}
                         >
-                            <Image
-                                src={isActive ? "/icon_farmers/famicons_fish_w.svg" : "/icon_farmers/famicons_fish_b.svg"}
+                            <img
+                                src={isActive ? `${ICON_BASE}/icon_farmers/famicons_fish_w.svg` : `${ICON_BASE}/icon_farmers/famicons_fish_b.svg`}
                                 alt="fish-icon"
                                 width={18}
                                 height={18}
