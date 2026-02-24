@@ -16,7 +16,7 @@ import FarmerToolbar from "../../../components/farmers/FarmerToolbar";
 import Pagination from "../../../components/common/Pagination";
 import DeleteConfirm from "../../../components/common/DeleteConfirm";
 
-import { farmersAPI } from "@/services/api/farmers";
+import { farmersAPI, FarmerDetailEntry, DashboardSummary } from "@/services/api/farmers";
 import { recordsAPI, ListRecordsParams } from "@/services/api/records";
 import { pondsAPI, ProductionCycle } from "@/services/api/ponds";
 import { APIError } from "@/services/api/types";
@@ -43,15 +43,15 @@ export default function FarmerDetailPage(props: PageProps) {
 
     const [farmerData, setFarmerData] = useState<FarmerListItem | null>(null);
     const [historyData, setHistoryData] = useState<FarmerHistory[]>([]);
-    const [allRawEntries, setAllRawEntries] = useState<any[]>([]);
+    const [allRawEntries, setAllRawEntries] = useState<FarmerDetailEntry[]>([]);
 
     const [isFarmerLoading, setIsFarmerLoading] = useState(true);
     const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
     const [activePond, setActivePond] = useState('');
-    const [filterPeriod, setFilterPeriod] = useState('ALL');
+    const [filterPeriod] = useState('ALL');
     const [pondItems, setPondItems] = useState<{ id: string; label: string; productionCycleCount: number }[]>([]);
-    const [dashboardSummary, setDashboardSummary] = useState<any>(null);
+    const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
 
     const [productionCycles, setProductionCycles] = useState<ProductionCycle[]>([]);
     const [activeProductionCycle, setActiveProductionCycle] = useState<string>('');
@@ -80,8 +80,8 @@ export default function FarmerDetailPage(props: PageProps) {
                 setFarmerData(mapFarmerResponse(farmerRes));
 
                 // Extract ponds from response
-                const rawPonds = (farmerRes as any).ponds || [];
-                const mappedPonds = rawPonds.map((p: any, idx: number) => ({
+                const rawPonds = farmerRes.ponds || [];
+                const mappedPonds = rawPonds.map((p, idx: number) => ({
                     id: p.id,
                     label: `บ่อที่ ${idx + 1}`,
                     productionCycleCount: p.productionCycleCount ?? 0,
@@ -92,10 +92,10 @@ export default function FarmerDetailPage(props: PageProps) {
                 }
 
                 // Extract dashboardSummary from response
-                const summary = (farmerRes as any).dashboardSummary || null;
+                const summary = farmerRes.dashboardSummary || null;
                 setDashboardSummary(summary);
 
-                const rawEntries = (farmerRes as any).entries || [];
+                const rawEntries = farmerRes.entries || [];
                 setAllRawEntries(rawEntries);
 
                 if (Array.isArray(rawEntries) && rawEntries.length > 0) {
@@ -215,7 +215,11 @@ export default function FarmerDetailPage(props: PageProps) {
             let filtered = [...allRawEntries];
 
             if (activePond) {
-                filtered = filtered.filter(item => item.pondId === activePond || item.pondName === activePond);
+                filtered = filtered.filter(item => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const entry = item as unknown as Record<string, any>;
+                    return entry.pondId === activePond || entry.pondName === activePond;
+                });
             }
 
             if (filterPeriod !== 'ALL') {
@@ -268,6 +272,7 @@ export default function FarmerDetailPage(props: PageProps) {
     const handleDeleteClick = (item: FarmerHistory) => setModalState({ type: 'delete', data: item });
     const closeModal = () => setModalState({ type: null, data: null });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleUpdateHistory = async (updatedData: any) => {
         const originalData = modalState.data;
         if (!originalData) return;

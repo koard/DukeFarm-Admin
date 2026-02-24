@@ -53,6 +53,52 @@ export interface Farmer {
   entries?: FarmerEntry[];
 }
 
+export interface FarmerDetailEntry {
+  id: string;
+  recordedAt: string;
+  farmType: string;
+  fishAgeDays: number | null;
+  fishAgeLabel: string | null;
+  pondType: string | null;
+  pondCount: number | null;
+  fishRemaining: number | null;
+  fishReleased: number | null;
+  foodAmountKg: number | null;
+  averageFishWeightGr: number | null;
+  feedFormulaName: string | null;
+  medicineName: string | null;
+  weatherTemperatureC: number | null;
+  weatherRainMm: number | null;
+  weatherHumidityPct: number | null;
+  fishAverageWeight: number | null;
+}
+
+export interface DashboardSummary {
+  fishType: string;
+  avgWeight: number | null;
+  releaseCount: number | null;
+  remainingCount: number | null;
+  survivalRate: number | null;
+}
+
+export interface PondInfo {
+  id: string;
+  pondType: string;
+  farmType: string;
+  widthM: number;
+  lengthM: number;
+  depthM: number;
+  volumeM3: number;
+  productionCycleCount: number;
+}
+
+export interface FarmerDetailResponse extends Farmer {
+  ponds?: PondInfo[];
+  stats?: FarmerStats;
+  dashboardSummary?: DashboardSummary;
+  entries?: FarmerDetailEntry[];
+}
+
 export interface FarmersListParams {
   page?: number;
   limit?: number;
@@ -86,8 +132,8 @@ export const farmersAPI = {
   /**
    * Fetch single farmer detail by ID
    */
-  async getById(farmerId: string): Promise<Farmer> {
-    return httpClient.get<Farmer>(`/farmers/${farmerId}`);
+  async getById(farmerId: string): Promise<FarmerDetailResponse> {
+    return httpClient.get<FarmerDetailResponse>(`/farmers/${farmerId}`);
   },
 
   /**

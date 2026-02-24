@@ -1,4 +1,4 @@
-import type { Farmer as FarmerApiResponse } from '@/services/api/farmers';
+import type { Farmer as FarmerApiResponse, FarmerDetailResponse } from '@/services/api/farmers';
 import type { FarmerListItem } from '@/types/farmer';
 
 const FARM_TYPE_LABELS: Record<string, string> = {
@@ -37,7 +37,7 @@ const formatCoordinates = (latitude?: number | null, longitude?: number | null) 
   return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
 };
 
-export const mapFarmerResponse = (farmer: FarmerApiResponse): FarmerListItem => ({
+export const mapFarmerResponse = (farmer: FarmerApiResponse | FarmerDetailResponse): FarmerListItem => ({
   id: farmer.userId,
   rowNumber: farmer.no,
   name: farmer.fullName || '-',
