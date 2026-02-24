@@ -173,7 +173,7 @@ const FarmerToolbar = ({
                                 >
                                     {productionCycles.map((cycle) => (
                                         <option key={cycle.id} value={cycle.id}>
-                                            {cycle.label} {cycle.isActive ? '● ปัจจุบัน' : ''}
+                                            {cycle.label}
                                         </option>
                                     ))}
                                 </select>
