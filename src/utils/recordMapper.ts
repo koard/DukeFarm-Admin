@@ -8,7 +8,7 @@ type RecordInput = FarmerDetailEntry | RecordResponse;
 
 export const mapRecordToHistory = (record: RecordInput): FarmerHistory => {
   // Use indexed access for fields that differ between the two types
-  const r = record as Record<string, unknown>;
+  const r = record as unknown as Record<string, unknown>;
 
   const rawWeight = (r.fishAverageWeight ?? r.averageFishWeightGr) as number | null | undefined;
   const weightValue =
