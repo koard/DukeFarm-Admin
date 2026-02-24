@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/th';
 
 import FarmerInfoCard from "../../../components/farmers/FarmerInfoCard";
-import FarmerDashboard from "../../../components/farmers/FarmerDashboard"; 
+import FarmerDashboard from "../../../components/farmers/FarmerDashboard";
 import FarmerHistoryTable, { FarmerHistory } from "../../../components/farmers/FarmerHistoryTable";
 import ViewFarmerHistory from "../../../components/farmers/ViewFarmerHistory";
 import EditFarmerHistory from "../../../components/farmers/EditFarmerHistory";
@@ -42,13 +42,15 @@ export default function FarmerDetailPage(props: PageProps) {
 
     const [farmerData, setFarmerData] = useState<FarmerListItem | null>(null);
     const [historyData, setHistoryData] = useState<FarmerHistory[]>([]);
-    const [allRawEntries, setAllRawEntries] = useState<any[]>([]); 
+    const [allRawEntries, setAllRawEntries] = useState<any[]>([]);
 
     const [isFarmerLoading, setIsFarmerLoading] = useState(true);
     const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
-    const [activePond, setActivePond] = useState('pond_1'); 
+    const [activePond, setActivePond] = useState('ALL');
     const [filterPeriod, setFilterPeriod] = useState('1M');
+    const [pondItems, setPondItems] = useState<{ id: string; label: string }[]>([]);
+    const [dashboardSummary, setDashboardSummary] = useState<any>(null);
 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -72,6 +74,21 @@ export default function FarmerDetailPage(props: PageProps) {
             try {
                 const farmerRes = await farmersAPI.getById(id);
                 setFarmerData(mapFarmerResponse(farmerRes));
+
+                // Extract ponds from response
+                const rawPonds = (farmerRes as any).ponds || [];
+                const mappedPonds = rawPonds.map((p: any, idx: number) => ({
+                    id: p.id,
+                    label: `บ่อที่ ${idx + 1}`,
+                }));
+                setPondItems(mappedPonds);
+                if (mappedPonds.length > 0) {
+                    setActivePond(mappedPonds[0].id);
+                }
+
+                // Extract dashboardSummary from response
+                const summary = (farmerRes as any).dashboardSummary || null;
+                setDashboardSummary(summary);
 
                 const rawEntries = (farmerRes as any).entries || [];
                 setAllRawEntries(rawEntries);
@@ -101,7 +118,7 @@ export default function FarmerDetailPage(props: PageProps) {
     const fetchRecords = useCallback(async () => {
         if (!id || !farmerData) return;
 
-        if (activePond === 'ALL' && filterPeriod === 'ALL') { 
+        if (activePond === 'ALL' && filterPeriod === 'ALL') {
             const mappedHistory = allRawEntries.map(mapRecordToHistory);
             mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
             setHistoryData(mappedHistory);
@@ -112,7 +129,7 @@ export default function FarmerDetailPage(props: PageProps) {
         try {
             const params: ListRecordsParams & { startDate?: string, endDate?: string, pondId?: string } = {
                 userId: farmerData.id,
-                pondId: activePond !== 'ALL' ? activePond : undefined, 
+                pondId: activePond !== 'ALL' ? activePond : undefined,
             };
 
             if (filterPeriod !== 'ALL') {
@@ -147,7 +164,7 @@ export default function FarmerDetailPage(props: PageProps) {
             let filtered = [...allRawEntries];
 
             if (activePond !== 'ALL') {
-                filtered = filtered.filter(item => item.pondId === activePond || item.pondName === activePond); 
+                filtered = filtered.filter(item => item.pondId === activePond || item.pondName === activePond);
             }
 
             if (filterPeriod !== 'ALL') {
@@ -305,18 +322,26 @@ export default function FarmerDetailPage(props: PageProps) {
                 <FarmerInfoCard data={farmerData} />
 
                 <div className="mt-8">
-                    
-                    <FarmerToolbar 
+
+                    <FarmerToolbar
                         isHistoryLoading={isHistoryLoading}
                         activePond={activePond}
                         setActivePond={setActivePond}
                         filterPeriod={filterPeriod}
                         setFilterPeriod={setFilterPeriod}
                         setCurrentPage={setCurrentPage}
+                        ponds={pondItems}
                     />
 
                     <div className="mb-6">
-                        <FarmerDashboard loading={isHistoryLoading} />
+                        <FarmerDashboard
+                            loading={isHistoryLoading}
+                            fishType={dashboardSummary?.fishType}
+                            avgWeight={dashboardSummary?.avgWeight ?? '-'}
+                            releaseCount={dashboardSummary?.releaseCount ?? '-'}
+                            remainingCount={dashboardSummary?.remainingCount ?? '-'}
+                            survivalRate={dashboardSummary?.survivalRate ?? null}
+                        />
                     </div>
 
                     <FarmerHistoryTable

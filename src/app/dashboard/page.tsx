@@ -48,7 +48,7 @@ const Dashboard = () => {
     const fetchDashboard = async () => {
       setLoading(true);
       try {
-        const response = await dashboardAPI.get(selectedFarm); // Note: API currently doesn't support year param explicitly in standard get, may need update if we want to filter by year. Assuming backend defaults to current year or handles it.
+        const response = await dashboardAPI.get(selectedFarm, selectedYear);
         // For Admin, response.data contains the new structure
         setDashboardData(response);
       } catch (error) {

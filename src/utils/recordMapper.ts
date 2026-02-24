@@ -22,6 +22,11 @@ export const mapRecordToHistory = (record: FarmerEntry): FarmerHistory => {
     age: r.fishAgeLabel || `${r.fishAgeDays} วัน`,
     weight: weightValue,
 
+    initialFishCount: r.fishReleased ?? '-',
+    remainingFishCount: r.fishRemaining ?? '-',
+    foodType: r.feedFormulaName || '-',
+    medicineGiven: r.medicineName || '-',
+
     pondType: r.pondType === 'EARTHEN' ? 'บ่อดิน' : r.pondType === 'CONCRETE' ? 'บ่อปูน' : r.pondType,
 
     pondCount: r.pondCount ?? '-',

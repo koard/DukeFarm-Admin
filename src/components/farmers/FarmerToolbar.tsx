@@ -10,47 +10,54 @@ const PERIOD_FILTERS = [
     { label: 'ข้อมูลทั้งหมด', value: 'ALL' },
 ];
 
-const MOCK_PONDS = [
-    { id: 'pond_1', label: 'บ่อที่ 1' },
-    { id: 'pond_2', label: 'บ่อที่ 2' },
-];
+interface PondItem {
+    id: string;
+    label: string;
+}
 
 interface FarmerToolbarProps {
-    isHistoryLoading: boolean;
-    activePond: string;
-    setActivePond: (val: string) => void;
-    filterPeriod: string;
-    setFilterPeriod: (val: string) => void;
-    setCurrentPage: (val: number) => void;
+    // Detail page props
+    isHistoryLoading?: boolean;
+    activePond?: string;
+    setActivePond?: (val: string) => void;
+    filterPeriod?: string;
+    setFilterPeriod?: (val: string) => void;
+    setCurrentPage?: (val: number) => void;
+    ponds?: PondItem[];
+    // List page props
+    count?: number;
+    onSearchChange?: (term: string) => void;
+    onDateChange?: (date: string) => void;
+    onGroupTypeChange?: (group: string) => void;
 }
 
 const FarmerToolbar = ({
-    isHistoryLoading,
-    activePond,
+    isHistoryLoading = false,
+    activePond = 'ALL',
     setActivePond,
-    filterPeriod,
+    filterPeriod = '1M',
     setFilterPeriod,
     setCurrentPage,
+    ponds = [],
 }: FarmerToolbarProps) => {
     return (
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-            
+
             {/* ซ้าย: ส่วนปุ่มเลือกบ่อ */}
             <div className="flex flex-wrap items-center gap-2">
-                {MOCK_PONDS.map((pond) => {
+                {ponds.length > 0 ? ponds.map((pond) => {
                     const isActive = activePond === pond.id;
                     return (
                         <button
                             key={pond.id}
                             onClick={() => {
-                                setActivePond(pond.id);
-                                setCurrentPage(1);
+                                setActivePond?.(pond.id);
+                                setCurrentPage?.(1);
                             }}
-                            className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-bold transition-all duration-200 border ${
-                                isActive
-                                    ? 'bg-[#179678] text-white border-[#179678] shadow-sm' 
-                                    : 'bg-white text-gray-800 border-gray-400 hover:bg-gray-50'
-                            }`}
+                            className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-bold transition-all duration-200 border ${isActive
+                                ? 'bg-[#179678] text-white border-[#179678] shadow-sm'
+                                : 'bg-white text-gray-800 border-gray-400 hover:bg-gray-50'
+                                }`}
                         >
                             <Image
                                 src={isActive ? "/icon_farmers/famicons_fish_w.svg" : "/icon_farmers/famicons_fish_b.svg"}
@@ -62,7 +69,9 @@ const FarmerToolbar = ({
                             {pond.label}
                         </button>
                     );
-                })}
+                }) : (
+                    <span className="text-sm text-gray-400">ไม่มีข้อมูลบ่อ</span>
+                )}
             </div>
 
             {/* ขวา: ส่วนกรองเดือน */}
@@ -71,8 +80,8 @@ const FarmerToolbar = ({
                 <select
                     value={filterPeriod}
                     onChange={(e) => {
-                        setFilterPeriod(e.target.value);
-                        setCurrentPage(1);
+                        setFilterPeriod?.(e.target.value);
+                        setCurrentPage?.(1);
                     }}
                     className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#034A30] focus:border-transparent shadow-sm cursor-pointer"
                 >
@@ -83,7 +92,7 @@ const FarmerToolbar = ({
                     ))}
                 </select>
             </div>
-            
+
         </div>
     );
 };
