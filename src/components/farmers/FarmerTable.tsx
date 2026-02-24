@@ -67,8 +67,8 @@ const FarmerTable = ({ farmersData, onDeleteClick, startIndex = 0 }: FarmerTable
                         </th>
                         <th className="p-4 text-center"><TableHeader title="เบอร์โทร" /></th>
                         <th className="p-4 text-center"><TableHeader title="ประเภทกลุ่มการเลี้ยง" /></th>
-                        <th className="p-4 text-center"><TableHeader title="จำนวนบ่อ" /></th>
-                        <th className="p-4 text-center"><TableHeader title="จำนวนบันทึก" /></th>
+                        <th className="p-4 text-center"><TableHeader title="จำนวนบ่อที่ลงทะเบียน" /></th>
+                        <th className="p-4 text-center"><TableHeader title="จำนวนการบันทึก" /></th>
                         <th className="p-4 text-center"><TableHeader title="บันทึกล่าสุด" /></th>
                         <th className="p-4 text-center"><TableHeader title="วันที่ลงทะเบียน" /></th>
                         <th className="p-4 text-center w-24">Action</th>

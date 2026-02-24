@@ -358,10 +358,10 @@ export default function FarmerDetailPage(props: PageProps) {
         <div className="min-h-screen bg-gradient-to-b from-gray-50 via-gray-50 to-gray-100 pb-10">
             {/* Premium Header */}
             <header className="sticky top-0 z-20 bg-gradient-to-r from-[#034A30] via-[#045A3C] to-[#034A30] shadow-xl">
-                <div className="max-w-7xl mx-auto flex items-center h-16 px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center h-16 px-2 sm:px-4">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center gap-3 text-white hover:bg-white/10 px-3 py-2 rounded-xl transition-all duration-200 group"
+                        className="flex items-center gap-3 text-white hover:bg-white/10 px-2 py-2 rounded-xl transition-all duration-200 group"
                     >
                         <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
