@@ -4,13 +4,6 @@ import React from 'react';
 
 const ICON_BASE = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
-const PERIOD_FILTERS = [
-    { label: 'ทั้งหมด', value: 'ALL', icon: '📋' },
-    { label: '1 เดือน', value: '1M', icon: '📅' },
-    { label: '3 เดือน', value: '3M', icon: '📅' },
-    { label: '6 เดือน', value: '6M', icon: '📅' },
-];
-
 interface PondItem {
     id: string;
     label: string;
@@ -27,25 +20,17 @@ interface FarmerToolbarProps {
     isHistoryLoading?: boolean;
     activePond?: string;
     setActivePond?: (val: string) => void;
-    filterPeriod?: string;
-    setFilterPeriod?: (val: string) => void;
     setCurrentPage?: (val: number) => void;
     ponds?: PondItem[];
     productionCycles?: ProductionCycleItem[];
     activeProductionCycle?: string;
     setActiveProductionCycle?: (val: string) => void;
-    count?: number;
-    onSearchChange?: (term: string) => void;
-    onDateChange?: (date: string) => void;
-    onGroupTypeChange?: (group: string) => void;
 }
 
 const FarmerToolbar = ({
     isHistoryLoading = false,
     activePond = 'ALL',
     setActivePond,
-    filterPeriod = '1M',
-    setFilterPeriod,
     setCurrentPage,
     ponds = [],
     productionCycles = [],
@@ -67,7 +52,7 @@ const FarmerToolbar = ({
                     )}
                 </div>
                 <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                    {ponds.length > 0 ? ponds.map((pond, idx) => {
+                    {ponds.length > 0 ? ponds.map((pond) => {
                         const isActive = activePond === pond.id;
                         return (
                             <button

@@ -378,7 +378,6 @@ export default function FarmerDetailPage(props: PageProps) {
                             <span className="text-lg font-bold block leading-tight">
                                 {isFarmerLoading ? "กำลังโหลด..." : farmerData?.name || "ไม่พบข้อมูล"}
                             </span>
-                            <span className="text-[10px] font-medium text-white/60 uppercase tracking-wider">Farmer Detail</span>
                         </div>
                     </button>
                     <div className="flex-1" />
@@ -390,7 +389,7 @@ export default function FarmerDetailPage(props: PageProps) {
             </header>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
-                <FarmerInfoCard data={farmerData} />
+                <FarmerInfoCard data={farmerData} registeredPondCount={pondItems.length || '-'} />
 
                 <FarmerToolbar
                     isHistoryLoading={isHistoryLoading}
@@ -399,7 +398,6 @@ export default function FarmerDetailPage(props: PageProps) {
                         setActivePond(pondId);
                         setCurrentPage(1);
                     }}
-                    filterPeriod={filterPeriod}
                     setCurrentPage={setCurrentPage}
                     ponds={pondItems}
                     productionCycles={productionCycles.map((cycle, index) => ({

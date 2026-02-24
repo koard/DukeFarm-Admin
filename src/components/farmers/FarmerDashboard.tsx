@@ -89,7 +89,6 @@ const FarmerDashboard = ({
     releaseCount = "-",
     remainingCount = "-",
     survivalRate = null,
-    marketSize = "-",
 }: FarmerDashboardProps) => {
 
     const survivalColor = getSurvivalColor(survivalRate);

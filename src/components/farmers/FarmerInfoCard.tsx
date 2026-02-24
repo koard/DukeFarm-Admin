@@ -4,16 +4,14 @@ import type { FarmerListItem } from '@/types/farmer';
 
 interface FarmerInfoCardProps {
     data: FarmerListItem | null;
+    registeredPondCount?: number | string;
 }
 
-const FarmerInfoCard = ({ data }: FarmerInfoCardProps) => {
+const FarmerInfoCard = ({ data, registeredPondCount = '-' }: FarmerInfoCardProps) => {
 
     if (!data) return null;
 
-    const farmAreaRai = (data as any).farmAreaRai;
-    const registeredPondCount = (data as any).ponds && Array.isArray((data as any).ponds) 
-        ? (data as any).ponds.length 
-        : '-';
+    const farmAreaRai = data.farmAreaRai;
 
     return (
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#034A30] via-[#06644A] to-[#0A8865] p-[1px]">
@@ -40,14 +38,14 @@ const FarmerInfoCard = ({ data }: FarmerInfoCardProps) => {
                         ) : null}
                         <div className={`flex-shrink-0 w-16 h-16 bg-gradient-to-br from-[#034A30] to-[#179678] rounded-2xl flex items-center justify-center shadow-lg ${data.pictureUrl ? 'hidden' : ''}`}>
                             <span className="text-2xl font-black text-white">
-                                {(data.name || (data as any).fullName || 'U').charAt(0).toUpperCase()}
+                                {(data.name || 'U').charAt(0).toUpperCase()}
                             </span>
                         </div>
 
                         <div className="flex-1 min-w-0">
                             <p className="text-[11px] font-bold text-[#179678] uppercase tracking-[0.15em] mb-1">เจ้าของบ่อ</p>
                             <h2 className="text-2xl lg:text-3xl font-extrabold text-[#0A1F1C] truncate leading-tight">
-                                {data.name || (data as any).fullName}
+                                {data.name}
                             </h2>
                             
                             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-3">
@@ -60,7 +58,7 @@ const FarmerInfoCard = ({ data }: FarmerInfoCardProps) => {
                                     <span className="text-sm font-semibold text-gray-800">{data.phone}</span>
                                 </div>
                                 <a
-                                    href={`https://maps.google.com/?q=${data.location || ((data as any).latitude && (data as any).longitude ? `${(data as any).latitude},${(data as any).longitude}` : '')}`}
+                                    href={`https://maps.google.com/?q=${data.location || ''}`}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="group flex items-center gap-2 hover:scale-[1.02] transition-transform"
@@ -72,7 +70,7 @@ const FarmerInfoCard = ({ data }: FarmerInfoCardProps) => {
                                         </svg>
                                     </div>
                                     <span className="text-sm font-semibold text-[#179678] group-hover:underline underline-offset-2">
-                                        {data.location || ((data as any).latitude && (data as any).longitude ? `${(data as any).latitude}, ${(data as any).longitude}` : '-')}
+                                        {data.location || '-'}
                                     </span>
                                 </a>
                             </div>
