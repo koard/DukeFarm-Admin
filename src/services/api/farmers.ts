@@ -92,7 +92,7 @@ export interface PondInfo {
   productionCycleCount: number;
 }
 
-export interface FarmerDetailResponse extends Farmer {
+export interface FarmerDetailResponse extends Omit<Farmer, 'entries'> {
   ponds?: PondInfo[];
   stats?: FarmerStats;
   dashboardSummary?: DashboardSummary;
