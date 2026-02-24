@@ -104,18 +104,14 @@ const FarmerToolbar = ({
     return (
         <div className="space-y-4 mb-6">
             {/* Pond Selection - Horizontal scrollable pills */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-4">
-                <div className="flex items-center gap-3 mb-3">
-                    <div className="w-1 h-5 bg-[#179678] rounded-full" />
-                    <span className="text-sm font-bold text-gray-800">เลือกบ่อ</span>
-                    {isHistoryLoading && (
-                        <div className="flex items-center gap-1.5 ml-auto">
-                            <div className="w-1.5 h-1.5 bg-[#179678] rounded-full animate-pulse" />
-                            <span className="text-xs text-gray-400 animate-pulse">กำลังโหลด...</span>
-                        </div>
-                    )}
-                </div>
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <div className="relative">
+                {isHistoryLoading && (
+                    <div className="absolute right-0 -top-6 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 bg-[#179678] rounded-full animate-pulse" />
+                        <span className="text-xs text-gray-400 animate-pulse">กำลังโหลด...</span>
+                    </div>
+                )}
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                     {ponds.length > 0 ? ponds.map((pond) => {
                         const isActive = activePond === pond.id;
                         return (
@@ -125,29 +121,27 @@ const FarmerToolbar = ({
                                     setActivePond?.(pond.id);
                                     setCurrentPage?.(1);
                                 }}
-                                className={`group relative flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 ${isActive
-                                    ? 'bg-gradient-to-r from-[#034A30] to-[#0A8865] text-white shadow-lg shadow-[#034A30]/25 scale-[1.02]'
-                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-800 hover:shadow-md border border-gray-200/60'
+                                className={`group relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${isActive
+                                    ? 'bg-gradient-to-r from-[#034A30] to-[#0A8865] text-white shadow-md shadow-[#034A30]/20'
+                                    : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-800 border border-gray-200/80 shadow-sm'
                                     }`}
                             >
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? 'bg-white/20' : 'bg-white shadow-sm'}`}>
-                                    <img
-                                        src={isActive ? `${ICON_BASE}/icon_farmers/famicons_fish_w.svg` : `${ICON_BASE}/icon_farmers/famicons_fish_b.svg`}
-                                        alt="fish-icon"
-                                        width={18}
-                                        height={18}
-                                        className="object-contain"
-                                    />
-                                </div>
+                                <img
+                                    src={isActive ? `${ICON_BASE}/icon_farmers/famicons_fish_w.svg` : `${ICON_BASE}/icon_farmers/famicons_fish_b.svg`}
+                                    alt="fish-icon"
+                                    width={16}
+                                    height={16}
+                                    className="object-contain"
+                                />
                                 <span>{pond.label}</span>
                                 {isActive && (
-                                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse" />
+                                    <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white" />
                                 )}
                             </button>
                         );
                     }) : (
-                        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gray-50 text-sm text-gray-400">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
+                        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200/80 shadow-sm text-sm text-gray-400">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
                             ไม่มีข้อมูลบ่อ
                         </div>
                     )}
@@ -156,129 +150,129 @@ const FarmerToolbar = ({
 
             {/* Production Cycle Card - Light background */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-5">
-                {/* Header with cycle selector */}
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-1 h-5 bg-amber-500 rounded-full" />
-                        {productionCycles.length > 1 ? (
-                            <div className="relative inline-block">
-                                <select
-                                    value={activeProductionCycle || ''}
-                                    onChange={(e) => {
-                                        setActiveProductionCycle?.(e.target.value);
-                                        setCurrentPage?.(1);
-                                    }}
-                                    disabled={isHistoryLoading}
-                                    className="appearance-none bg-gray-50 border border-gray-200 text-sm font-bold text-gray-800 pl-3 pr-8 py-1.5 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#179678]/30 focus:border-[#179678] transition-all disabled:opacity-50"
-                                >
-                                    {productionCycles.map((cycle) => (
-                                        <option key={cycle.id} value={cycle.id}>
-                                            {cycle.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-                                </div>
-                            </div>
-                        ) : productionCycles.length === 1 ? (
-                            <span className="text-sm font-bold text-gray-800">{productionCycles[0].label}</span>
-                        ) : (
-                            <span className="text-sm font-bold text-gray-800">รอบการเลี้ยง</span>
-                        )}
-                    </div>
-                    {viewingCycle && getStatusBadge(viewingCycle.status, viewingCycle.isActive)}
-                </div>
-
-                {/* Cycle details */}
-                {viewingCycle ? (
-                    <div className="space-y-2.5 bg-gray-50/80 rounded-xl p-4 border border-gray-100">
-                        {/* Date & Duration — hide when PLANNING */}
-                        {viewingCycle.status !== 'PLANNING' && viewingCycle.startDate ? (
-                            <>
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-500">วันที่เริ่มปล่อยปลา</span>
-                                    <span className="font-semibold text-gray-800">
-                                        {new Date(viewingCycle.startDate).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                                    </span>
-                                </div>
-
-                                {/* End date — only for ended cycles */}
-                                {!viewingCycle.isActive && viewingCycle.endDate && (
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-500">วันที่สิ้นสุด</span>
-                                        <span className="font-semibold text-gray-800">
-                                            {new Date(viewingCycle.endDate).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                                        </span>
+                <div className="flex flex-col lg:flex-row gap-6">
+                    {/* Left Column: Cycle Info */}
+                    <div className="flex-1">
+                        {/* Header with cycle selector */}
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                {productionCycles.length > 1 ? (
+                                    <div className="relative inline-block">
+                                        <select
+                                            value={activeProductionCycle || ''}
+                                            onChange={(e) => {
+                                                setActiveProductionCycle?.(e.target.value);
+                                                setCurrentPage?.(1);
+                                            }}
+                                            disabled={isHistoryLoading}
+                                            className="appearance-none bg-gray-50 border border-gray-200 text-sm font-bold text-gray-800 pl-3 pr-8 py-1.5 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#179678]/30 focus:border-[#179678] transition-all disabled:opacity-50"
+                                        >
+                                            {productionCycles.map((cycle) => (
+                                                <option key={cycle.id} value={cycle.id}>
+                                                    {cycle.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                                        </div>
                                     </div>
+                                ) : productionCycles.length === 1 ? (
+                                    <span className="text-sm font-bold text-gray-800">{productionCycles[0].label}</span>
+                                ) : (
+                                    <span className="text-sm font-bold text-gray-800">รอบการเลี้ยง</span>
                                 )}
+                            </div>
+                            {viewingCycle && getStatusBadge(viewingCycle.status, viewingCycle.isActive)}
+                        </div>
 
-                                {/* Duration */}
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-500">ระยะเวลา</span>
-                                    <span className="font-semibold text-[#034A30]">
-                                        {getDurationDays(viewingCycle.startDate, viewingCycle.endDate, viewingCycle.isActive)} วัน
-                                    </span>
-                                </div>
-                            </>
+                        {/* Cycle details */}
+                        {viewingCycle ? (
+                            <div className="space-y-2.5 bg-gray-50/80 rounded-xl p-4 border border-gray-100">
+                                {/* Date & Duration — hide when PLANNING */}
+                                {viewingCycle.status !== 'PLANNING' && viewingCycle.startDate ? (
+                                    <>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-500">วันที่เริ่มปล่อยปลา</span>
+                                            <span className="font-semibold text-gray-800">
+                                                {new Date(viewingCycle.startDate).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                            </span>
+                                        </div>
+
+                                        {/* End date — only for ended cycles */}
+                                        {!viewingCycle.isActive && viewingCycle.endDate && (
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-gray-500">วันที่สิ้นสุด</span>
+                                                <span className="font-semibold text-gray-800">
+                                                    {new Date(viewingCycle.endDate).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Duration */}
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-500">ระยะเวลา</span>
+                                            <span className="font-semibold text-[#034A30]">
+                                                {getDurationDays(viewingCycle.startDate, viewingCycle.endDate, viewingCycle.isActive)} วัน
+                                            </span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <p className="text-sm text-gray-400">รอการบันทึกข้อมูลรอบนี้</p>
+                                )}
+                            </div>
                         ) : (
-                            <p className="text-sm text-gray-400">รอการบันทึกข้อมูลรอบนี้</p>
+                            <p className="text-sm text-gray-400">{productionCycles.length === 0 ? 'ไม่มีข้อมูลรอบการเลี้ยง' : 'กำลังเตรียมรอบการเลี้ยง...'}</p>
                         )}
                     </div>
-                ) : (
-                    <p className="text-sm text-gray-400">{productionCycles.length === 0 ? 'ไม่มีข้อมูลรอบการเลี้ยง' : 'กำลังเตรียมรอบการเลี้ยง...'}</p>
-                )}
 
-                {/* Summary Section */}
-                {summary && (
-                    <div className="mt-4 pt-4 border-t border-gray-200/60">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="w-1 h-5 bg-[#034A30] rounded-full" />
-                            <span className="text-sm font-bold text-gray-800">ข้อมูลสรุป</span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-3">
-                            {/* Row 1: ประเภทปลา, น้ำหนักเฉลี่ย, อัตราการรอด */}
-                            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3.5 border border-amber-100/60">
-                                <div className="flex items-center gap-1.5 mb-1.5">
-                                    <img src={`${ICON_BASE}/icon_farmers/ion_fish.svg`} alt="" width={14} height={14} />
-                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">ประเภทปลา</span>
-                                </div>
-                                <p className="text-lg font-black text-gray-900">{isHistoryLoading ? '...' : (summary.fishType || '-')}</p>
-                            </div>
-
-                            <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-3.5 border border-violet-100/60">
-                                <div className="flex items-center gap-1.5 mb-1.5">
-                                    <img src={`${ICON_BASE}/icon_farmers/line.svg`} alt="" width={14} height={14} />
-                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">น้ำหนักเฉลี่ย</span>
-                                </div>
-                                <p className="text-lg font-black text-gray-900">{isHistoryLoading ? '...' : (summary.avgWeight ?? '-')} <span className="text-xs font-semibold text-gray-400">กรัม</span></p>
-                            </div>
-
-                            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3.5 border border-emerald-100/60 flex items-center gap-3">
+                    {/* Right Column: Survival Rate */}
+                    {summary && (
+                        <div className="lg:w-64 flex-shrink-0 flex flex-col justify-center items-center bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-100/60">
+                            <span className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">อัตราการรอด</span>
+                            <div className="flex items-center gap-4">
                                 <SurvivalRing percentage={isHistoryLoading ? null : (summary.survivalRate ?? null)} />
-                                <div>
-                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">อัตราการรอด</span>
-                                    <span className={`text-xs font-bold mt-1 block ${getSurvivalColor(summary.survivalRate).badge} px-2 py-0.5 rounded-full text-center`}>
+                                <div className="flex flex-col items-center">
+                                    <span className={`text-xl font-bold ${getSurvivalColor(summary.survivalRate).badge} px-3 py-1 rounded-full text-center`}>
                                         {getSurvivalColor(summary.survivalRate).label}
                                     </span>
                                 </div>
                             </div>
+                        </div>
+                    )}
+                </div>
 
-                            {/* Row 2: จำนวนที่ปล่อย, คงเหลือ */}
+                {/* Summary Section (4 columns) */}
+                {summary && (
+                    <div className="mt-2 pt-4">
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3.5 border border-amber-100/60">
+                                <div className="flex items-center gap-1.5 mb-1.5">
+                                    <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">ประเภทปลา</span>
+                                </div>
+                                <p className="text-xl font-black text-gray-900">{isHistoryLoading ? '...' : (summary.fishType || '-')}</p>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-3.5 border border-violet-100/60">
+                                <div className="flex items-center gap-1.5 mb-1.5">
+                                    <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">น้ำหนักเฉลี่ย</span>
+                                </div>
+                                <p className="text-xl font-black text-gray-900">{isHistoryLoading ? '...' : (summary.avgWeight ?? '-')} <span className="text-sm font-semibold text-gray-400">กรัม</span></p>
+                            </div>
+
                             <div className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl p-3.5 border border-sky-100/60">
                                 <div className="flex items-center gap-1.5 mb-1.5">
-                                    <img src={`${ICON_BASE}/icon_farmers/ix_water-fish.svg`} alt="" width={14} height={14} />
-                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">จำนวนที่ปล่อย</span>
+                                    <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">จำนวนที่ปล่อย</span>
                                 </div>
-                                <p className="text-lg font-black text-gray-900">{isHistoryLoading ? '...' : (summary.releaseCount ?? '-')} <span className="text-xs font-semibold text-gray-400">ตัว</span></p>
+                                <p className="text-xl font-black text-gray-900">{isHistoryLoading ? '...' : (summary.releaseCount ?? '-')} <span className="text-sm font-semibold text-gray-400">ตัว</span></p>
                             </div>
 
                             <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-3.5 border border-orange-100/60">
                                 <div className="flex items-center gap-1.5 mb-1.5">
-                                    <img src={`${ICON_BASE}/icon_farmers/Group 1000003034.svg`} alt="" width={14} height={14} />
-                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">คงเหลือ</span>
+                                    <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">คงเหลือ</span>
                                 </div>
-                                <p className="text-lg font-black text-gray-900">{isHistoryLoading ? '...' : (summary.remainingCount ?? '-')} <span className="text-xs font-semibold text-gray-400">ตัว</span></p>
+                                <p className="text-xl font-black text-gray-900">{isHistoryLoading ? '...' : (summary.remainingCount ?? '-')} <span className="text-sm font-semibold text-gray-400">ตัว</span></p>
                             </div>
                         </div>
                     </div>

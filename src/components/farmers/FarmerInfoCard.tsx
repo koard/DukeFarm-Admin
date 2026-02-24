@@ -84,7 +84,7 @@ const FarmerInfoCard = ({ data, registeredPondCount = '-' }: FarmerInfoCardProps
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#179678" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
                             </div>
                             <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">พื้นที่</p>
-                            <p className="text-2xl font-black text-[#034A30] leading-none">{farmAreaRai || '-'} <span className="text-sm font-semibold text-gray-500">ไร่</span></p>
+                            <p className="text-xl font-black text-[#034A30] leading-none">{farmAreaRai || '-'} <span className="text-sm font-semibold text-gray-500">ไร่</span></p>
                         </div>
 
                         <div className="group relative bg-gradient-to-br from-[#F0F9F6] to-[#E2F5ED] rounded-xl p-4 border border-[#179678]/10 hover:border-[#179678]/30 hover:shadow-md transition-all duration-300 cursor-default">
@@ -92,7 +92,7 @@ const FarmerInfoCard = ({ data, registeredPondCount = '-' }: FarmerInfoCardProps
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#179678" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/></svg>
                             </div>
                             <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">บ่อทั้งหมด</p>
-                            <p className="text-2xl font-black text-[#034A30] leading-none">{data.pondCount || '-'} <span className="text-sm font-semibold text-gray-500">บ่อ</span></p>
+                            <p className="text-xl font-black text-[#034A30] leading-none">{data.pondCount || '-'} <span className="text-sm font-semibold text-gray-500">บ่อ</span></p>
                         </div>
 
                         <div className="group relative bg-gradient-to-br from-[#F0F9F6] to-[#E2F5ED] rounded-xl p-4 border border-[#179678]/10 hover:border-[#179678]/30 hover:shadow-md transition-all duration-300 cursor-default">
@@ -100,7 +100,7 @@ const FarmerInfoCard = ({ data, registeredPondCount = '-' }: FarmerInfoCardProps
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#179678" strokeWidth="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                             </div>
                             <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">ลงทะเบียน</p>
-                            <p className="text-2xl font-black text-[#179678] leading-none">{registeredPondCount} <span className="text-sm font-semibold text-gray-500">บ่อ</span></p>
+                            <p className="text-xl font-black text-[#179678] leading-none">{registeredPondCount} <span className="text-sm font-semibold text-gray-500">บ่อ</span></p>
                         </div>
                     </div>
                 </div>

@@ -65,7 +65,6 @@ const FarmerHistoryTable = ({
         return (
             <div className="w-full">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-1 h-5 bg-[#034A30] rounded-full" />
                     <h3 className="text-sm font-bold text-gray-800">ประวัติการบันทึกข้อมูล</h3>
                 </div>
                 <div className="flex flex-col items-center justify-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm">
@@ -89,7 +88,6 @@ const FarmerHistoryTable = ({
             {/* Section header */}
             <div className="flex items-center justify-between gap-4 mb-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-1 h-5 bg-[#034A30] rounded-full" />
                     <h3 className="text-sm font-bold text-gray-800">ประวัติการบันทึกข้อมูล</h3>
                     <span className="px-2.5 py-0.5 bg-[#034A30]/10 text-[#034A30] text-xs font-bold rounded-full">
                         {data.length} รายการ

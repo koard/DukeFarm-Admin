@@ -96,11 +96,6 @@ const FarmerDashboard = ({
 
     return (
         <div className="w-full mb-6">
-            {/* Section header */}
-            <div className="flex items-center gap-3 mb-4">
-                <div className="w-1 h-5 bg-[#034A30] rounded-full" />
-                <h3 className="text-sm font-bold text-gray-800">ข้อมูลสรุป</h3>
-            </div>
 
             {/* Bento grid layout */}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
