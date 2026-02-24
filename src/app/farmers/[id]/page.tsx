@@ -402,9 +402,11 @@ export default function FarmerDetailPage(props: PageProps) {
                     ponds={pondItems}
                     productionCycles={productionCycles.map((cycle, index) => ({
                         id: cycle.id,
-                        label: `รอบที่ ${productionCycles.length - index}`,
+                        label: `รอบการเลี้ยงที่ ${productionCycles.length - index}`,
                         status: cycle.status,
                         isActive: ['PLANNING', 'STOCKING', 'GROWOUT', 'HARVEST_READY'].includes(cycle.status),
+                        startDate: cycle.startDate,
+                        endDate: cycle.endDate,
                     }))}
                     activeProductionCycle={activeProductionCycle}
                     setActiveProductionCycle={setActiveProductionCycle}

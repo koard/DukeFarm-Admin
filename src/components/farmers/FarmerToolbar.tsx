@@ -14,6 +14,8 @@ interface ProductionCycleItem {
     label: string;
     status: string;
     isActive: boolean;
+    startDate?: string;
+    endDate?: string | null;
 }
 
 interface FarmerToolbarProps {
@@ -27,6 +29,23 @@ interface FarmerToolbarProps {
     setActiveProductionCycle?: (val: string) => void;
 }
 
+const getStatusBadge = (status: string, isActive: boolean) => {
+    if (!isActive) {
+        return <span className="bg-red-100 text-red-600 px-2.5 py-0.5 rounded-full text-xs font-bold">สิ้นสุดแล้ว</span>;
+    }
+    if (status === 'PLANNING') {
+        return <span className="bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full text-xs font-bold">รอการบันทึกข้อมูล</span>;
+    }
+    return <span className="bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full text-xs font-bold">กำลังดำเนินการ</span>;
+};
+
+const getDurationDays = (startDate?: string, endDate?: string | null, isActive?: boolean) => {
+    if (!startDate) return null;
+    const start = new Date(startDate).getTime();
+    const end = (!isActive && endDate) ? new Date(endDate).getTime() : Date.now();
+    return Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+};
+
 const FarmerToolbar = ({
     isHistoryLoading = false,
     activePond = 'ALL',
@@ -37,6 +56,8 @@ const FarmerToolbar = ({
     activeProductionCycle,
     setActiveProductionCycle,
 }: FarmerToolbarProps) => {
+    const viewingCycle = productionCycles.find(c => c.id === activeProductionCycle);
+
     return (
         <div className="space-y-4 mb-6">
             {/* Pond Selection - Horizontal scrollable pills */}
@@ -90,36 +111,80 @@ const FarmerToolbar = ({
                 </div>
             </div>
 
-            {/* Production Cycle Selector */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-4">
-                <div className="flex items-center gap-3 mb-3">
-                    <div className="w-1 h-5 bg-amber-500 rounded-full" />
-                    <span className="text-sm font-bold text-gray-800">รอบการเลี้ยง</span>
-                </div>
-                <div className="relative">
-                    <select
-                        value={activeProductionCycle || ''}
-                        onChange={(e) => {
-                            setActiveProductionCycle?.(e.target.value);
-                            setCurrentPage?.(1);
-                        }}
-                        disabled={productionCycles.length === 0 || isHistoryLoading}
-                        className="w-full appearance-none px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#179678]/30 focus:border-[#179678] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed pr-10"
-                    >
-                        {productionCycles.length === 0 ? (
-                            <option value="">ไม่มีข้อมูลรอบการเลี้ยง</option>
+            {/* Production Cycle Card - Light background */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-5">
+                {/* Header with cycle selector */}
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-1 h-5 bg-amber-500 rounded-full" />
+                        {productionCycles.length > 1 ? (
+                            <div className="relative inline-block">
+                                <select
+                                    value={activeProductionCycle || ''}
+                                    onChange={(e) => {
+                                        setActiveProductionCycle?.(e.target.value);
+                                        setCurrentPage?.(1);
+                                    }}
+                                    disabled={isHistoryLoading}
+                                    className="appearance-none bg-gray-50 border border-gray-200 text-sm font-bold text-gray-800 pl-3 pr-8 py-1.5 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#179678]/30 focus:border-[#179678] transition-all disabled:opacity-50"
+                                >
+                                    {productionCycles.map((cycle) => (
+                                        <option key={cycle.id} value={cycle.id}>
+                                            {cycle.label} {cycle.isActive ? '● ปัจจุบัน' : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                                </div>
+                            </div>
+                        ) : productionCycles.length === 1 ? (
+                            <span className="text-sm font-bold text-gray-800">{productionCycles[0].label}</span>
                         ) : (
-                            productionCycles.map((cycle) => (
-                                <option key={cycle.id} value={cycle.id}>
-                                    {cycle.label} {cycle.isActive ? '● ปัจจุบัน' : ''}
-                                </option>
-                            ))
+                            <span className="text-sm font-bold text-gray-800">รอบการเลี้ยง</span>
                         )}
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
                     </div>
+                    {viewingCycle && getStatusBadge(viewingCycle.status, viewingCycle.isActive)}
                 </div>
+
+                {/* Cycle details */}
+                {viewingCycle ? (
+                    <div className="space-y-2.5 bg-gray-50/80 rounded-xl p-4 border border-gray-100">
+                        {/* Date & Duration — hide when PLANNING */}
+                        {viewingCycle.status !== 'PLANNING' && viewingCycle.startDate ? (
+                            <>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-500">วันที่เริ่มปล่อยปลา</span>
+                                    <span className="font-semibold text-gray-800">
+                                        {new Date(viewingCycle.startDate).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                    </span>
+                                </div>
+
+                                {/* End date — only for ended cycles */}
+                                {!viewingCycle.isActive && viewingCycle.endDate && (
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-500">วันที่สิ้นสุด</span>
+                                        <span className="font-semibold text-gray-800">
+                                            {new Date(viewingCycle.endDate).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Duration */}
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-500">ระยะเวลา</span>
+                                    <span className="font-semibold text-[#034A30]">
+                                        {getDurationDays(viewingCycle.startDate, viewingCycle.endDate, viewingCycle.isActive)} วัน
+                                    </span>
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-sm text-gray-400">รอการบันทึกข้อมูลรอบนี้</p>
+                        )}
+                    </div>
+                ) : (
+                    <p className="text-sm text-gray-400">{productionCycles.length === 0 ? 'ไม่มีข้อมูลรอบการเลี้ยง' : 'กำลังเตรียมรอบการเลี้ยง...'}</p>
+                )}
             </div>
         </div>
     );
