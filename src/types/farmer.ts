@@ -5,6 +5,7 @@ export interface FarmerListItem {
   rowNumber?: number;
   name: string;
   phone: string;
+  pictureUrl?: string | null;
   farmType: string;
   farmTypes?: string[];
   farmAreaRai?: number | null;

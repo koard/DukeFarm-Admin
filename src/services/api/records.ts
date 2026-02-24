@@ -77,6 +77,8 @@ export interface RecordResponse {
 export interface ListRecordsParams {
   userId?: string;
   farmType?: string;
+  pondId?: string;
+  productionCycleId?: string;
   page?: number;
   limit?: number;
   startDate?: string;
@@ -101,23 +103,27 @@ export class RecordsAPI {
 
   /**
    * GET /records
+   * Note: httpClient already unwraps { data: ... } envelope,
+   * so the response is the records array directly.
    */
-  async list(params?: ListRecordsParams): Promise<{ data: RecordResponse[], total: number }> {
+  async list(params?: ListRecordsParams): Promise<RecordResponse[]> {
     const queryParams = new URLSearchParams();
 
     if (params) {
       if (params.userId) queryParams.append('userId', params.userId);
       if (params.farmType && params.farmType !== 'ALL') queryParams.append('farmType', params.farmType);
+      if (params.pondId) queryParams.append('pondId', params.pondId);
+      if (params.productionCycleId) queryParams.append('productionCycleId', params.productionCycleId);
       if (params.page) queryParams.append('page', params.page.toString());
       if (params.limit) queryParams.append('limit', params.limit.toString());
       if (params.startDate) queryParams.append('startDate', params.startDate);
       if (params.endDate) queryParams.append('endDate', params.endDate);
     }
 
-    const response = await httpClient.get<{ data: RecordResponse[], total: number }>(
+    const result = await httpClient.get<RecordResponse[]>(
       `${this.basePath}?${queryParams.toString()}`
     );
-    return response;
+    return Array.isArray(result) ? result : [];
   }
 
   /**

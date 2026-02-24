@@ -36,6 +36,7 @@ export interface Farmer {
   no: number;
   fullName: string;
   phone: string;
+  pictureUrl?: string | null;
   farmType: string;
   farmTypes: string[];
   availableFarmTypes?: string[];

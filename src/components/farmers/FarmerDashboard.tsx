@@ -15,40 +15,72 @@ export interface FarmerDashboardProps {
     productionCycleCount?: number;
 }
 
-const getSurvivalStatusStyles = (percentage: number | null) => {
-    if (percentage === null) {
-        return {
-            bg: "bg-gray-50",
-            text: "text-gray-400",
-            label: "-"
-        };
-    }
-    if (percentage >= 90) {
-        return {
-            bg: "bg-[#E6FFFA]",
-            text: "text-[#047857]",
-            label: "▲ (สูง)"
-        };
-    } else if (percentage >= 75) {
-        return {
-            bg: "bg-[#FFF9C4]",
-            text: "text-[#854D0E]",
-            label: "● (ปกติ)"
-        };
-    } else if (percentage >= 50) {
-        return {
-            bg: "bg-[#FFCCBC]",
-            text: "text-[#BF360C]",
-            label: "▼ (ค่อนข้างต่ำ)"
-        };
-    } else {
-        return {
-            bg: "bg-[#FFCDD2]",
-            text: "text-[#B91C1C]",
-            label: "▼ (ต่ำมาก)"
-        };
-    }
+const getSurvivalColor = (p: number | null) => {
+    if (p === null) return { ring: 'stroke-gray-200', text: 'text-gray-400', badge: 'bg-gray-100 text-gray-400', label: '-' };
+    if (p >= 90) return { ring: 'stroke-emerald-500', text: 'text-emerald-600', badge: 'bg-emerald-50 text-emerald-700', label: 'สูง' };
+    if (p >= 75) return { ring: 'stroke-amber-500', text: 'text-amber-600', badge: 'bg-amber-50 text-amber-700', label: 'ปกติ' };
+    if (p >= 50) return { ring: 'stroke-orange-500', text: 'text-orange-600', badge: 'bg-orange-50 text-orange-700', label: 'ค่อนข้างต่ำ' };
+    return { ring: 'stroke-red-500', text: 'text-red-600', badge: 'bg-red-50 text-red-700', label: 'ต่ำมาก' };
 };
+
+/* Animated ring for survival rate */
+const SurvivalRing = ({ percentage }: { percentage: number | null }) => {
+    const color = getSurvivalColor(percentage);
+    const r = 36;
+    const circumference = 2 * Math.PI * r;
+    const offset = percentage !== null ? circumference - (percentage / 100) * circumference : circumference;
+
+    return (
+        <div className="relative w-24 h-24 mx-auto">
+            <svg className="w-24 h-24 -rotate-90" viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r={r} fill="none" strokeWidth="6" className="stroke-gray-100" />
+                <circle
+                    cx="40" cy="40" r={r} fill="none" strokeWidth="6"
+                    strokeLinecap="round"
+                    className={`${color.ring} transition-all duration-1000 ease-out`}
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
+                />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+                <span className={`text-lg font-black ${color.text}`}>
+                    {percentage !== null ? `${percentage}%` : '-'}
+                </span>
+            </div>
+        </div>
+    );
+};
+
+const StatCard = ({
+    icon, label, value, unit, gradient, textColor = 'text-gray-900', delay = '0ms',
+    children,
+}: {
+    icon: React.ReactNode; label: string; value: string | number; unit?: string;
+    gradient: string; textColor?: string; delay?: string;
+    children?: React.ReactNode;
+}) => (
+    <div
+        className={`group relative ${gradient} rounded-2xl p-5 shadow-sm border border-white/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden`}
+        style={{ animationDelay: delay }}
+    >
+        {/* Decorative corner blob */}
+        <div className="absolute -top-6 -right-6 w-20 h-20 bg-white/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500" />
+        <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-white/30 backdrop-blur-sm flex items-center justify-center shadow-sm">
+                    {icon}
+                </div>
+                <span className="text-xs font-bold uppercase tracking-wider opacity-70">{label}</span>
+            </div>
+            {children ?? (
+                <div className="flex items-baseline gap-1.5">
+                    <p className={`text-3xl font-black ${textColor} tracking-tight`}>{value}</p>
+                    {unit && <span className="text-sm font-bold opacity-60">{unit}</span>}
+                </div>
+            )}
+        </div>
+    </div>
+);
 
 const FarmerDashboard = ({
     loading = false,
@@ -58,141 +90,75 @@ const FarmerDashboard = ({
     remainingCount = "-",
     survivalRate = null,
     marketSize = "-",
-    productionCycleCount = 0,
 }: FarmerDashboardProps) => {
 
-    const status = getSurvivalStatusStyles(survivalRate);
+    const survivalColor = getSurvivalColor(survivalRate);
+    const v = (val: string | number) => loading ? '...' : val;
 
     return (
-        <div className="w-full overflow-x-auto pb-4 scrollbar-hide">
-            <div className="flex items-stretch gap-3 min-w-[1100px]">
+        <div className="w-full mb-6">
+            {/* Section header */}
+            <div className="flex items-center gap-3 mb-4">
+                <div className="w-1 h-5 bg-[#034A30] rounded-full" />
+                <h3 className="text-sm font-bold text-gray-800">ข้อมูลสรุป</h3>
+            </div>
 
-                {/* -------------------------------------------------------------------------
-                    1. ประเภทปลา & น้ำหนักปลาเฉลี่ย 
-                ------------------------------------------------------------------------- */}
-                <div className="bg-gradient-to-r from-[#FFF6E2] via-[#FFF6E2] to-[#E6DAFF] rounded-2xl shadow-sm flex overflow-hidden border border-orange-50/20 flex-[1.5] h-[96px]">
+            {/* Bento grid layout */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
 
-                    {/* ฝั่งซ้าย: ประเภทปลา */}
-                    <div className="flex-1 flex flex-col p-4 relative">
-                        <div className="flex items-center gap-1.5 mb-1">
-                            <img src={`${ICON_BASE}/icon_farmers/ion_fish.svg`} alt="type" width={18} height={18} />
-                            <span className="text-sm font-bold text-gray-900">ประเภทปลา</span>
+                {/* ประเภทปลา */}
+                <StatCard
+                    gradient="bg-gradient-to-br from-amber-50 to-orange-50"
+                    icon={<img src={`${ICON_BASE}/icon_farmers/ion_fish.svg`} alt="" width={18} height={18} />}
+                    label="ประเภทปลา"
+                    value={v(fishType)}
+                    delay="0ms"
+                />
+
+                {/* น้ำหนักปลาเฉลี่ย */}
+                <StatCard
+                    gradient="bg-gradient-to-br from-violet-50 to-purple-50"
+                    icon={<img src={`${ICON_BASE}/icon_farmers/line.svg`} alt="" width={18} height={18} />}
+                    label="น้ำหนักเฉลี่ย"
+                    value={v(avgWeight)}
+                    unit="กรัม"
+                    delay="50ms"
+                />
+
+                {/* อัตราการรอด - Ring visualization */}
+                <div className="row-span-2 group relative bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-5 shadow-sm border border-emerald-100/60 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                    <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-100/40 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-500" />
+                    <div className="relative z-10 flex flex-col items-center gap-3">
+                        <div className="flex items-center gap-2 mb-1">
+                            <img src={`${ICON_BASE}/icon_farmers/famicons_fish-bb.svg`} alt="" width={18} height={18} />
+                            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">อัตราการรอด</span>
                         </div>
-                        <div className="flex-1 flex items-center justify-center">
-                            <p className="text-2xl font-black text-black">
-                                {loading ? "..." : fishType}
-                            </p>
-                        </div>
-                        {/* เส้นคั่นสีขาวแบบยาว */}
-                        <div className="absolute right-0 top-3 bottom-3 w-px bg-white shadow-sm opacity-80"></div>
-                    </div>
-
-                    {/* ฝั่งขวา: น้ำหนักปลาเฉลี่ย */}
-                    <div className="flex-1 flex flex-col p-4">
-                        <div className="flex items-center gap-1.5 mb-1">
-                            <img src={`${ICON_BASE}/icon_farmers/line.svg`} alt="avg" width={18} height={18} />
-                            <span className="text-sm font-bold text-gray-900">น้ำหนักปลาเฉลี่ย</span>
-                        </div>
-                        <div className="flex-1 flex items-center justify-center">
-                            <p className="text-2xl font-black text-black">
-                                {loading ? "..." : avgWeight} <span className="text-sm font-bold text-gray-900 ml-1">กรัม</span>
-                            </p>
-                        </div>
+                        <SurvivalRing percentage={loading ? null : survivalRate} />
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${survivalColor.badge}`}>
+                            {survivalColor.label}
+                        </span>
                     </div>
                 </div>
 
-                {/* -------------------------------------------------------------------------
-                    2. จำนวนที่ปล่อย 
-                ------------------------------------------------------------------------- */}
-                <div className="bg-[#4A59FF] rounded-2xl p-4 relative overflow-hidden text-white shadow-md flex-1 flex flex-col h-[96px]">
-                    <span className="text-base font-medium opacity-90">จำนวนที่ปล่อย</span>
-                    <div className="flex-1 flex items-center justify-center">
-                        <p className="text-3xl font-black leading-none relative z-10">
-                            {loading ? "..." : releaseCount}
-                        </p>
-                    </div>
-                    <img
-                        src={`${ICON_BASE}/icon_farmers/ix_water-fish.svg`}
-                        alt="fish"
-                        width={60}
-                        height={50}
-                        className="absolute bottom-0 right-0 opacity-90 translate-x-1 translate-y-1"
-                    />
-                </div>
+                {/* จำนวนที่ปล่อย */}
+                <StatCard
+                    gradient="bg-gradient-to-br from-sky-50 to-blue-50"
+                    icon={<img src={`${ICON_BASE}/icon_farmers/ix_water-fish.svg`} alt="" width={18} height={18} />}
+                    label="จำนวนที่ปล่อย"
+                    value={v(releaseCount)}
+                    unit="ตัว"
+                    delay="100ms"
+                />
 
-                {/* -------------------------------------------------------------------------
-                    3. คงเหลือ 
-                ------------------------------------------------------------------------- */}
-                <div className="bg-[#E0A84D] rounded-2xl p-4 relative overflow-hidden text-white shadow-md flex-1 flex flex-col h-[96px]">
-                    <span className="text-base font-medium opacity-90">คงเหลือ</span>
-                    <div className="flex-1 flex items-center justify-center">
-                        <p className="text-3xl font-black leading-none relative z-10">
-                            {loading ? "..." : remainingCount}
-                        </p>
-                    </div>
-                    <img
-                        src={`${ICON_BASE}/icon_farmers/Group 1000003034.svg`}
-                        alt="group"
-                        width={60}
-                        height={50}
-                        className="absolute bottom-0 right-0 opacity-90 translate-x-1 translate-y-1"
-                    />
-                </div>
-
-                {/* -------------------------------------------------------------------------
-                    4. อัตราการรอด 
-                ------------------------------------------------------------------------- */}
-                <div className={`${status.bg} rounded-2xl p-4 flex flex-col shadow-sm border border-white/40 transition-colors duration-300 flex-1 h-[96px]`}>
-                    <div className="flex items-center gap-2 mb-2">
-                        <img src={`${ICON_BASE}/icon_farmers/famicons_fish-bb.svg`} alt="survival" width={22} height={22} />
-                        <span className="text-base font-bold text-gray-700">อัตราการรอด</span>
-                    </div>
-                    <div className="flex flex-col items-center justify-center flex-1">
-                        <div className="flex items-baseline gap-1">
-                            <span className={`text-3xl font-black ${status.text}`}>
-                                {loading ? "..." : (survivalRate !== null ? `${survivalRate}%` : "-")}
-                            </span>
-                            <span className={`text-xs font-bold ${status.text}`}>
-                                {status.label}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* -------------------------------------------------------------------------
-                    5. ขนาดที่เหมาะสำหรับการขาย 
-                ------------------------------------------------------------------------- */}
-                <div className="bg-[#F1DFFF] rounded-2xl p-4 flex flex-col shadow-sm border border-purple-100/30 flex-[1.2] h-[96px]">
-                    <div className="flex items-center gap-2 mb-2">
-                        <img src={`${ICON_BASE}/icon_farmers/weight.svg`} alt="weight" width={20} height={20} />
-                        <span className="text-base font-bold text-gray-700">ขนาดที่เหมาะสำหรับการขาย</span>
-                    </div>
-                    <div className="flex justify-center items-baseline gap-1 flex-1">
-                        <p className="text-2xl font-black text-black">
-                            {loading ? "..." : marketSize}
-                        </p>
-                        <span className="text-lg font-bold text-black">กรัม</span>
-                    </div>
-                </div>
-
-                {/* -------------------------------------------------------------------------
-                    6. จำนวนรอบการเลี้ยง 
-                ------------------------------------------------------------------------- */}
-                <div className="bg-[#E0F2F1] rounded-2xl p-4 flex flex-col shadow-sm border border-teal-100/30 flex-1 h-[96px]">
-                    <div className="flex items-center gap-2 mb-2">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 8V12L15 15" stroke="#0D7377" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            <circle cx="12" cy="12" r="9" stroke="#0D7377" strokeWidth="2" />
-                        </svg>
-                        <span className="text-base font-bold text-gray-700">รอบการเลี้ยง</span>
-                    </div>
-                    <div className="flex justify-center items-baseline gap-1 flex-1">
-                        <p className="text-2xl font-black text-[#0D7377]">
-                            {loading ? "..." : productionCycleCount}
-                        </p>
-                        <span className="text-lg font-bold text-[#0D7377]">รอบ</span>
-                    </div>
-                </div>
+                {/* คงเหลือ */}
+                <StatCard
+                    gradient="bg-gradient-to-br from-orange-50 to-amber-50"
+                    icon={<img src={`${ICON_BASE}/icon_farmers/Group 1000003034.svg`} alt="" width={18} height={18} />}
+                    label="คงเหลือ"
+                    value={v(remainingCount)}
+                    unit="ตัว"
+                    delay="150ms"
+                />
 
             </div>
         </div>

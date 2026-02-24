@@ -18,6 +18,7 @@ import DeleteConfirm from "../../../components/common/DeleteConfirm";
 
 import { farmersAPI } from "@/services/api/farmers";
 import { recordsAPI, ListRecordsParams } from "@/services/api/records";
+import { pondsAPI, ProductionCycle } from "@/services/api/ponds";
 import { APIError } from "@/services/api/types";
 import type { FarmerListItem } from "@/types/farmer";
 import { mapFarmerResponse } from "@/utils/farmerMapper";
@@ -47,10 +48,13 @@ export default function FarmerDetailPage(props: PageProps) {
     const [isFarmerLoading, setIsFarmerLoading] = useState(true);
     const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
-    const [activePond, setActivePond] = useState('ALL');
-    const [filterPeriod, setFilterPeriod] = useState('1M');
+    const [activePond, setActivePond] = useState('');
+    const [filterPeriod, setFilterPeriod] = useState('ALL');
     const [pondItems, setPondItems] = useState<{ id: string; label: string; productionCycleCount: number }[]>([]);
     const [dashboardSummary, setDashboardSummary] = useState<any>(null);
+
+    const [productionCycles, setProductionCycles] = useState<ProductionCycle[]>([]);
+    const [activeProductionCycle, setActiveProductionCycle] = useState<string>('');
 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -77,14 +81,9 @@ export default function FarmerDetailPage(props: PageProps) {
 
                 // Extract ponds from response
                 const rawPonds = (farmerRes as any).ponds || [];
-                const FARM_TYPE_LABELS: Record<string, string> = {
-                    SMALL: 'ปลาตุ้ม',
-                    LARGE: 'ปลานิ้ว',
-                    MARKET: 'ปลาตลาด',
-                };
                 const mappedPonds = rawPonds.map((p: any, idx: number) => ({
                     id: p.id,
-                    label: `บ่อที่ ${idx + 1} (${FARM_TYPE_LABELS[p.farmType] || p.farmType})`,
+                    label: `บ่อที่ ${idx + 1}`,
                     productionCycleCount: p.productionCycleCount ?? 0,
                 }));
                 setPondItems(mappedPonds);
@@ -121,10 +120,47 @@ export default function FarmerDetailPage(props: PageProps) {
         }
     }, [id]);
 
+    // Fetch production cycles when pond changes
+    useEffect(() => {
+        const fetchProductionCycles = async () => {
+            if (!activePond || activePond === 'ALL') {
+                setProductionCycles([]);
+                setActiveProductionCycle('');
+                return;
+            }
+
+            try {
+                const cycles = await pondsAPI.listCycles(activePond);
+                setProductionCycles(cycles);
+                
+                // Find active cycle (STOCKING, GROWOUT, etc.) or latest cycle
+                const active = cycles.find(c => 
+                    ['PLANNING', 'STOCKING', 'GROWOUT', 'HARVEST_READY'].includes(c.status)
+                );
+                
+                if (active) {
+                    setActiveProductionCycle(active.id);
+                } else if (cycles.length > 0) {
+                    // Default to most recent cycle
+                    setActiveProductionCycle(cycles[0].id);
+                } else {
+                    setActiveProductionCycle('');
+                }
+            } catch (error) {
+                console.error('Failed to fetch production cycles:', error);
+                setProductionCycles([]);
+                setActiveProductionCycle('');
+            }
+        };
+
+        fetchProductionCycles();
+    }, [activePond]);
+
     const fetchRecords = useCallback(async () => {
         if (!id || !farmerData) return;
 
-        if (activePond === 'ALL' && filterPeriod === 'ALL') {
+        // If no specific pond/cycle selected, show all
+        if (!activePond && filterPeriod === 'ALL') {
             const mappedHistory = allRawEntries.map(mapRecordToHistory);
             mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
             setHistoryData(mappedHistory);
@@ -133,11 +169,21 @@ export default function FarmerDetailPage(props: PageProps) {
 
         setIsHistoryLoading(true);
         try {
-            const params: ListRecordsParams & { startDate?: string, endDate?: string, pondId?: string } = {
+            const params: ListRecordsParams = {
                 userId: farmerData.id,
-                pondId: activePond !== 'ALL' ? activePond : undefined,
             };
 
+            // Filter by pond if selected
+            if (activePond) {
+                params.pondId = activePond;
+            }
+
+            // Filter by production cycle if selected
+            if (activeProductionCycle) {
+                params.productionCycleId = activeProductionCycle;
+            }
+
+            // Filter by date range if selected
             if (filterPeriod !== 'ALL') {
                 const now = dayjs();
 
@@ -153,10 +199,9 @@ export default function FarmerDetailPage(props: PageProps) {
                 }
             }
 
-            const res = await recordsAPI.list(params);
+            const rawEntries = await recordsAPI.list(params);
 
-            const rawEntries = res.data;
-            if (Array.isArray(rawEntries)) {
+            if (Array.isArray(rawEntries) && rawEntries.length > 0) {
                 const mappedHistory = rawEntries.map(mapRecordToHistory);
                 mappedHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                 setHistoryData(mappedHistory);
@@ -169,7 +214,7 @@ export default function FarmerDetailPage(props: PageProps) {
 
             let filtered = [...allRawEntries];
 
-            if (activePond !== 'ALL') {
+            if (activePond) {
                 filtered = filtered.filter(item => item.pondId === activePond || item.pondName === activePond);
             }
 
@@ -196,7 +241,7 @@ export default function FarmerDetailPage(props: PageProps) {
         } finally {
             setIsHistoryLoading(false);
         }
-    }, [id, farmerData, activePond, filterPeriod, allRawEntries]);
+    }, [id, farmerData, activePond, activeProductionCycle, filterPeriod, allRawEntries]);
 
     useEffect(() => {
         if (farmerData) {
@@ -311,67 +356,83 @@ export default function FarmerDetailPage(props: PageProps) {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-10">
-            <header className="h-16 flex items-center px-5 text-white mb-6 bg-[#034A30] sticky top-0 z-20 shadow-md pl-16 lg:pl-5">
-                <button onClick={() => router.back()} className="flex items-center gap-2 hover:bg-white/10 px-3 py-1.5 rounded-lg transition-colors -ml-12 lg:ml-0">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span className="text-xl font-medium">{isFarmerLoading ? "กำลังโหลด..." : farmerData?.name || "ไม่พบข้อมูล"}</span>
-                </button>
-                <div className="flex-1 flex justify-end items-center space-x-3 text-sm pr-5">
-                    <span className="text-xl me-2">Admin</span>
+        <div className="min-h-screen bg-gradient-to-b from-gray-50 via-gray-50 to-gray-100 pb-10">
+            {/* Premium Header */}
+            <header className="sticky top-0 z-20 bg-gradient-to-r from-[#034A30] via-[#045A3C] to-[#034A30] shadow-xl">
+                <div className="max-w-7xl mx-auto flex items-center h-16 px-4 sm:px-6 lg:px-8">
+                    <button
+                        onClick={() => router.back()}
+                        className="flex items-center gap-3 text-white hover:bg-white/10 px-3 py-2 rounded-xl transition-all duration-200 group"
+                    >
+                        <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        </div>
+                        <div>
+                            <span className="text-lg font-bold block leading-tight">
+                                {isFarmerLoading ? "กำลังโหลด..." : farmerData?.name || "ไม่พบข้อมูล"}
+                            </span>
+                            <span className="text-[10px] font-medium text-white/60 uppercase tracking-wider">Farmer Detail</span>
+                        </div>
+                    </button>
+                    <div className="flex-1" />
+                    <div className="flex items-center gap-2 text-white/80">
+                        <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-xs font-bold">A</div>
+                        <span className="text-sm font-medium hidden sm:inline">Admin</span>
+                    </div>
                 </div>
             </header>
 
-            <div className="px-6 space-y-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
                 <FarmerInfoCard data={farmerData} />
 
-                <div className="mt-8">
+                <FarmerToolbar
+                    isHistoryLoading={isHistoryLoading}
+                    activePond={activePond}
+                    setActivePond={(pondId) => {
+                        setActivePond(pondId);
+                        setCurrentPage(1);
+                    }}
+                    filterPeriod={filterPeriod}
+                    setCurrentPage={setCurrentPage}
+                    ponds={pondItems}
+                    productionCycles={productionCycles.map((cycle, index) => ({
+                        id: cycle.id,
+                        label: `รอบที่ ${productionCycles.length - index}`,
+                        status: cycle.status,
+                        isActive: ['PLANNING', 'STOCKING', 'GROWOUT', 'HARVEST_READY'].includes(cycle.status),
+                    }))}
+                    activeProductionCycle={activeProductionCycle}
+                    setActiveProductionCycle={setActiveProductionCycle}
+                />
 
-                    <FarmerToolbar
-                        isHistoryLoading={isHistoryLoading}
-                        activePond={activePond}
-                        setActivePond={setActivePond}
-                        filterPeriod={filterPeriod}
-                        setFilterPeriod={setFilterPeriod}
-                        setCurrentPage={setCurrentPage}
-                        ponds={pondItems}
-                    />
+                <FarmerDashboard
+                    loading={isHistoryLoading}
+                    fishType={dashboardSummary?.fishType}
+                    avgWeight={dashboardSummary?.avgWeight ?? '-'}
+                    releaseCount={dashboardSummary?.releaseCount ?? '-'}
+                    remainingCount={dashboardSummary?.remainingCount ?? '-'}
+                    survivalRate={dashboardSummary?.survivalRate ?? null}
+                    productionCycleCount={productionCycles.length}
+                />
 
-                    <div className="mb-6">
-                        <FarmerDashboard
-                            loading={isHistoryLoading}
-                            fishType={dashboardSummary?.fishType}
-                            avgWeight={dashboardSummary?.avgWeight ?? '-'}
-                            releaseCount={dashboardSummary?.releaseCount ?? '-'}
-                            remainingCount={dashboardSummary?.remainingCount ?? '-'}
-                            survivalRate={dashboardSummary?.survivalRate ?? null}
-                            productionCycleCount={
-                                pondItems.find(p => p.id === activePond)?.productionCycleCount ?? 0
-                            }
-                        />
-                    </div>
+                <FarmerHistoryTable
+                    data={paginatedHistory}
+                    startIndex={(currentPage - 1) * itemsPerPage}
+                    onView={handleViewClick}
+                    onEdit={handleEditClick}
+                    onDelete={handleDeleteClick}
+                />
 
-                    <FarmerHistoryTable
-                        data={paginatedHistory}
-                        startIndex={(currentPage - 1) * itemsPerPage}
-                        onView={handleViewClick}
-                        onEdit={handleEditClick}
-                        onDelete={handleDeleteClick}
-                    />
-                </div>
-
-                <div className="mt-4">
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        totalItems={totalItems}
-                        itemsPerPage={itemsPerPage}
-                        onItemsPerPageChange={handleItemsPerPageChange}
-                        onPageChange={(page) => setCurrentPage(page)}
-                    />
-                </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                    itemsPerPage={itemsPerPage}
+                    onItemsPerPageChange={handleItemsPerPageChange}
+                    onPageChange={(page) => setCurrentPage(page)}
+                />
             </div>
 
             {/* Modals */}

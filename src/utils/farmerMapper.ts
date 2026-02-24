@@ -42,6 +42,7 @@ export const mapFarmerResponse = (farmer: FarmerApiResponse): FarmerListItem => 
   rowNumber: farmer.no,
   name: farmer.fullName || '-',
   phone: farmer.phone || '-',
+  pictureUrl: farmer.pictureUrl || null,
   farmType: farmer.farmType,
   farmTypes: farmer.farmTypes || [],
   farmAreaRai: farmer.farmAreaRai,
